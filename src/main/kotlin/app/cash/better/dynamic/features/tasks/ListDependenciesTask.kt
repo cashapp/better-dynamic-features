@@ -5,8 +5,8 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.ArtifactCollection
 import org.gradle.api.capabilities.Capability
 import org.gradle.api.file.ConfigurableFileCollection
-import org.gradle.api.tasks.Classpath
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import java.io.File
@@ -16,7 +16,7 @@ abstract class ListDependenciesTask : DefaultTask() {
    * This is only used to trick Gradle into recognizing that this task is no longer up-to-date
    * For actual processing, [dependencyArtifacts] is used.
    */
-  @get:Classpath
+  @get:InputFiles
   abstract val dependencyFileCollection: ConfigurableFileCollection
 
   private lateinit var dependencyArtifacts: ArtifactCollection
