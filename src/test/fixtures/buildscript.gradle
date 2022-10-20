@@ -1,0 +1,10 @@
+project.buildscript.repositories {
+  mavenCentral()
+  google()
+}
+
+project.buildscript.dependencies {
+  classpath 'app.cash:better-dynamic-features:+'
+  classpath libs.kotlin
+  classpath libs.agp
+}
