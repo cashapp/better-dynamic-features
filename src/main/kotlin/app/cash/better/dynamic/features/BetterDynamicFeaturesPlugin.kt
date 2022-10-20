@@ -68,8 +68,8 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
           )
         }
       }
-      .artifacts
-    it.setDependencyArtifacts(collection)
+    it.dependencyFileCollection.setFrom(collection.artifacts.artifactFiles)
+    it.setDependencyArtifacts(collection.artifacts)
     it.projectName = this.name
     it.listFile = this.depsListFile()
   }
