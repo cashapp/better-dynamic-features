@@ -19,6 +19,11 @@ dependencies {
   implementation(libs.agp)
   implementation(libs.kotlin)
 
+  compileOnly(libs.google.guava)
+  compileOnly(libs.google.gson)
+  compileOnly(libs.android.common)
+  compileOnly(libs.android.sdkCommon)
+
   testImplementation(libs.junit)
   testImplementation(libs.truth)
 }
