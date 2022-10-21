@@ -37,8 +37,8 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
         "check${variant.name.capitalized()}DependencyVersions",
         DependenciesVersionCheckTask::class.java
       ) { task ->
-        task.baseModuleDependencies = project.depsListFile()
-        task.dynamicModuleDependencies = dynamicModules.map { project.project(it).depsListFile() }
+        task.baseModuleDependencies = project.depsListFile(variant.name)
+        task.dynamicModuleDependencies = dynamicModules.map { project.project(it).depsListFile(variant.name) }
 
         task.dependsOn(baseTask)
         task.dependsOn(featureTasks)
@@ -71,8 +71,8 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     it.dependencyFileCollection.setFrom(collection.artifacts.artifactFiles)
     it.setDependencyArtifacts(collection.artifacts)
     it.projectName = this.name
-    it.listFile = this.depsListFile()
+    it.listFile = this.depsListFile(variant.name)
   }
 
-  private fun Project.depsListFile(): File = buildDir.resolve("tmp/bfd/deps.txt")
+  private fun Project.depsListFile(variant: String): File = buildDir.resolve("tmp/bfd/$variant/deps.txt")
 }
