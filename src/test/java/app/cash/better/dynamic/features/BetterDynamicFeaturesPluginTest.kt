@@ -53,4 +53,27 @@ class BetterDynamicFeaturesPluginTest {
     // Undo that
     baseGradle.writeText(baseGradle.readText().replace("5.0.0-alpha.2", "4.9.3"))
   }
+
+  @Test fun `conflict check does not build project module dependencies`() {
+    val integrationRoot = File("src/test/fixtures/project-dependency")
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .withArguments("clean", "checkDebugDependencyVersions")
+
+    val result = gradleRunner.build()
+    assertThat(result.output).contains("BUILD SUCCESSFUL")
+    assertThat(result.task(":library:jar")?.outcome).isNull()
+  }
+
+  @Test fun `conflict check looks at transitive dependencies`() {
+    val integrationRoot = File("src/test/fixtures/transitive-dependency")
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .withArguments("clean", "checkDebugDependencyVersions")
+
+    val result = gradleRunner.buildAndFail()
+    assertThat(result.output).contains("com.squareup.okhttp3:okhttp, :base=4.9.3, :feature=5.0.0-alpha.2 -> Use 5.0.0-alpha.2")
+  }
 }

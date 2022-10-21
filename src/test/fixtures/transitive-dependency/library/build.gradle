@@ -1,0 +1,5 @@
+apply plugin: 'org.jetbrains.kotlin.jvm'
+
+dependencies {
+  implementation "com.squareup.okhttp3:okhttp:5.0.0-alpha.2"
+}

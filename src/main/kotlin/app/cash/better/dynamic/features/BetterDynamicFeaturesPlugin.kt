@@ -9,7 +9,7 @@ import com.android.build.api.variant.Variant
 import com.android.build.gradle.internal.publishing.AndroidArtifacts
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.Task
+import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.configurationcache.extensions.capitalized
 import java.io.File
@@ -58,7 +58,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
   private fun Project.registerListingTask(variant: Variant): TaskProvider<ListDependenciesTask> = tasks.register(
     "list${variant.name.capitalized()}Dependencies",
     ListDependenciesTask::class.java
-  ) {
+  ) { task ->
     val collection = configurations.getByName("${variant.name}RuntimeClasspath").incoming
       .artifactView { config ->
         config.attributes { container ->
@@ -67,11 +67,14 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
             AndroidArtifacts.ArtifactType.AAR_OR_JAR.type
           )
         }
+
+        // Look only for external dependencies
+        config.componentFilter { it !is ProjectComponentIdentifier }
       }
-    it.dependencyFileCollection.setFrom(collection.artifacts.artifactFiles)
-    it.setDependencyArtifacts(collection.artifacts)
-    it.projectName = this.name
-    it.listFile = this.depsListFile(variant.name)
+    task.dependencyFileCollection.setFrom(collection.artifacts.artifactFiles)
+    task.setDependencyArtifacts(collection.artifacts)
+    task.projectName = this.name
+    task.listFile = this.depsListFile(variant.name)
   }
 
   private fun Project.depsListFile(variant: String): File = buildDir.resolve("tmp/bfd/$variant/deps.txt")
