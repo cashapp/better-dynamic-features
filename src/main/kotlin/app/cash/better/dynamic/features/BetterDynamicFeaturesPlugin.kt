@@ -11,6 +11,7 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.ArtifactCollection
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
+import org.gradle.api.internal.artifacts.dependencies.DefaultProjectDependency
 import java.io.File
 
 @Suppress("UnstableApiUsage")
@@ -31,6 +32,18 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
 
     project.setupListingTask(androidComponents)
+
+    project.afterEvaluate {
+      val base = project.configurations.getByName("implementation").dependencies
+        .filterIsInstance<DefaultProjectDependency>()
+        .firstOrNull {
+          it.dependencyProject.plugins.hasPlugin("com.android.application") &&
+            it.dependencyProject.plugins.hasPlugin("app.cash.better.dynamic.features")
+        }
+      checkNotNull(base) {
+        "Your base application module should be added as a dependency of this project"
+      }
+    }
   }
 
   private fun applyToApplication(project: Project) {
