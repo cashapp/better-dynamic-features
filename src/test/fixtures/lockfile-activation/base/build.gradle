@@ -1,13 +1,14 @@
-apply plugin: 'com.android.dynamic-feature'
+apply plugin: 'com.android.application'
 apply plugin: 'app.cash.better.dynamic.features'
 
 android {
-  namespace "app.cash.better.dynamic.features.integration.feature"
+  namespace "app.cash.better.dynamic.features.integration"
 
   compileSdk 32
+
+  dynamicFeatures = [':feature']
 }
 
 dependencies {
-  implementation project(":base")
   implementation "com.squareup.okhttp3:okhttp:4.9.3"
 }

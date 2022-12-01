@@ -10,3 +10,5 @@
 local.properties
 
 !**/com/android/build
+
+**/fixtures/**/gradle.lockfile
