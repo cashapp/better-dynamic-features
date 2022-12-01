@@ -4,18 +4,27 @@ A plugin for making dynamic feature modules better.
 
 ## Setup
 
-Apply the plugin to a `com.android.application` module that has dynamic features declared in it.
-The plugin automatically does the rest.
+Apply the plugin to your `com.android.application` module and each of your `com.android.dynamic-feature` modules.
 
-## Dependency Checking
+```groovy
+plugins {
+  id("com.android.application")
+  id("app.cash.better.dynamic.features")
+}
 
-This plugin adds a task to check that your base module and dynamic feature modules are all pulling
-the same versions of each dependency (including transitive ones).
+// Or...
 
-Usage:
-
-```shell
-./gradlew :app:checkInternalDebugDependencyVersions
+plugins {
+  id("com.android.dynamic-feature")
+  id("app.cash.better.dynamic.features")
+}
 ```
 
-This task will either pass or fail with a list of mismatched dependencies.
+## Gradle Lockfiles
+
+This plugin uses [gradle lockfiles](https://docs.gradle.org/current/userguide/dependency_locking.html) to ensure that the dependency versions of your base and feature modules stay in sync.
+The plugin will activate dependency locking on each of your `runtimeClasspath` configurations.
+
+To generate the lockfile, run the `writeLockfile` task on your application module.
+This will generate the `gradle.lockfile` file in the application module directory.
+This file should be checked in to version control.
