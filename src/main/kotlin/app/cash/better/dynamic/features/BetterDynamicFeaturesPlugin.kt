@@ -2,10 +2,12 @@
 package app.cash.better.dynamic.features
 
 import app.cash.better.dynamic.features.tasks.BaseLockfileWriterTask
+import app.cash.better.dynamic.features.tasks.CheckLockfileTask
 import app.cash.better.dynamic.features.tasks.PartialLockfileWriterTask
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.gradle.internal.publishing.AndroidArtifacts
+import com.android.build.gradle.internal.tasks.factory.dependsOn
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ArtifactCollection
@@ -55,23 +57,29 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       check(extension is ApplicationExtension)
       dynamicModules.addAll(extension.dynamicFeatures)
 
-      project.tasks.register("writeLockfile", BaseLockfileWriterTask::class.java) { task ->
-        task.dependsOn(project.tasks.named("writePartialLockfile"))
-        val featureProjects = dynamicModules.map { project.project(it) }
+      val realLockfile = project.projectDir.resolve("gradle.lockfile")
+      val tempLockfile = project.buildDir.resolve("tmp/gradle.lockfile")
 
-        featureProjects.forEach { featureProject ->
-          check (featureProject.plugins.hasPlugin("app.cash.better.dynamic.features")) {
-            "Plugin 'app.cash.better.dynamic.features' needs to be applied to $featureProject"
-          }
-          task.dependsOn(featureProject.tasks.named("writePartialLockfile"))
+      project.tasks.register("writeLockfile", BaseLockfileWriterTask::class.java) { task ->
+        task.configure(project, dynamicModules, realLockfile)
+      }
+
+      val tempLockfileTask =
+        project.tasks.register("writeTempLockfile", BaseLockfileWriterTask::class.java) { task ->
+          task.configure(project, dynamicModules, tempLockfile)
         }
 
-        task.outputLockfile = project.projectDir.resolve("gradle.lockfile")
-        task.partialFeatureLockfiles = featureProjects.map { it.partialLockfilePath() }
-        task.partialBaseLockfile = project.partialLockfilePath()
+      val checkLockfileTask =
+        project.tasks.register("checkLockfile", CheckLockfileTask::class.java) { task ->
+          task.currentLockfile = realLockfile
+          task.newLockfile = tempLockfile
+          task.outputFile = project.buildDir.resolve("tmp/lockfile_check")
 
-        task.group = GROUP
-      }
+          task.dependsOn(tempLockfileTask)
+          task.group = GROUP
+        }
+
+      project.tasks.named("preBuild").dependsOn(checkLockfileTask)
     }
 
     project.setupListingTask(androidComponents)
@@ -123,6 +131,28 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       // Look only for external dependencies
       config.componentFilter { it !is ProjectComponentIdentifier }
     }.artifacts
+
+  private fun BaseLockfileWriterTask.configure(
+    project: Project,
+    dynamicModules: Set<String>,
+    output: File
+  ) {
+    dependsOn(project.tasks.named("writePartialLockfile"))
+    val featureProjects = dynamicModules.map { project.project(it) }
+
+    featureProjects.forEach { featureProject ->
+      check (featureProject.plugins.hasPlugin("app.cash.better.dynamic.features")) {
+        "Plugin 'app.cash.better.dynamic.features' needs to be applied to $featureProject"
+      }
+      dependsOn(featureProject.tasks.named("writePartialLockfile"))
+    }
+
+    outputLockfile = output
+    partialFeatureLockfiles = featureProjects.map { it.partialLockfilePath() }
+    partialBaseLockfile = project.partialLockfilePath()
+
+    group = GROUP
+  }
 
   private fun Project.partialLockfilePath(): File = buildDir.resolve("tmp/gradle.lockfile.partial")
 

@@ -3,6 +3,7 @@ package app.cash.better.dynamic.features
 
 import com.google.common.truth.Truth.assertThat
 import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Test
 import java.io.File
 
@@ -194,6 +195,32 @@ class BetterDynamicFeaturesPluginTest {
       |org.jetbrains:annotations:13.0=debugRuntimeClasspath, releaseRuntimeClasspath
       |empty=
     """.trimMargin())
+  }
+
+  @Test fun `build with outdated lockfile fails`() {
+    val integrationRoot = File("src/test/fixtures/out-of-date")
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .withArguments("clean", ":base:installDebug")
+
+    val result = gradleRunner.buildAndFail()
+    assertThat(result.output).contains("The lockfile is out of date. Run :base:writeLockfile to update it.")
+  }
+
+  @Test fun `checkLockfile task stays up-to-date if dependencies unchanged`() {
+    val integrationRoot = File("src/test/fixtures/up-to-date")
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .withArguments("clean", ":base:preBuild")
+
+    gradleRunner.build()
+
+    val result = gradleRunner.withArguments(":base:preBuild").build()
+
+    assertThat(result.output).contains("BUILD SUCCESSFUL")
+    assertThat(result.task(":base:checkLockfile")?.outcome).isEqualTo(TaskOutcome.UP_TO_DATE)
   }
 
   @Test fun `configuration fails when feature project does not depend on base module`() {
