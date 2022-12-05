@@ -2,7 +2,7 @@
 kotlin = "1.7.20"
 
 [libraries]
-agp = { module = "com.android.tools.build:gradle", version = "7.2.2" }
+agp = { module = "com.android.tools.build:gradle", version = "7.3.1" }
 kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 
 truth = { module = "com.google.truth:truth", version = "1.1.2" }
@@ -11,8 +11,8 @@ junit = { module = "junit:junit", version = "4.13.2" }
 # AGP things
 google-guava = "com.google.guava:guava:31.1-jre"
 google-gson = "com.google.code.gson:gson:2.9.1"
-android-common = "com.android.tools:common:30.2.2"
-android-sdkCommon = "com.android.tools:sdk-common:30.2.2"
+android-common = "com.android.tools:common:30.3.1"
+android-sdkCommon = "com.android.tools:sdk-common:30.3.1"
 
 [plugins]
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
