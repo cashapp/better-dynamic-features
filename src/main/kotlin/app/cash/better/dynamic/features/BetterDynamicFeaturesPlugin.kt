@@ -47,12 +47,17 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
         val featureProjects = dynamicModules.map { project.project(it) }
 
         featureProjects.forEach { featureProject ->
+          check (featureProject.plugins.hasPlugin("app.cash.better.dynamic.features")) {
+            "Plugin 'app.cash.better.dynamic.features' needs to be applied to $featureProject"
+          }
           task.dependsOn(featureProject.tasks.named("writePartialLockfile"))
         }
 
         task.outputLockfile = project.projectDir.resolve("gradle.lockfile")
         task.partialFeatureLockfiles = featureProjects.map { it.partialLockfilePath() }
         task.partialBaseLockfile = project.partialLockfilePath()
+
+        task.group = GROUP
       }
     }
 
@@ -87,6 +92,8 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
         task.projectName = this.name
         task.partialLockFile = this.partialLockfilePath()
         task.configurationNames = variantNames.map { "${it}RuntimeClasspath" }.sorted()
+
+        task.group = GROUP
       }
     }
   }
@@ -105,4 +112,8 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     }.artifacts
 
   private fun Project.partialLockfilePath(): File = buildDir.resolve("tmp/gradle.lockfile.partial")
+
+  internal companion object {
+    const val GROUP = "Better Dynamic Features"
+  }
 }

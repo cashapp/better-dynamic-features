@@ -6,7 +6,6 @@ import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import java.io.File
-import kotlin.io.path.div
 
 abstract class BaseLockfileWriterTask : DefaultTask() {
   @get:InputFiles
@@ -34,8 +33,6 @@ abstract class BaseLockfileWriterTask : DefaultTask() {
   }
 
   private fun mergeLockfiles(): List<LockfileEntry> {
-    project.buildDir.toPath() / "tmp"
-
     val resolvedEntries =
       partialBaseLockfile.readLockfileEntries().associateBy { it.artifact }
         .toMutableMap()
