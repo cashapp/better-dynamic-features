@@ -196,6 +196,19 @@ class BetterDynamicFeaturesPluginTest {
     """.trimMargin())
   }
 
+  @Test fun `configuration fails when feature project does not depend on base module`() {
+    val integrationRoot = File("src/test/fixtures/no-base-dependency")
+    val baseProject = integrationRoot.resolve("base")
+    clearLockfile(baseProject)
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .withArguments("clean", ":base:writeLockfile")
+    val result = gradleRunner.buildAndFail()
+
+    assertThat(result.output).contains("Your base application module should be added as a dependency of this project")
+  }
+
   private fun clearLockfile(root: File) {
     root.lockfile().takeIf { it.exists() }?.delete()
   }
