@@ -1,0 +1,7 @@
+# This is a Gradle generated file for dependency locking.
+# Manual edits can break the build and are not advised.
+# This file is expected to be part of source control.
+com.squareup.okhttp3:okhttp:4.9.0=debugRuntimeClasspath, releaseRuntimeClasspath
+com.squareup.okio:okio:2.8.0=debugRuntimeClasspath
+org.jetbrains:annotations:13.0=debugRuntimeClasspath, releaseRuntimeClasspath
+empty=

@@ -9,57 +9,113 @@ import java.io.File
 class BetterDynamicFeaturesPluginTest {
   @Test fun `base and feature apks have different library versions`() {
     val integrationRoot = File("src/test/fixtures/different-versions")
+    val baseProject = integrationRoot.resolve("base")
+    clearLockfile(baseProject)
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", "checkDebugDependencyVersions")
+      .withArguments("clean", ":base:writeLockfile")
 
-    val result = gradleRunner.buildAndFail()
-    assertThat(result.output).contains("com.squareup.okhttp3:okhttp, :base=4.9.3, :feature=5.0.0-alpha.2 -> Use 5.0.0-alpha.2")
+    // Generate lockfile first, and then run dependencies task
+    gradleRunner.build()
+    val result = gradleRunner.withArguments(":base:dependencies").build()
+
+    assertThat(result.output).contains("com.squareup.okhttp3:okhttp:4.9.3 -> 5.0.0-alpha.2")
+    assertThat(baseProject.lockfile().readText()).isEqualTo("""
+      |# This is a Gradle generated file for dependency locking.
+      |# Manual edits can break the build and are not advised.
+      |# This file is expected to be part of source control.
+      |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugRuntimeClasspath, releaseRuntimeClasspath
+      |com.squareup.okio:okio:2.9.0=debugRuntimeClasspath, releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-common:1.4.21=debugRuntimeClasspath, releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib:1.4.21=debugRuntimeClasspath, releaseRuntimeClasspath
+      |org.jetbrains:annotations:13.0=debugRuntimeClasspath, releaseRuntimeClasspath
+      |empty=
+    """.trimMargin())
   }
 
   @Test fun `base and feature apks have same library versions`() {
     val integrationRoot = File("src/test/fixtures/same-versions")
+    val baseProject = integrationRoot.resolve("base")
+    clearLockfile(baseProject)
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", "checkDebugDependencyVersions")
+      .withArguments("clean", ":base:writeLockfile")
 
-    val result = gradleRunner.build()
-    assertThat(result.output).contains("BUILD SUCCESSFUL")
+    // Generate lockfile first, and then run dependencies task
+    gradleRunner.build()
+    val result = gradleRunner.withArguments(":base:dependencies").build()
+
+    assertThat(result.output).contains("com.squareup.okhttp3:okhttp:4.9.3")
+    assertThat(baseProject.lockfile().readText()).isEqualTo("""
+      |# This is a Gradle generated file for dependency locking.
+      |# Manual edits can break the build and are not advised.
+      |# This file is expected to be part of source control.
+      |com.squareup.okhttp3:okhttp:4.9.3=debugRuntimeClasspath, releaseRuntimeClasspath
+      |com.squareup.okio:okio:2.8.0=debugRuntimeClasspath, releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-common:1.4.10=debugRuntimeClasspath, releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib:1.4.10=debugRuntimeClasspath, releaseRuntimeClasspath
+      |org.jetbrains:annotations:13.0=debugRuntimeClasspath, releaseRuntimeClasspath
+      |empty=
+    """.trimMargin())
   }
 
-  @Test fun `plugin report changes after dependency update`() {
+  @Test fun `lockfile updates if task run after dependency version change`() {
     val integrationRoot = File("src/test/fixtures/version-update")
+    val baseProject = integrationRoot.resolve("base")
+    clearLockfile(baseProject)
 
-    val gradleRunner = GradleRunner.create()
+    val result = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", "checkDebugDependencyVersions")
+      .withArguments("clean", ":base:writeLockfile")
+      .build()
 
-    val result = gradleRunner.buildAndFail()
-    assertThat(result.output).contains("com.squareup.okhttp3:okhttp, :base=4.9.3, :feature=5.0.0-alpha.2 -> Use 5.0.0-alpha.2")
+    assertThat(result.output).contains("BUILD SUCCESSFUL")
+    assertThat(baseProject.lockfile().readText()).isEqualTo("""
+      |# This is a Gradle generated file for dependency locking.
+      |# Manual edits can break the build and are not advised.
+      |# This file is expected to be part of source control.
+      |com.squareup.okhttp3:okhttp:4.9.3=debugRuntimeClasspath, releaseRuntimeClasspath
+      |com.squareup.okio:okio:2.8.0=debugRuntimeClasspath, releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-common:1.4.10=debugRuntimeClasspath, releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib:1.4.10=debugRuntimeClasspath, releaseRuntimeClasspath
+      |org.jetbrains:annotations:13.0=debugRuntimeClasspath, releaseRuntimeClasspath
+      |empty=
+    """.trimMargin())
 
     // Update dependency version
-    val baseGradle = integrationRoot.resolve("base/build.gradle")
-    baseGradle.writeText(baseGradle.readText().replace("4.9.3", "5.0.0-alpha.2"))
+    val featureGradle = integrationRoot.resolve("feature/build.gradle")
+    featureGradle.writeText(featureGradle.readText().replace("4.9.3", "5.0.0-alpha.2"))
 
     val newGradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("checkDebugDependencyVersions")
+      .withArguments(":base:writeLockfile")
 
     val newResult = newGradleRunner.build()
     assertThat(newResult.output).contains("BUILD SUCCESSFUL")
+    assertThat(baseProject.lockfile().readText()).isEqualTo("""
+      |# This is a Gradle generated file for dependency locking.
+      |# Manual edits can break the build and are not advised.
+      |# This file is expected to be part of source control.
+      |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugRuntimeClasspath, releaseRuntimeClasspath
+      |com.squareup.okio:okio:2.9.0=debugRuntimeClasspath, releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-common:1.4.21=debugRuntimeClasspath, releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib:1.4.21=debugRuntimeClasspath, releaseRuntimeClasspath
+      |org.jetbrains:annotations:13.0=debugRuntimeClasspath, releaseRuntimeClasspath
+      |empty=
+    """.trimMargin())
 
     // Undo that
-    baseGradle.writeText(baseGradle.readText().replace("5.0.0-alpha.2", "4.9.3"))
+    featureGradle.writeText(featureGradle.readText().replace("5.0.0-alpha.2", "4.9.3"))
   }
 
-  @Test fun `conflict check does not build project module dependencies`() {
+  @Test fun `plugin tasks do not build project module dependencies`() {
     val integrationRoot = File("src/test/fixtures/project-dependency")
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", "checkDebugDependencyVersions")
+      .withArguments("clean", ":base:writeLockfile")
 
     val result = gradleRunner.build()
     assertThat(result.output).contains("BUILD SUCCESSFUL")
@@ -69,11 +125,80 @@ class BetterDynamicFeaturesPluginTest {
   @Test fun `conflict check looks at transitive dependencies`() {
     val integrationRoot = File("src/test/fixtures/transitive-dependency")
 
+    val baseProject = integrationRoot.resolve("base")
+    clearLockfile(baseProject)
+
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", "checkDebugDependencyVersions")
+      .withArguments("clean", ":base:writeLockfile")
+
+    // Generate lockfile first, and then run dependencies task
+    gradleRunner.build()
+    val result = gradleRunner.withArguments(":base:dependencies").build()
+
+    assertThat(result.output).contains("com.squareup.okhttp3:okhttp:4.9.3 -> 5.0.0-alpha.2")
+    assertThat(baseProject.lockfile().readText()).isEqualTo("""
+      |# This is a Gradle generated file for dependency locking.
+      |# Manual edits can break the build and are not advised.
+      |# This file is expected to be part of source control.
+      |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugRuntimeClasspath, releaseRuntimeClasspath
+      |com.squareup.okio:okio:2.9.0=debugRuntimeClasspath, releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-common:1.7.20=debugRuntimeClasspath, releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.20=debugRuntimeClasspath, releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20=debugRuntimeClasspath, releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib:1.7.20=debugRuntimeClasspath, releaseRuntimeClasspath
+      |org.jetbrains:annotations:13.0=debugRuntimeClasspath, releaseRuntimeClasspath
+      |empty=
+    """.trimMargin())
+  }
+
+  @Test fun `lockfiles activated on base runtime classpath configurations`() {
+    val integrationRoot = File("src/test/fixtures/lockfile-activation")
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .withArguments("clean", ":base:build")
 
     val result = gradleRunner.buildAndFail()
-    assertThat(result.output).contains("com.squareup.okhttp3:okhttp, :base=4.9.3, :feature=5.0.0-alpha.2 -> Use 5.0.0-alpha.2")
+
+    // The included lockfile is invalid, so if activated then these errors should be shown
+    assertThat(result.output).contains("Resolved 'org.jetbrains.kotlin:kotlin-stdlib-common:1.4.10' which is not part of the dependency lock state")
+    assertThat(result.output).contains("Cannot find a version of 'com.squareup.okhttp3:okhttp' that satisfies the version constraints:")
   }
+
+  @Test fun `lockfile handles variant-specific dependencies correctly`() {
+    val integrationRoot = File("src/test/fixtures/variant-aware")
+    val baseProject = integrationRoot.resolve("base")
+    clearLockfile(baseProject)
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .withArguments("clean", ":base:writeLockfile")
+
+    // Generate lockfile first, and then run dependencies task
+    gradleRunner.build()
+    val result = gradleRunner.withArguments(":base:dependencies").build()
+
+    assertThat(result.output).contains("com.jakewharton.picnic:picnic:0.4.0 -> 0.5.0")
+    assertThat(baseProject.lockfile().readText()).isEqualTo("""
+      |# This is a Gradle generated file for dependency locking.
+      |# Manual edits can break the build and are not advised.
+      |# This file is expected to be part of source control.
+      |com.jakewharton.picnic:picnic:0.5.0=debugRuntimeClasspath
+      |com.squareup.okhttp3:okhttp:4.9.3=debugRuntimeClasspath, releaseRuntimeClasspath
+      |com.squareup.okio:okio:2.8.0=debugRuntimeClasspath, releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-common:1.4.10=debugRuntimeClasspath, releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.4.0=debugRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.0=debugRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib:1.4.10=debugRuntimeClasspath, releaseRuntimeClasspath
+      |org.jetbrains:annotations:13.0=debugRuntimeClasspath, releaseRuntimeClasspath
+      |empty=
+    """.trimMargin())
+  }
+
+  private fun clearLockfile(root: File) {
+    root.lockfile().takeIf { it.exists() }?.delete()
+  }
+
+  private fun File.lockfile() = resolve("gradle.lockfile")
 }

@@ -1,25 +1,39 @@
 // Copyright Square, Inc.
 package app.cash.better.dynamic.features
 
-import app.cash.better.dynamic.features.tasks.DependenciesVersionCheckTask
-import app.cash.better.dynamic.features.tasks.ListDependenciesTask
+import app.cash.better.dynamic.features.tasks.BaseLockfileWriterTask
+import app.cash.better.dynamic.features.tasks.PartialLockfileWriterTask
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.variant.AndroidComponentsExtension
-import com.android.build.api.variant.Variant
 import com.android.build.gradle.internal.publishing.AndroidArtifacts
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.ArtifactCollection
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
-import org.gradle.api.tasks.TaskProvider
-import org.gradle.configurationcache.extensions.capitalized
 import java.io.File
 
 @Suppress("UnstableApiUsage")
 class BetterDynamicFeaturesPlugin : Plugin<Project> {
   override fun apply(project: Project) {
-    check(project.plugins.hasPlugin("com.android.application")) {
-      "Plugin 'com.android.application' must also be applied before this plugin"
+    check(project.plugins.hasPlugin("com.android.application") || project.plugins.hasPlugin("com.android.dynamic-feature")) {
+      "Plugin 'com.android.application' or 'com.android.dynamic-feature' must also be applied before this plugin"
     }
+
+    if (project.plugins.hasPlugin("com.android.application")) {
+      applyToApplication(project)
+    } else {
+      applyToFeature(project)
+    }
+  }
+
+  private fun applyToFeature(project: Project) {
+    val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
+
+    project.setupListingTask(androidComponents)
+  }
+
+  private fun applyToApplication(project: Project) {
     val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
 
     // Callback for finalizeDsl is called before onVariants, so this is "safe"
@@ -27,55 +41,79 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     androidComponents.finalizeDsl { extension ->
       check(extension is ApplicationExtension)
       dynamicModules.addAll(extension.dynamicFeatures)
-    }
 
-    androidComponents.onVariants { variant ->
-      val baseTask = project.registerListingTask(variant)
-      val featureTasks = project.setupBetterDynamicFeatures(dynamicModules, variant)
+      project.tasks.register("writeLockfile", BaseLockfileWriterTask::class.java) { task ->
+        task.dependsOn(project.tasks.named("writePartialLockfile"))
+        val featureProjects = dynamicModules.map { project.project(it) }
 
-      project.tasks.register(
-        "check${variant.name.capitalized()}DependencyVersions",
-        DependenciesVersionCheckTask::class.java
-      ) { task ->
-        task.baseModuleDependencies = project.depsListFile(variant.name)
-        task.dynamicModuleDependencies = dynamicModules.map { project.project(it).depsListFile(variant.name) }
-
-        task.dependsOn(baseTask)
-        task.dependsOn(featureTasks)
-      }
-    }
-  }
-
-  private fun Project.setupBetterDynamicFeatures(
-    featureModules: Set<String>,
-    variant: Variant
-  ): List<TaskProvider<ListDependenciesTask>> =
-    featureModules.map { project(it) }.map { project ->
-      // Register tasks
-      project.registerListingTask(variant)
-    }
-
-  private fun Project.registerListingTask(variant: Variant): TaskProvider<ListDependenciesTask> = tasks.register(
-    "list${variant.name.capitalized()}Dependencies",
-    ListDependenciesTask::class.java
-  ) { task ->
-    val collection = configurations.getByName("${variant.name}RuntimeClasspath").incoming
-      .artifactView { config ->
-        config.attributes { container ->
-          container.attribute(
-            AndroidArtifacts.ARTIFACT_TYPE,
-            AndroidArtifacts.ArtifactType.AAR_OR_JAR.type
-          )
+        featureProjects.forEach { featureProject ->
+          check (featureProject.plugins.hasPlugin("app.cash.better.dynamic.features")) {
+            "Plugin 'app.cash.better.dynamic.features' needs to be applied to $featureProject"
+          }
+          task.dependsOn(featureProject.tasks.named("writePartialLockfile"))
         }
 
-        // Look only for external dependencies
-        config.componentFilter { it !is ProjectComponentIdentifier }
+        task.outputLockfile = project.projectDir.resolve("gradle.lockfile")
+        task.partialFeatureLockfiles = featureProjects.map { it.partialLockfilePath() }
+        task.partialBaseLockfile = project.partialLockfilePath()
+
+        task.group = GROUP
       }
-    task.dependencyFileCollection.setFrom(collection.artifacts.artifactFiles)
-    task.setDependencyArtifacts(collection.artifacts)
-    task.projectName = this.name
-    task.listFile = this.depsListFile(variant.name)
+    }
+
+    project.setupListingTask(androidComponents)
   }
 
-  private fun Project.depsListFile(variant: String): File = buildDir.resolve("tmp/bfd/$variant/deps.txt")
+  private fun Project.setupListingTask(androidComponents: AndroidComponentsExtension<*, *, *>) {
+    val variantNames = mutableSetOf<String>()
+
+    androidComponents.onVariants { variant ->
+      variantNames += variant.name
+
+      configurations.named("${variant.name}RuntimeClasspath").configure {
+        it.resolutionStrategy.activateDependencyLocking()
+      }
+    }
+
+    afterEvaluate {
+      project.tasks.register(
+        "writePartialLockfile",
+        PartialLockfileWriterTask::class.java
+      ) { task ->
+        val artifactCollections = variantNames.associateWith {
+          project.configurations.getByName("${it}RuntimeClasspath")
+            .getConfigurationArtifactCollection()
+        }
+
+        task.setDependencyArtifacts(artifactCollections)
+        task.dependencyFileCollection.setFrom(artifactCollections.map { (_, value) -> value.artifactFiles }
+          .reduce { acc, fileCollection -> acc + fileCollection })
+
+        task.projectName = this.name
+        task.partialLockFile = this.partialLockfilePath()
+        task.configurationNames = variantNames.map { "${it}RuntimeClasspath" }.sorted()
+
+        task.group = GROUP
+      }
+    }
+  }
+
+  private fun Configuration.getConfigurationArtifactCollection(): ArtifactCollection =
+    incoming.artifactView { config ->
+      config.attributes { container ->
+        container.attribute(
+          AndroidArtifacts.ARTIFACT_TYPE,
+          AndroidArtifacts.ArtifactType.AAR_OR_JAR.type
+        )
+      }
+
+      // Look only for external dependencies
+      config.componentFilter { it !is ProjectComponentIdentifier }
+    }.artifacts
+
+  private fun Project.partialLockfilePath(): File = buildDir.resolve("tmp/gradle.lockfile.partial")
+
+  internal companion object {
+    const val GROUP = "Better Dynamic Features"
+  }
 }
