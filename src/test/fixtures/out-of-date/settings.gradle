@@ -1,0 +1,4 @@
+apply from: "../settings.gradle"
+
+include ':base'
+include ':feature'
