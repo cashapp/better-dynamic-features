@@ -99,7 +99,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     afterEvaluate {
       project.tasks.register(
         "writePartialLockfile",
-        PartialLockfileWriterTask::class.java
+        PartialLockfileWriterTask::class.java,
       ) { task ->
         val artifactCollections = variantNames.associateWith {
           project.configurations.getByName("${it}RuntimeClasspath")
@@ -107,8 +107,10 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
         }
 
         task.setDependencyArtifacts(artifactCollections)
-        task.dependencyFileCollection.setFrom(artifactCollections.map { (_, value) -> value.artifactFiles }
-          .reduce { acc, fileCollection -> acc + fileCollection })
+        task.dependencyFileCollection.setFrom(
+          artifactCollections.map { (_, value) -> value.artifactFiles }
+            .reduce { acc, fileCollection -> acc + fileCollection },
+        )
 
         task.projectName = this.name
         task.partialLockFile = this.partialLockfilePath()
@@ -124,7 +126,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       config.attributes { container ->
         container.attribute(
           AndroidArtifacts.ARTIFACT_TYPE,
-          AndroidArtifacts.ArtifactType.AAR_OR_JAR.type
+          AndroidArtifacts.ArtifactType.AAR_OR_JAR.type,
         )
       }
 
@@ -135,13 +137,13 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
   private fun BaseLockfileWriterTask.configure(
     project: Project,
     dynamicModules: Set<String>,
-    output: File
+    output: File,
   ) {
     dependsOn(project.tasks.named("writePartialLockfile"))
     val featureProjects = dynamicModules.map { project.project(it) }
 
     featureProjects.forEach { featureProject ->
-      check (featureProject.plugins.hasPlugin("app.cash.better.dynamic.features")) {
+      check(featureProject.plugins.hasPlugin("app.cash.better.dynamic.features")) {
         "Plugin 'app.cash.better.dynamic.features' needs to be applied to $featureProject"
       }
       dependsOn(featureProject.tasks.named("writePartialLockfile"))

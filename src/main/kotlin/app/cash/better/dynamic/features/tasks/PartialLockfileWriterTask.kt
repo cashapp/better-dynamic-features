@@ -42,7 +42,7 @@ abstract class PartialLockfileWriterTask : DefaultTask() {
           LockfileEntry(
             "${capability.group}:${capability.name}",
             capability.version!!,
-            sortedSetOf("${configuration}RuntimeClasspath")
+            sortedSetOf("${configuration}RuntimeClasspath"),
           )
         }
     }

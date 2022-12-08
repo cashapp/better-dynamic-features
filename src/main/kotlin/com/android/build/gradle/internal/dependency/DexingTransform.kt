@@ -29,7 +29,6 @@ import com.android.build.gradle.internal.dexing.writeDesugarGraph
 import com.android.build.gradle.internal.errors.MessageReceiverImpl
 import com.android.build.gradle.internal.publishing.AndroidArtifacts
 import com.android.build.gradle.internal.scope.VariantScope
-import com.android.build.gradle.options.BooleanOption
 import com.android.build.gradle.options.SyncOptions
 import com.android.build.gradle.tasks.toSerializable
 import com.android.builder.dexing.ClassFileEntry
@@ -58,7 +57,6 @@ import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileSystemLocation
 import org.gradle.api.internal.artifacts.ArtifactAttributes.ARTIFACT_FORMAT
-import org.gradle.api.internal.artifacts.transform.DefaultTransformOutputs
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Classpath
@@ -73,11 +71,9 @@ import org.gradle.work.Incremental
 import org.gradle.work.InputChanges
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import javax.inject.Inject
-import kotlin.random.Random
 
 @CacheableTransform
 abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : TransformAction<T> {
@@ -85,14 +81,19 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
   interface Parameters : GenericTransformParameters {
     @get:Input
     val minSdkVersion: Property<Int>
+
     @get:Input
     val debuggable: Property<Boolean>
+
     @get:Input
     val enableDesugaring: Property<Boolean>
+
     @get:Classpath
     val bootClasspath: ConfigurableFileCollection
+
     @get:Internal
     val errorFormat: Property<SyncOptions.ErrorFormatMode>
+
     @get:Optional
     @get:Input
     val libConfiguration: Property<String>
@@ -112,7 +113,7 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
   protected abstract fun computeClasspathFiles(): List<Path>
 
   override fun transform(outputs: TransformOutputs) {
-    //TODO(b/162813654) record transform execution span
+    // TODO(b/162813654) record transform execution span
     val input = primaryInput.get().asFile
     // TODO(derek): Remove this entire buildSrc setup
     // appends a hash of the full artifact path to the output name to work around this issue
@@ -158,7 +159,7 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
         inputChanges.getFileChanges(primaryInput).toSerializable(),
         classpathChanges.toSerializable(),
         dexOutputDir,
-        desugarGraphFile!!
+        desugarGraphFile!!,
       )
     } else {
       processNonIncrementally(
@@ -166,7 +167,7 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
         dexOutputDir,
         keepRulesOutputFile,
         provideIncrementalSupport,
-        desugarGraphFile
+        desugarGraphFile,
       )
     }
   }
@@ -176,7 +177,7 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
     inputChanges: SerializableFileChanges,
     classpathChanges: SerializableFileChanges,
     dexOutputDir: File,
-    desugarGraphFile: File
+    desugarGraphFile: File,
   ) {
     val desugarGraph = try {
       readDesugarGraph(desugarGraphFile)
@@ -184,7 +185,7 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
       LoggerWrapper.getLogger(BaseDexingTransform::class.java).warning(
         "Failed to read desugaring graph." +
           " Cause: ${e.javaClass.simpleName}, message: ${e.message}.\n" +
-          "Fall back to non-incremental mode."
+          "Fall back to non-incremental mode.",
       )
       processNonIncrementally(input, dexOutputDir, null, true, desugarGraphFile)
       return
@@ -234,7 +235,7 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
     dexOutputDir: File,
     keepRulesOutputFile: File?,
     provideIncrementalSupport: Boolean,
-    desugarGraphFile: File? // desugarGraphFile != null iff provideIncrementalSupport == true
+    desugarGraphFile: File?, // desugarGraphFile != null iff provideIncrementalSupport == true
   ) {
     FileUtils.deleteRecursivelyIfExists(dexOutputDir)
     FileUtils.mkdirs(dexOutputDir)
@@ -257,7 +258,7 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
       dexOutputDir,
       keepRulesOutputFile,
       provideIncrementalSupport,
-      desugarGraph
+      desugarGraph,
     )
 
     // Store the desugaring graph for use in the next build. If dexing failed earlier, it is
@@ -275,7 +276,7 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
     keepRulesOutputFile: File?,
     provideIncrementalSupport: Boolean,
     // desugarGraphUpdater != null iff provideIncrementalSupport == true
-    desugarGraphUpdater: DependencyGraphUpdater<File>?
+    desugarGraphUpdater: DependencyGraphUpdater<File>?,
   ) {
     Closer.create().use { closer ->
       val d8DexBuilder = DexArchiveBuilder.createD8DexBuilder(
@@ -285,7 +286,7 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
           dexPerClass = provideIncrementalSupport,
           withDesugaring = parameters.enableDesugaring.get(),
           desugarBootclasspath = ClassFileProviderFactory(
-            parameters.bootClasspath.files.map(File::toPath)
+            parameters.bootClasspath.files.map(File::toPath),
           )
             .also { closer.register(it) },
           desugarClasspath = ClassFileProviderFactory(computeClasspathFiles()).also {
@@ -295,9 +296,9 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
           coreLibDesugarOutputKeepRuleFile = keepRulesOutputFile,
           messageReceiver = MessageReceiverImpl(
             parameters.errorFormat.get(),
-            LoggerFactory.getLogger(BaseDexingTransform::class.java)
-          )
-        )
+            LoggerFactory.getLogger(BaseDexingTransform::class.java),
+          ),
+        ),
       )
 
       ClassFileInputs.fromPath(input.toPath()).use { classFileInput ->
@@ -307,7 +308,7 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
           d8DexBuilder.convert(
             classesInput,
             dexOutputDir.toPath(),
-            desugarGraphUpdater
+            desugarGraphUpdater,
           )
         }
       }
@@ -350,7 +351,7 @@ fun getDexingArtifactConfiguration(creationConfig: ApkCreationConfig): DexingArt
     needsShrinkDesugarLibrary = creationConfig.needsShrinkDesugarLibrary,
     asmTransformedVariant =
     if (creationConfig.dependenciesClassesAreInstrumented) creationConfig.name else null,
-    useJacocoTransformInstrumentation = creationConfig.useJacocoTransformInstrumentation
+    useJacocoTransformInstrumentation = creationConfig.useJacocoTransformInstrumentation,
   )
 }
 
@@ -361,7 +362,7 @@ data class DexingArtifactConfiguration(
   private val enableCoreLibraryDesugaring: Boolean,
   private val needsShrinkDesugarLibrary: Boolean,
   private val asmTransformedVariant: String?,
-  private val useJacocoTransformInstrumentation: Boolean
+  private val useJacocoTransformInstrumentation: Boolean,
 ) {
 
   // If we want to do desugaring and our minSdk (or the API level of the device we're deploying
@@ -373,7 +374,7 @@ data class DexingArtifactConfiguration(
     dependencyHandler: DependencyHandler,
     bootClasspath: FileCollection,
     libConfiguration: Provider<String>,
-    errorFormat: SyncOptions.ErrorFormatMode
+    errorFormat: SyncOptions.ErrorFormatMode,
   ) {
     dependencyHandler.registerTransform(getTransformClass()) { spec ->
       spec.parameters { parameters ->
@@ -437,12 +438,12 @@ data class DexingArtifactConfiguration(
         }
       spec.from.attribute(
         ARTIFACT_FORMAT,
-        inputArtifact.type
+        inputArtifact.type,
       )
       if (needsShrinkDesugarLibrary) {
         spec.to.attribute(
           ARTIFACT_FORMAT,
-          AndroidArtifacts.ArtifactType.DEX_AND_KEEP_RULES.type
+          AndroidArtifacts.ArtifactType.DEX_AND_KEEP_RULES.type,
         )
       } else {
         spec.to.attribute(ARTIFACT_FORMAT, AndroidArtifacts.ArtifactType.DEX.type)
@@ -470,8 +471,8 @@ data class DexingArtifactConfiguration(
         ATTR_IS_DEBUGGABLE to isDebuggable.toString(),
         ATTR_ENABLE_DESUGARING to enableDesugaring.toString(),
         ATTR_ENABLE_JACOCO_INSTRUMENTATION to useJacocoTransformInstrumentation.toString(),
-        ATTR_ASM_TRANSFORMED_VARIANT to (asmTransformedVariant ?: "NONE")
-      )
+        ATTR_ASM_TRANSFORMED_VARIANT to (asmTransformedVariant ?: "NONE"),
+      ),
     )
   }
 }

@@ -24,7 +24,8 @@ class BetterDynamicFeaturesPluginTest {
     val result = gradleRunner.withArguments(":base:dependencies").build()
 
     assertThat(result.output).contains("com.squareup.okhttp3:okhttp:4.9.3 -> 5.0.0-alpha.2")
-    assertThat(baseProject.lockfile().readText()).isEqualTo("""
+    assertThat(baseProject.lockfile().readText()).isEqualTo(
+      """
       |# This is a Gradle generated file for dependency locking.
       |# Manual edits can break the build and are not advised.
       |# This file is expected to be part of source control.
@@ -34,7 +35,8 @@ class BetterDynamicFeaturesPluginTest {
       |org.jetbrains.kotlin:kotlin-stdlib:1.4.21=debugRuntimeClasspath, releaseRuntimeClasspath
       |org.jetbrains:annotations:13.0=debugRuntimeClasspath, releaseRuntimeClasspath
       |empty=
-    """.trimMargin())
+      """.trimMargin(),
+    )
   }
 
   @Test fun `base and feature apks have same library versions`() {
@@ -51,7 +53,8 @@ class BetterDynamicFeaturesPluginTest {
     val result = gradleRunner.withArguments(":base:dependencies").build()
 
     assertThat(result.output).contains("com.squareup.okhttp3:okhttp:4.9.3")
-    assertThat(baseProject.lockfile().readText()).isEqualTo("""
+    assertThat(baseProject.lockfile().readText()).isEqualTo(
+      """
       |# This is a Gradle generated file for dependency locking.
       |# Manual edits can break the build and are not advised.
       |# This file is expected to be part of source control.
@@ -61,7 +64,8 @@ class BetterDynamicFeaturesPluginTest {
       |org.jetbrains.kotlin:kotlin-stdlib:1.4.10=debugRuntimeClasspath, releaseRuntimeClasspath
       |org.jetbrains:annotations:13.0=debugRuntimeClasspath, releaseRuntimeClasspath
       |empty=
-    """.trimMargin())
+      """.trimMargin(),
+    )
   }
 
   @Test fun `lockfile updates if task run after dependency version change`() {
@@ -75,7 +79,8 @@ class BetterDynamicFeaturesPluginTest {
       .build()
 
     assertThat(result.output).contains("BUILD SUCCESSFUL")
-    assertThat(baseProject.lockfile().readText()).isEqualTo("""
+    assertThat(baseProject.lockfile().readText()).isEqualTo(
+      """
       |# This is a Gradle generated file for dependency locking.
       |# Manual edits can break the build and are not advised.
       |# This file is expected to be part of source control.
@@ -85,7 +90,8 @@ class BetterDynamicFeaturesPluginTest {
       |org.jetbrains.kotlin:kotlin-stdlib:1.4.10=debugRuntimeClasspath, releaseRuntimeClasspath
       |org.jetbrains:annotations:13.0=debugRuntimeClasspath, releaseRuntimeClasspath
       |empty=
-    """.trimMargin())
+      """.trimMargin(),
+    )
 
     // Update dependency version
     val featureGradle = integrationRoot.resolve("feature/build.gradle")
@@ -97,7 +103,8 @@ class BetterDynamicFeaturesPluginTest {
 
     val newResult = newGradleRunner.build()
     assertThat(newResult.output).contains("BUILD SUCCESSFUL")
-    assertThat(baseProject.lockfile().readText()).isEqualTo("""
+    assertThat(baseProject.lockfile().readText()).isEqualTo(
+      """
       |# This is a Gradle generated file for dependency locking.
       |# Manual edits can break the build and are not advised.
       |# This file is expected to be part of source control.
@@ -107,7 +114,8 @@ class BetterDynamicFeaturesPluginTest {
       |org.jetbrains.kotlin:kotlin-stdlib:1.4.21=debugRuntimeClasspath, releaseRuntimeClasspath
       |org.jetbrains:annotations:13.0=debugRuntimeClasspath, releaseRuntimeClasspath
       |empty=
-    """.trimMargin())
+      """.trimMargin(),
+    )
 
     // Undo that
     featureGradle.writeText(featureGradle.readText().replace("5.0.0-alpha.2", "4.9.3"))
@@ -140,7 +148,8 @@ class BetterDynamicFeaturesPluginTest {
     val result = gradleRunner.withArguments(":base:dependencies").build()
 
     assertThat(result.output).contains("com.squareup.okhttp3:okhttp:4.9.3 -> 5.0.0-alpha.2")
-    assertThat(baseProject.lockfile().readText()).isEqualTo("""
+    assertThat(baseProject.lockfile().readText()).isEqualTo(
+      """
       |# This is a Gradle generated file for dependency locking.
       |# Manual edits can break the build and are not advised.
       |# This file is expected to be part of source control.
@@ -152,7 +161,8 @@ class BetterDynamicFeaturesPluginTest {
       |org.jetbrains.kotlin:kotlin-stdlib:1.7.20=debugRuntimeClasspath, releaseRuntimeClasspath
       |org.jetbrains:annotations:13.0=debugRuntimeClasspath, releaseRuntimeClasspath
       |empty=
-    """.trimMargin())
+      """.trimMargin(),
+    )
   }
 
   @Test fun `lockfiles activated on base runtime classpath configurations`() {
@@ -183,7 +193,8 @@ class BetterDynamicFeaturesPluginTest {
     val result = gradleRunner.withArguments(":base:dependencies").build()
 
     assertThat(result.output).contains("com.jakewharton.picnic:picnic:0.4.0 -> 0.5.0")
-    assertThat(baseProject.lockfile().readText()).isEqualTo("""
+    assertThat(baseProject.lockfile().readText()).isEqualTo(
+      """
       |# This is a Gradle generated file for dependency locking.
       |# Manual edits can break the build and are not advised.
       |# This file is expected to be part of source control.
@@ -196,7 +207,8 @@ class BetterDynamicFeaturesPluginTest {
       |org.jetbrains.kotlin:kotlin-stdlib:1.4.10=debugRuntimeClasspath, releaseRuntimeClasspath
       |org.jetbrains:annotations:13.0=debugRuntimeClasspath, releaseRuntimeClasspath
       |empty=
-    """.trimMargin())
+      """.trimMargin(),
+    )
   }
 
   @Test fun `build with outdated lockfile fails`() {
@@ -205,7 +217,7 @@ class BetterDynamicFeaturesPluginTest {
     Files.copy(
       integrationRoot.resolve("base/gradle.lockfile.original").toPath(),
       lockfile.toPath(),
-      StandardCopyOption.REPLACE_EXISTING
+      StandardCopyOption.REPLACE_EXISTING,
     )
 
     val gradleRunner = GradleRunner.create()

@@ -18,4 +18,4 @@ jobs:
           java-version: 11
 
       - name: Run tests
-        run: ./gradlew test
+        run: ./gradlew check
