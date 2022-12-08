@@ -5,6 +5,8 @@ import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
 abstract class CheckLockfileTask : DefaultTask() {
   @get:InputFile
@@ -20,8 +22,9 @@ abstract class CheckLockfileTask : DefaultTask() {
   fun checkLockfiles() {
     val areTheyEqual = newLockfile.readText() == currentLockfile.readText()
     outputFile.writeText(areTheyEqual.toString())
-    check(areTheyEqual) {
-      "The lockfile is out of date. Run ${project.path}:writeLockfile to update it."
+    if (!areTheyEqual) {
+      Files.copy(newLockfile.toPath(), currentLockfile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+      throw IllegalStateException("The lockfile was out of date and has been updated. Rerun your build.")
     }
   }
 }

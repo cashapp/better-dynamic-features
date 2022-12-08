@@ -6,6 +6,8 @@ import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Test
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
 class BetterDynamicFeaturesPluginTest {
   @Test fun `base and feature apks have different library versions`() {
@@ -199,13 +201,23 @@ class BetterDynamicFeaturesPluginTest {
 
   @Test fun `build with outdated lockfile fails`() {
     val integrationRoot = File("src/test/fixtures/out-of-date")
+    val lockfile = integrationRoot.resolve("base/gradle.lockfile")
+    Files.copy(
+      integrationRoot.resolve("base/gradle.lockfile.original").toPath(),
+      lockfile.toPath(),
+      StandardCopyOption.REPLACE_EXISTING
+    )
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
       .withArguments("clean", ":base:installDebug")
 
     val result = gradleRunner.buildAndFail()
-    assertThat(result.output).contains("The lockfile is out of date. Run :base:writeLockfile to update it.")
+    assertThat(result.output).contains("The lockfile was out of date and has been updated. Rerun your build.")
+
+    val lockfileContent = lockfile.readText()
+    val expectedContent = integrationRoot.resolve("base/gradle.lockfile.updated").readText()
+    assertThat(lockfileContent).isEqualTo(expectedContent)
   }
 
   @Test fun `checkLockfile task stays up-to-date if dependencies unchanged`() {
