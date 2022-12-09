@@ -12,8 +12,8 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ArtifactCollection
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
-import org.gradle.api.internal.artifacts.dependencies.DefaultProjectDependency
 import java.io.File
 
 @Suppress("UnstableApiUsage")
@@ -34,39 +34,25 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
 
     project.setupListingTask(androidComponents)
-
-    project.afterEvaluate {
-      val base = project.configurations.getByName("implementation").dependencies
-        .filterIsInstance<DefaultProjectDependency>()
-        .firstOrNull {
-          it.dependencyProject.plugins.hasPlugin("com.android.application") &&
-            it.dependencyProject.plugins.hasPlugin("app.cash.better.dynamic.features")
-        }
-      checkNotNull(base) {
-        "Your base application module should be added as a dependency of this project"
-      }
-    }
   }
 
   private fun applyToApplication(project: Project) {
     val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
 
-    // Callback for finalizeDsl is called before onVariants, so this is "safe"
-    val dynamicModules = mutableSetOf<String>()
     androidComponents.finalizeDsl { extension ->
       check(extension is ApplicationExtension)
-      dynamicModules.addAll(extension.dynamicFeatures)
+      val featureProjects = extension.dynamicFeatures.map { project.project(it) }
 
       val realLockfile = project.projectDir.resolve("gradle.lockfile")
       val tempLockfile = project.buildDir.resolve("tmp/gradle.lockfile")
 
       project.tasks.register("writeLockfile", BaseLockfileWriterTask::class.java) { task ->
-        task.configure(project, dynamicModules, realLockfile)
+        task.configure(project, featureProjects, realLockfile)
       }
 
       val tempLockfileTask =
         project.tasks.register("writeTempLockfile", BaseLockfileWriterTask::class.java) { task ->
-          task.configure(project, dynamicModules, tempLockfile)
+          task.configure(project, featureProjects, tempLockfile)
         }
 
       val checkLockfileTask =
@@ -80,9 +66,27 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
         }
 
       project.tasks.named("preBuild").dependsOn(checkLockfileTask)
+
+      featureProjects.forEach { feature ->
+        if (feature.state.executed) {
+          feature.checkHasDependencyOn(project)
+        } else {
+          feature.afterEvaluate { feature.checkHasDependencyOn(project) }
+        }
+      }
     }
 
     project.setupListingTask(androidComponents)
+  }
+
+  private fun Project.checkHasDependencyOn(other: Project) {
+    val match = configurations.getByName("implementation").dependencies
+      .filterIsInstance<ProjectDependency>()
+      .firstOrNull { it.dependencyProject == other }
+
+    checkNotNull(match) {
+      "$this should have a dependency on the base $other"
+    }
   }
 
   private fun Project.setupListingTask(androidComponents: AndroidComponentsExtension<*, *, *>) {
@@ -136,11 +140,10 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
 
   private fun BaseLockfileWriterTask.configure(
     project: Project,
-    dynamicModules: Set<String>,
+    featureProjects: List<Project>,
     output: File,
   ) {
     dependsOn(project.tasks.named("writePartialLockfile"))
-    val featureProjects = dynamicModules.map { project.project(it) }
 
     featureProjects.forEach { featureProject ->
       check(featureProject.plugins.hasPlugin("app.cash.better.dynamic.features")) {
