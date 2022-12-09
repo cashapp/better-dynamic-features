@@ -5,7 +5,7 @@ import java.util.SortedSet
 data class LockfileEntry(
   val artifact: String,
   val version: String,
-  val configurations: SortedSet<String>
+  val configurations: SortedSet<String>,
 ) : Comparable<LockfileEntry> {
   override fun compareTo(other: LockfileEntry): Int = this.toString().compareTo(other.toString())
 

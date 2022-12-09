@@ -28,7 +28,7 @@ abstract class BaseLockfileWriterTask : DefaultTask() {
       |# This file is expected to be part of source control.
       |${mergedLockfileEntries.sorted().joinToString(separator = "\n")}
       |empty=
-    """.trimMargin()
+      """.trimMargin(),
     )
   }
 
