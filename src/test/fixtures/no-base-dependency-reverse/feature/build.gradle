@@ -1,5 +1,3 @@
-project.evaluationDependsOn(":base")
-
 apply plugin: 'com.android.dynamic-feature'
 apply plugin: 'app.cash.better.dynamic.features'
 
