@@ -254,7 +254,7 @@ class BetterDynamicFeaturesPluginTest {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", ":base:writeLockfile")
+      .withArguments("clean", ":feature:checkDependencyOnBase")
     val result = gradleRunner.buildAndFail()
 
     assertThat(result.output).contains("project ':feature' should have a dependency on the base project ':base'")
@@ -267,7 +267,7 @@ class BetterDynamicFeaturesPluginTest {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", ":base:writeLockfile")
+      .withArguments("clean", ":feature:checkDependencyOnBase")
     val result = gradleRunner.buildAndFail()
 
     assertThat(result.output).contains("project ':feature' should have a dependency on the base project ':base'")

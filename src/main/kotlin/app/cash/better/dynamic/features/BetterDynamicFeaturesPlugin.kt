@@ -2,6 +2,7 @@
 package app.cash.better.dynamic.features
 
 import app.cash.better.dynamic.features.tasks.BaseLockfileWriterTask
+import app.cash.better.dynamic.features.tasks.CheckFeatureBaseDependencyTask
 import app.cash.better.dynamic.features.tasks.CheckLockfileTask
 import app.cash.better.dynamic.features.tasks.PartialLockfileWriterTask
 import com.android.build.api.dsl.ApplicationExtension
@@ -12,7 +13,6 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ArtifactCollection
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import java.io.File
 
@@ -68,25 +68,19 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       project.tasks.named("preBuild").dependsOn(checkLockfileTask)
 
       featureProjects.forEach { feature ->
+        val checkTask = feature.tasks.register("checkDependencyOnBase", CheckFeatureBaseDependencyTask::class.java) { task ->
+          task.baseProject = project
+          task.group = GROUP
+        }
         if (feature.state.executed) {
-          feature.checkHasDependencyOn(project)
+          feature.tasks.named("preBuild").dependsOn(checkTask)
         } else {
-          feature.afterEvaluate { feature.checkHasDependencyOn(project) }
+          feature.afterEvaluate { feature.tasks.named("preBuild").dependsOn(checkTask) }
         }
       }
     }
 
     project.setupListingTask(androidComponents)
-  }
-
-  private fun Project.checkHasDependencyOn(other: Project) {
-    val match = configurations.getByName("implementation").dependencies
-      .filterIsInstance<ProjectDependency>()
-      .firstOrNull { it.dependencyProject == other }
-
-    checkNotNull(match) {
-      "$this should have a dependency on the base $other"
-    }
   }
 
   private fun Project.setupListingTask(androidComponents: AndroidComponentsExtension<*, *, *>) {
