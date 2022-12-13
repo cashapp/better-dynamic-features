@@ -2,7 +2,6 @@
 package app.cash.better.dynamic.features
 
 import app.cash.better.dynamic.features.tasks.BaseLockfileWriterTask
-import app.cash.better.dynamic.features.tasks.CheckFeatureBaseDependencyTask
 import app.cash.better.dynamic.features.tasks.CheckLockfileTask
 import app.cash.better.dynamic.features.tasks.PartialLockfileWriterTask
 import com.android.build.api.dsl.ApplicationExtension
@@ -66,18 +65,6 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
         }
 
       project.tasks.named("preBuild").dependsOn(checkLockfileTask)
-
-      featureProjects.forEach { feature ->
-        val checkTask = feature.tasks.register("checkDependencyOnBase", CheckFeatureBaseDependencyTask::class.java) { task ->
-          task.baseProject = project
-          task.group = GROUP
-        }
-        if (feature.state.executed) {
-          feature.tasks.named("preBuild").dependsOn(checkTask)
-        } else {
-          feature.afterEvaluate { feature.tasks.named("preBuild").dependsOn(checkTask) }
-        }
-      }
     }
 
     project.setupListingTask(androidComponents)
