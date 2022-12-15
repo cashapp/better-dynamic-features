@@ -81,6 +81,14 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     }
 
     project.setupListingTask(androidComponents)
+    androidComponents.onVariants { variant ->
+      // We only want to enforce the lockfile if we aren't explicitly trying to update it
+      if (project.gradle.startParameter.taskNames.none { "writeLockfile" in it }) {
+        project.configurations.named("${variant.name}RuntimeClasspath").configure {
+          it.resolutionStrategy.activateDependencyLocking()
+        }
+      }
+    }
   }
 
   private fun Project.setupListingTask(androidComponents: AndroidComponentsExtension<*, *, *>) {
@@ -88,10 +96,6 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
 
     androidComponents.onVariants { variant ->
       variantNames += variant.name
-
-      configurations.named("${variant.name}RuntimeClasspath").configure {
-        it.resolutionStrategy.activateDependencyLocking()
-      }
     }
 
     afterEvaluate {
