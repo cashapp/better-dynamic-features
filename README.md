@@ -2,6 +2,8 @@
 
 A plugin for making dynamic feature modules better.
 
+Required version of AGP: **7.4.0-rc01**
+
 ## Setup
 
 Apply the plugin to your `com.android.application` module and each of your `com.android.dynamic-feature` modules.

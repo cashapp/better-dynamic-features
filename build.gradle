@@ -9,7 +9,7 @@ plugins {
 spotless {
   kotlin {
     target "**/*.kt"
-    targetExclude "src/test/fixtures/**/*.*"
+    targetExclude "src/test/fixtures/**/*.*", "src/main/kotlin/com/android/build/gradle/internal/**/*.*"
     ktlint(libs.versions.ktlint.get()).editorConfigOverride([
             "indent_size": "2",
             "disabled_rules": "package-name",
