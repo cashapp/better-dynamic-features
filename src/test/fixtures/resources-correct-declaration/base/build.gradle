@@ -1,0 +1,29 @@
+apply plugin: 'com.android.application'
+apply plugin: 'app.cash.better.dynamic.features'
+apply plugin: 'org.jetbrains.kotlin.android'
+
+android {
+  namespace "app.cash.better.dynamic.features.integration"
+
+  compileSdk 32
+  defaultConfig {
+    minSdk = 24
+  }
+
+  dynamicFeatures = [':feature']
+
+  lint {
+    baseline = file("lint-baseline.xml")
+  }
+}
+
+dependencies {
+  implementation "com.squareup.okhttp3:okhttp:4.9.3"
+  implementation "androidx.appcompat:appcompat:1.5.1"
+}
+
+betterDynamicFeatures {
+  externalResources {
+    style("MyTheme")
+  }
+}
