@@ -13,7 +13,7 @@ class ResourceScanningTests {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", ":base:assembleDebug")
+      .withArguments("clean", "base:writeLockfile", ":base:assembleDebug")
 
     val result = gradleRunner.build()
     assertThat(result.output).contains("BUILD SUCCESSFUL")
@@ -26,7 +26,7 @@ class ResourceScanningTests {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", ":base:assembleDebug")
+      .withArguments("clean", "base:writeLockfile", ":base:assembleDebug")
 
     val result = gradleRunner.buildAndFail()
     assertThat(result.output).contains("Some resources are defined externally but not declared as external.")
@@ -47,7 +47,7 @@ class ResourceScanningTests {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", ":base:assembleDebug")
+      .withArguments("clean", "base:writeLockfile", ":base:assembleDebug")
 
     val result = gradleRunner.buildAndFail()
     assertThat(result.output).contains("Some external resource declarations are overwriting actual resource definitions.")
@@ -60,7 +60,7 @@ class ResourceScanningTests {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", ":base:assembleDebug")
+      .withArguments("clean", "base:writeLockfile", ":base:assembleDebug")
 
     val result = gradleRunner.build()
     assertThat(result.output).contains("BUILD SUCCESSFUL")
@@ -73,7 +73,7 @@ class ResourceScanningTests {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", ":base:assembleDebug")
+      .withArguments("clean", "base:writeLockfile", ":base:assembleDebug")
 
     val result = gradleRunner.build()
     println(result.output)
