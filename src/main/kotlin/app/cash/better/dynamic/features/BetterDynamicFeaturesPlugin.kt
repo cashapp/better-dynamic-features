@@ -57,7 +57,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
 
       val checkLockfileTask =
         project.tasks.register("checkLockfile", CheckLockfileTask::class.java) { task ->
-          task.currentLockfile = realLockfile
+          task.currentLockfilePath = realLockfile
           task.newLockfile = tempLockfile
           task.outputFile = project.buildDir.resolve("tmp/lockfile_check")
 
