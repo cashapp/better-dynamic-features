@@ -71,9 +71,10 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     androidComponents.onVariants { variant ->
       // We only want to enforce the lockfile if we aren't explicitly trying to update it
       if (project.gradle.startParameter.taskNames.none {
-          it.contains("writeLockfile", ignoreCase = true) ||
-            it.contains("writePartialLockfile", ignoreCase = true)
-        }) {
+        it.contains("writeLockfile", ignoreCase = true) ||
+          it.contains("writePartialLockfile", ignoreCase = true)
+      }
+      ) {
         project.configurations.named("${variant.name}RuntimeClasspath").configure {
           it.resolutionStrategy.activateDependencyLocking()
         }
@@ -103,13 +104,15 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
             .reduce { acc, fileCollection -> acc + fileCollection },
         )
 
-        task.setResolvedLockfileEntriesProvider(project.provider {
-          variantNames.associateWith {
-            project.configurations.getByName(
-              "${it}RuntimeClasspath",
-            ).resolvedConfiguration
-          }
-        })
+        task.setResolvedLockfileEntriesProvider(
+          project.provider {
+            variantNames.associateWith {
+              project.configurations.getByName(
+                "${it}RuntimeClasspath",
+              ).resolvedConfiguration
+            }
+          },
+        )
 
         task.projectName = this.name
         task.partialLockFile = this.partialLockfilePath()
