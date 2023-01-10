@@ -115,6 +115,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
         )
 
         task.projectName = this.name
+        task.rootProjectName = this.rootProject.name
         task.partialLockFile = this.partialLockfilePath()
         task.configurationNames = variantNames.map { "${it}RuntimeClasspath" }.sorted()
 
