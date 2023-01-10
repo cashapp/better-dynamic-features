@@ -247,6 +247,23 @@ class BetterDynamicFeaturesPluginTest {
     assertThat(result.task(":base:checkLockfile")?.outcome).isEqualTo(TaskOutcome.UP_TO_DATE)
   }
 
+  @Test fun `lockfile references multiplatform dependencies correctly`() {
+    val integrationRoot = File("src/test/fixtures/multiplatform-dependency")
+    val baseProject = integrationRoot.resolve("base")
+    clearLockfile(baseProject)
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .withDebug(true)
+      .withArguments("clean", ":base:writeLockfile")
+
+    gradleRunner.build()
+
+    val lockfile = baseProject.lockfile().readText()
+    assertThat(lockfile).contains("com.squareup.sqldelight:runtime-jvm:1.5.4=debugRuntimeClasspath, releaseRuntimeClasspath")
+    assertThat(lockfile).contains("com.squareup.sqldelight:runtime:1.5.4=debugRuntimeClasspath, releaseRuntimeClasspath")
+  }
+
   private fun clearLockfile(root: File) {
     root.lockfile().takeIf { it.exists() }?.delete()
   }
