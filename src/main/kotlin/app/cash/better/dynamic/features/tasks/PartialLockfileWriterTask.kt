@@ -26,6 +26,7 @@ abstract class PartialLockfileWriterTask : DefaultTask() {
     resolvedLockfileEntries = provider.map { configurationMap ->
       configurationMap.flatMap { (configuration, resolved) ->
         buildSet { resolved.firstLevelModuleDependencies.walkDependencyTree { add(it) } }
+          .filter { it.moduleGroup != rootProjectName }
           .map {
             LockfileEntry(
               "${it.moduleGroup}:${it.moduleName}",
@@ -39,6 +40,9 @@ abstract class PartialLockfileWriterTask : DefaultTask() {
 
   @get:Input
   abstract var projectName: String
+
+  @get:Input
+  abstract var rootProjectName: String
 
   @get:Input
   abstract var configurationNames: List<String>

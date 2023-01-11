@@ -264,6 +264,22 @@ class BetterDynamicFeaturesPluginTest {
     assertThat(lockfile).contains("com.squareup.sqldelight:runtime:1.5.4=debugRuntimeClasspath, releaseRuntimeClasspath")
   }
 
+  @Test fun `lockfile does not include project dependencies`() {
+    val integrationRoot = File("src/test/fixtures/project-dependency")
+    val baseProject = integrationRoot.resolve("base")
+    clearLockfile(baseProject)
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .withDebug(true)
+      .withArguments("clean", ":base:writeLockfile")
+
+    gradleRunner.build()
+
+    val lockfile = baseProject.lockfile().readText()
+    assertThat(lockfile).doesNotContain("project-dependency:library:unspecified=debugRuntimeClasspath, releaseRuntimeClasspath")
+  }
+
   private fun clearLockfile(root: File) {
     root.lockfile().takeIf { it.exists() }?.delete()
   }
