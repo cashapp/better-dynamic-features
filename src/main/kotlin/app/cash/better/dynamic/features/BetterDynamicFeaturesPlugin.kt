@@ -2,8 +2,11 @@
 package app.cash.better.dynamic.features
 
 import app.cash.better.dynamic.features.tasks.BaseLockfileWriterTask
+import app.cash.better.dynamic.features.tasks.CheckExternalResourcesTask
 import app.cash.better.dynamic.features.tasks.CheckLockfileTask
+import app.cash.better.dynamic.features.tasks.GenerateExternalResourcesTask
 import app.cash.better.dynamic.features.tasks.PartialLockfileWriterTask
+import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.gradle.internal.publishing.AndroidArtifacts
@@ -13,6 +16,7 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.ArtifactCollection
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
+import org.gradle.configurationcache.extensions.capitalized
 import java.io.File
 
 @Suppress("UnstableApiUsage")
@@ -36,6 +40,8 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
   }
 
   private fun applyToApplication(project: Project) {
+    val pluginExtension = project.extensions.create("betterDynamicFeatures", BetterDynamicFeaturesExtension::class.java)
+
     val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
 
     androidComponents.finalizeDsl { extension ->
@@ -78,6 +84,43 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
         project.configurations.named("${variant.name}RuntimeClasspath").configure {
           it.resolutionStrategy.activateDependencyLocking()
         }
+      }
+
+      val generateTask = project.tasks.register(
+        "generate${variant.name.capitalized()}ExternalResources",
+        GenerateExternalResourcesTask::class.java,
+      ) { task ->
+        task.outputDirectory.set(project.layout.buildDirectory.dir("gen"))
+        task.declarations = pluginExtension.externalStyles
+      }
+      variant.sources.res?.addGeneratedSourceDirectory(generateTask, GenerateExternalResourcesTask::outputDirectory)
+
+      project.afterEvaluate {
+        val externalsTask = project.tasks.register(
+          "check${variant.name.capitalized()}ExternalResources",
+          CheckExternalResourcesTask::class.java,
+        ) { task ->
+          val configuration = project.configurations.getByName("${variant.name}RuntimeClasspath")
+          val artifacts = configuration.incoming.artifactView { config ->
+            config.attributes { container ->
+              container.attribute(
+                AndroidArtifacts.ARTIFACT_TYPE,
+                AndroidArtifacts.ArtifactType.SYMBOL_LIST_WITH_PACKAGE_NAME.type,
+              )
+            }
+          }.artifacts
+
+          task.setIncomingResources(artifacts)
+          task.incomingResourcesCollection.setFrom(artifacts.artifactFiles)
+          task.manifestFile.set(variant.artifacts.get(SingleArtifact.MERGED_MANIFEST))
+          task.externalDeclarations = pluginExtension.externalStyles
+          task.localResources = variant.sources.res?.all
+        }
+
+        project.tasks.named("assemble${variant.name.capitalized()}").dependsOn(externalsTask)
+
+        // https://issuetracker.google.com/issues/223240936#comment40
+        project.tasks.named("map${variant.name.capitalized()}SourceSetPaths").dependsOn(generateTask)
       }
     }
   }
