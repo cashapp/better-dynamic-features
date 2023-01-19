@@ -2,6 +2,7 @@
 package app.cash.better.dynamic.features.tasks
 
 import org.gradle.api.DefaultTask
+import org.gradle.api.Project
 import org.gradle.api.artifacts.ResolvedConfiguration
 import org.gradle.api.artifacts.ResolvedDependency
 import org.gradle.api.file.ConfigurableFileCollection
@@ -26,12 +27,12 @@ abstract class PartialLockfileWriterTask : DefaultTask() {
     resolvedLockfileEntries = provider.map { configurationMap ->
       configurationMap.flatMap { (configuration, resolved) ->
         buildSet { resolved.firstLevelModuleDependencies.walkDependencyTree { add(it) } }
-          .filter { it.moduleGroup != rootProjectName }
+          .filter { dependency -> dependency.moduleVersion != Project.DEFAULT_VERSION }
           .map {
             LockfileEntry(
               "${it.moduleGroup}:${it.moduleName}",
               it.moduleVersion,
-              sortedSetOf("${configuration}RuntimeClasspath"),
+              setOf("${configuration}RuntimeClasspath"),
             )
           }
       }

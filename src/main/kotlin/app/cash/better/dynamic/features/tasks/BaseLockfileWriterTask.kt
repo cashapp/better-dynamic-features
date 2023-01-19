@@ -33,23 +33,27 @@ abstract class BaseLockfileWriterTask : DefaultTask() {
   }
 
   private fun mergeLockfiles(): List<LockfileEntry> {
-    val resolvedEntries =
-      partialBaseLockfile.readLockfileEntries().associateBy { it.artifact }
-        .toMutableMap()
+    val resolvedEntries = mutableMapOf<String, LockfileEntry>()
+    partialBaseLockfile.readLockfileEntries().forEach { entry ->
+      when (val existing = resolvedEntries[entry.artifact]) {
+        null -> resolvedEntries[entry.artifact] = entry
+        else -> {
+          val mergedVersion = maxOf(existing.version, entry.version)
+          val mergedConfigurations = existing.configurations + entry.configurations
+          resolvedEntries[entry.artifact] = existing.copy(version = mergedVersion, configurations = mergedConfigurations)
+        }
+      }
+    }
 
     val allEntries = partialFeatureLockfiles.flatMap { it.readLockfileEntries() }
 
     allEntries.forEach { entry ->
-      val (artifact, version, configurations) = entry
+      val (artifact, version) = entry
 
       val existing = resolvedEntries[artifact]
       // We only care about the conflicting dependencies that actually exist in the base
       if (existing != null) {
-        val resolvedVersion = maxOf(existing.version, version)
-        val resolvedConfigurations = existing.configurations + configurations
-
-        resolvedEntries[artifact] =
-          LockfileEntry(artifact, resolvedVersion, resolvedConfigurations.toSortedSet())
+        resolvedEntries[artifact] = existing.copy(version = maxOf(existing.version, version))
       }
     }
 
@@ -59,7 +63,7 @@ abstract class BaseLockfileWriterTask : DefaultTask() {
   private fun File.readLockfileEntries(): List<LockfileEntry> = readLines().map { entry ->
     val (dependency, configurationsString) = entry.split("=")
     val (group, artifact, version) = dependency.split(":")
-    val configurations = configurationsString.split(", ").toSortedSet()
+    val configurations = configurationsString.split(",").toSet()
 
     LockfileEntry("$group:$artifact", version, configurations)
   }

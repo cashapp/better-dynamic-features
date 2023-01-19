@@ -29,11 +29,40 @@ class BetterDynamicFeaturesPluginTest {
       |# This is a Gradle generated file for dependency locking.
       |# Manual edits can break the build and are not advised.
       |# This file is expected to be part of source control.
-      |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugRuntimeClasspath, releaseRuntimeClasspath
-      |com.squareup.okio:okio:2.9.0=debugRuntimeClasspath, releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-common:1.4.21=debugRuntimeClasspath, releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib:1.4.21=debugRuntimeClasspath, releaseRuntimeClasspath
-      |org.jetbrains:annotations:13.0=debugRuntimeClasspath, releaseRuntimeClasspath
+      |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugRuntimeClasspath,releaseRuntimeClasspath
+      |com.squareup.okio:okio:2.9.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-common:1.4.21=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib:1.4.21=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains:annotations:13.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |empty=
+      """.trimMargin(),
+    )
+  }
+
+  @Test fun `base configurations have different dependency versions`() {
+    val integrationRoot = File("src/test/fixtures/different-versions-in-base")
+    val baseProject = integrationRoot.resolve("base")
+    clearLockfile(baseProject)
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .withArguments("clean", ":base:writeLockfile")
+
+    // Generate lockfile first, and then run dependencies task
+    gradleRunner.build()
+    val result = gradleRunner.withArguments(":base:dependencies").build()
+
+    assertThat(result.output).contains("com.squareup.okhttp3:okhttp:4.9.3 -> 5.0.0-alpha.2")
+    assertThat(baseProject.lockfile().readText()).isEqualTo(
+      """
+      |# This is a Gradle generated file for dependency locking.
+      |# Manual edits can break the build and are not advised.
+      |# This file is expected to be part of source control.
+      |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugRuntimeClasspath,releaseRuntimeClasspath
+      |com.squareup.okio:okio:2.9.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-common:1.4.21=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib:1.4.21=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains:annotations:13.0=debugRuntimeClasspath,releaseRuntimeClasspath
       |empty=
       """.trimMargin(),
     )
@@ -58,11 +87,11 @@ class BetterDynamicFeaturesPluginTest {
       |# This is a Gradle generated file for dependency locking.
       |# Manual edits can break the build and are not advised.
       |# This file is expected to be part of source control.
-      |com.squareup.okhttp3:okhttp:4.9.3=debugRuntimeClasspath, releaseRuntimeClasspath
-      |com.squareup.okio:okio:2.8.0=debugRuntimeClasspath, releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-common:1.4.10=debugRuntimeClasspath, releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib:1.4.10=debugRuntimeClasspath, releaseRuntimeClasspath
-      |org.jetbrains:annotations:13.0=debugRuntimeClasspath, releaseRuntimeClasspath
+      |com.squareup.okhttp3:okhttp:4.9.3=debugRuntimeClasspath,releaseRuntimeClasspath
+      |com.squareup.okio:okio:2.8.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-common:1.4.10=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib:1.4.10=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains:annotations:13.0=debugRuntimeClasspath,releaseRuntimeClasspath
       |empty=
       """.trimMargin(),
     )
@@ -84,11 +113,11 @@ class BetterDynamicFeaturesPluginTest {
       |# This is a Gradle generated file for dependency locking.
       |# Manual edits can break the build and are not advised.
       |# This file is expected to be part of source control.
-      |com.squareup.okhttp3:okhttp:4.9.3=debugRuntimeClasspath, releaseRuntimeClasspath
-      |com.squareup.okio:okio:2.8.0=debugRuntimeClasspath, releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-common:1.4.10=debugRuntimeClasspath, releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib:1.4.10=debugRuntimeClasspath, releaseRuntimeClasspath
-      |org.jetbrains:annotations:13.0=debugRuntimeClasspath, releaseRuntimeClasspath
+      |com.squareup.okhttp3:okhttp:4.9.3=debugRuntimeClasspath,releaseRuntimeClasspath
+      |com.squareup.okio:okio:2.8.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-common:1.4.10=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib:1.4.10=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains:annotations:13.0=debugRuntimeClasspath,releaseRuntimeClasspath
       |empty=
       """.trimMargin(),
     )
@@ -108,11 +137,11 @@ class BetterDynamicFeaturesPluginTest {
       |# This is a Gradle generated file for dependency locking.
       |# Manual edits can break the build and are not advised.
       |# This file is expected to be part of source control.
-      |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugRuntimeClasspath, releaseRuntimeClasspath
-      |com.squareup.okio:okio:2.9.0=debugRuntimeClasspath, releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-common:1.4.21=debugRuntimeClasspath, releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib:1.4.21=debugRuntimeClasspath, releaseRuntimeClasspath
-      |org.jetbrains:annotations:13.0=debugRuntimeClasspath, releaseRuntimeClasspath
+      |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugRuntimeClasspath,releaseRuntimeClasspath
+      |com.squareup.okio:okio:2.9.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-common:1.4.21=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib:1.4.21=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains:annotations:13.0=debugRuntimeClasspath,releaseRuntimeClasspath
       |empty=
       """.trimMargin(),
     )
@@ -153,13 +182,13 @@ class BetterDynamicFeaturesPluginTest {
       |# This is a Gradle generated file for dependency locking.
       |# Manual edits can break the build and are not advised.
       |# This file is expected to be part of source control.
-      |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugRuntimeClasspath, releaseRuntimeClasspath
-      |com.squareup.okio:okio:2.9.0=debugRuntimeClasspath, releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-common:1.7.20=debugRuntimeClasspath, releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.20=debugRuntimeClasspath, releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20=debugRuntimeClasspath, releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib:1.7.20=debugRuntimeClasspath, releaseRuntimeClasspath
-      |org.jetbrains:annotations:13.0=debugRuntimeClasspath, releaseRuntimeClasspath
+      |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugRuntimeClasspath,releaseRuntimeClasspath
+      |com.squareup.okio:okio:2.9.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-common:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains:annotations:13.0=debugRuntimeClasspath,releaseRuntimeClasspath
       |empty=
       """.trimMargin(),
     )
@@ -199,13 +228,13 @@ class BetterDynamicFeaturesPluginTest {
       |# Manual edits can break the build and are not advised.
       |# This file is expected to be part of source control.
       |com.jakewharton.picnic:picnic:0.5.0=debugRuntimeClasspath
-      |com.squareup.okhttp3:okhttp:4.9.3=debugRuntimeClasspath, releaseRuntimeClasspath
-      |com.squareup.okio:okio:2.8.0=debugRuntimeClasspath, releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-common:1.4.10=debugRuntimeClasspath, releaseRuntimeClasspath
+      |com.squareup.okhttp3:okhttp:4.9.3=debugRuntimeClasspath,releaseRuntimeClasspath
+      |com.squareup.okio:okio:2.8.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-common:1.4.10=debugRuntimeClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.4.0=debugRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.0=debugRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib:1.4.10=debugRuntimeClasspath, releaseRuntimeClasspath
-      |org.jetbrains:annotations:13.0=debugRuntimeClasspath, releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib:1.4.10=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains:annotations:13.0=debugRuntimeClasspath,releaseRuntimeClasspath
       |empty=
       """.trimMargin(),
     )
@@ -260,8 +289,8 @@ class BetterDynamicFeaturesPluginTest {
     gradleRunner.build()
 
     val lockfile = baseProject.lockfile().readText()
-    assertThat(lockfile).contains("com.squareup.sqldelight:runtime-jvm:1.5.4=debugRuntimeClasspath, releaseRuntimeClasspath")
-    assertThat(lockfile).contains("com.squareup.sqldelight:runtime:1.5.4=debugRuntimeClasspath, releaseRuntimeClasspath")
+    assertThat(lockfile).contains("com.squareup.sqldelight:runtime-jvm:1.5.4=debugRuntimeClasspath,releaseRuntimeClasspath")
+    assertThat(lockfile).contains("com.squareup.sqldelight:runtime:1.5.4=debugRuntimeClasspath,releaseRuntimeClasspath")
   }
 
   @Test fun `lockfile does not include project dependencies`() {
@@ -277,7 +306,7 @@ class BetterDynamicFeaturesPluginTest {
     gradleRunner.build()
 
     val lockfile = baseProject.lockfile().readText()
-    assertThat(lockfile).doesNotContain("project-dependency:library:unspecified=debugRuntimeClasspath, releaseRuntimeClasspath")
+    assertThat(lockfile).doesNotContain("project-dependency:library:unspecified=debugRuntimeClasspath,releaseRuntimeClasspath")
   }
 
   private fun clearLockfile(root: File) {
