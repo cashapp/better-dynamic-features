@@ -1,0 +1,15 @@
+apply plugin: 'com.android.application'
+apply plugin: 'app.cash.better.dynamic.features'
+
+android {
+  namespace "app.cash.better.dynamic.features.integration"
+
+  compileSdk 32
+
+  dynamicFeatures = [':feature']
+}
+
+dependencies {
+  debugImplementation "com.squareup.okhttp3:okhttp:4.9.3"
+  releaseImplementation "com.squareup.okhttp3:okhttp:5.0.0-alpha.2"
+}
