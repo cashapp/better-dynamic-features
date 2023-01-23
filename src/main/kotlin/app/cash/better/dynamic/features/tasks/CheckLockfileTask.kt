@@ -38,7 +38,7 @@ abstract class CheckLockfileTask : DefaultTask() {
     if (!areTheyEqual) {
       Files.copy(newLockfile.toPath(), currentLockfilePath.toPath(), StandardCopyOption.REPLACE_EXISTING)
       if (isCi) {
-        throw IllegalStateException("The lockfile was out of date. Run the '${projectPath}:writeLockfile' task and commit the updated lockfile.")
+        throw IllegalStateException("The lockfile was out of date. Run the '$projectPath:writeLockfile' task and commit the updated lockfile.")
       } else {
         throw IllegalStateException("The lockfile was out of date and has been updated. Rerun your build.")
       }
