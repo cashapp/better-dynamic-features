@@ -1,6 +1,7 @@
 package app.cash.better.dynamic.features.tasks
 
 import org.gradle.api.DefaultTask
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
@@ -24,13 +25,23 @@ abstract class CheckLockfileTask : DefaultTask() {
   @get:OutputFile
   abstract var outputFile: File
 
+  @get:Input
+  abstract var projectPath: String
+
+  @get:Input
+  abstract var isCi: Boolean
+
   @TaskAction
   fun checkLockfiles() {
     val areTheyEqual = newLockfile.readText() == currentLockfile?.readText()
     outputFile.writeText(areTheyEqual.toString())
     if (!areTheyEqual) {
       Files.copy(newLockfile.toPath(), currentLockfilePath.toPath(), StandardCopyOption.REPLACE_EXISTING)
-      throw IllegalStateException("The lockfile was out of date and has been updated. Rerun your build.")
+      if (isCi) {
+        throw IllegalStateException("The lockfile was out of date. Run the '$projectPath:writeLockfile' task and commit the updated lockfile.")
+      } else {
+        throw IllegalStateException("The lockfile was out of date and has been updated. Rerun your build.")
+      }
     }
   }
 }

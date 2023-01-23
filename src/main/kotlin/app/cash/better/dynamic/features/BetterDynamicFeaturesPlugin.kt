@@ -68,6 +68,8 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
 
           task.dependsOn(tempLockfileTask)
           task.group = GROUP
+          task.isCi = project.providers.systemProperty("ci").orElse("false").get().toBoolean()
+          task.projectPath = project.path
         }
 
       project.tasks.named("preBuild").dependsOn(checkLockfileTask)
