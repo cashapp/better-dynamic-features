@@ -80,7 +80,8 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       // We only want to enforce the lockfile if we aren't explicitly trying to update it
       if (project.gradle.startParameter.taskNames.none {
         it.contains("writeLockfile", ignoreCase = true) ||
-          it.contains("writePartialLockfile", ignoreCase = true)
+          it.contains("writePartialLockfile", ignoreCase = true) ||
+          it.contains("checkLockfile", ignoreCase = true)
       }
       ) {
         project.configurations.named("${variant.name}RuntimeClasspath").configure {
