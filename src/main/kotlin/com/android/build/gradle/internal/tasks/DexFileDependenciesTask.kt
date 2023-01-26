@@ -1,5 +1,5 @@
 // THIS IS COPIED FROM AGP (with some modifications)
-// https://cs.android.com/android-studio/platform/tools/base/+/studio-canary:build-system/gradle-core/src/main/java/com/android/build/gradle/internal/dependency/DexingTransform.kt
+// https://android.googlesource.com/platform/tools/base/+/refs/tags/studio-2022.1.1/build-system/gradle-core/src/main/java/com/android/build/gradle/internal/tasks/DexFileDependenciesTask.kt
 
 /*
  * Copyright (C) 2018 The Android Open Source Project
