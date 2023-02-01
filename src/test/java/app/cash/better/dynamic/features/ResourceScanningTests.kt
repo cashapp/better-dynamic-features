@@ -1,6 +1,7 @@
 // Copyright Square, Inc.
 package app.cash.better.dynamic.features
 
+import app.cash.better.dynamic.features.tasks.CheckExternalResourcesTask
 import com.google.common.truth.Truth.assertThat
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
@@ -8,6 +9,18 @@ import org.junit.Test
 import java.io.File
 
 class ResourceScanningTests {
+
+  @Test fun `style pattern regex matches xml correctly`() {
+    val fakeXml = """
+      <activity android:name="MyActivity" android:theme="@style/MyActivityTheme" />
+      <activity android:theme"@style/MyOtherTheme" android:name="WoahItInRevere" />
+    """.trimIndent()
+
+    val matches = CheckExternalResourcesTask.STYLE_PATTERN.findAll(fakeXml).map { it.value }.toList()
+    assertThat(matches).contains("@style/MyActivityTheme")
+    assertThat(matches).contains("@style/MyOtherTheme")
+  }
+
   @Test fun `theme defined in dynamic feature and declared as external succeeds`() {
     val integrationRoot = File("src/test/fixtures/resources-correct-declaration")
 
