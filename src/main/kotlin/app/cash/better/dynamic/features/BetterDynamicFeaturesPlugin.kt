@@ -95,6 +95,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       ) { task ->
         task.outputDirectory.set(project.layout.buildDirectory.dir("gen"))
         task.declarations = pluginExtension.externalStyles
+        task.group = GROUP
       }
       variant.sources.res?.addGeneratedSourceDirectory(generateTask, GenerateExternalResourcesTask::outputDirectory)
 
@@ -118,9 +119,10 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
           task.manifestFile.set(variant.artifacts.get(SingleArtifact.MERGED_MANIFEST))
           task.externalDeclarations = pluginExtension.externalStyles
           task.localResources = variant.sources.res?.all
+          task.group = GROUP
         }
 
-        project.tasks.named("assemble${variant.name.capitalized()}").dependsOn(externalsTask)
+        project.tasks.named("process${variant.name.capitalized()}Resources").dependsOn(externalsTask)
 
         // https://issuetracker.google.com/issues/223240936#comment40
         project.tasks.named("map${variant.name.capitalized()}SourceSetPaths").dependsOn(generateTask)
