@@ -52,8 +52,7 @@ abstract class CheckExternalResourcesTask : DefaultTask() {
     val manifestContents = manifestFile.get().asFile.readText()
 
     // Parsing XML? Haha. No.
-    val stylePattern = Regex("""@(android:)?style\/(.*)+(?=")""")
-    val styleMatches = stylePattern.findAll(manifestContents)
+    val styleMatches = STYLE_PATTERN.findAll(manifestContents)
 
     val resourceModules = incomingResources.artifactFiles.files
       .map { file ->
@@ -153,4 +152,8 @@ abstract class CheckExternalResourcesTask : DefaultTask() {
     ref.replace(Regex("""@(android:)?style\/"""), "").replace(".", "_")
 
   private data class ResourceModule(val namespace: String, val resources: Map<String, Set<String>>)
+
+  companion object {
+    val STYLE_PATTERN = Regex("""@(android:)?style\/.+?(?=")""")
+  }
 }
