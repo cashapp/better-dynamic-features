@@ -1,6 +1,7 @@
 package app.cash.better.dynamic.features.tasks
 
 import org.gradle.api.DefaultTask
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputFile
@@ -15,13 +16,13 @@ abstract class BaseLockfileWriterTask : DefaultTask() {
   abstract var partialBaseLockfile: File
 
   @get:OutputFile
-  abstract var outputLockfile: File
+  abstract val outputLockfile: RegularFileProperty
 
   @TaskAction
   fun generateLockfile() {
     val mergedLockfileEntries = mergeLockfiles()
 
-    outputLockfile.writeText(
+    outputLockfile.get().asFile.writeText(
       """
       |# This is a Gradle generated file for dependency locking.
       |# Manual edits can break the build and are not advised.

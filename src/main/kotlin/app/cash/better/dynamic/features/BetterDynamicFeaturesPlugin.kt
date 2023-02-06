@@ -16,6 +16,7 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.ArtifactCollection
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.configurationcache.extensions.capitalized
 import java.io.File
 
@@ -48,8 +49,10 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       check(extension is ApplicationExtension)
       val featureProjects = extension.dynamicFeatures.map { project.project(it) }
 
-      val realLockfile = project.projectDir.resolve("gradle.lockfile")
-      val tempLockfile = project.buildDir.resolve("tmp/gradle.lockfile")
+      val realLockfile = project.dependencyLocking.lockFile
+      val tempLockfile = project.objects.fileProperty().apply {
+        set(project.buildDir.resolve("tmp/gradle.lockfile"))
+      }
 
       project.tasks.register("writeLockfile", BaseLockfileWriterTask::class.java) { task ->
         task.configure(project, featureProjects, realLockfile)
@@ -62,8 +65,8 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
 
       val checkLockfileTask =
         project.tasks.register("checkLockfile", CheckLockfileTask::class.java) { task ->
-          task.currentLockfilePath = realLockfile
-          task.newLockfile = tempLockfile
+          task.currentLockfilePath.set(realLockfile)
+          task.newLockfile.set(tempLockfile)
           task.outputFile = project.buildDir.resolve("tmp/lockfile_check")
 
           task.dependsOn(tempLockfileTask)
@@ -188,7 +191,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
   private fun BaseLockfileWriterTask.configure(
     project: Project,
     featureProjects: List<Project>,
-    output: File,
+    output: RegularFileProperty,
   ) {
     dependsOn(project.tasks.named("writePartialLockfile"))
 
@@ -199,7 +202,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       dependsOn(featureProject.tasks.named("writePartialLockfile"))
     }
 
-    outputLockfile = output
+    outputLockfile.set(output)
     partialFeatureLockfiles = featureProjects.map { it.partialLockfilePath() }
     partialBaseLockfile = project.partialLockfilePath()
 

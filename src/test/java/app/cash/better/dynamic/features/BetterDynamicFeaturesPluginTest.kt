@@ -309,6 +309,36 @@ class BetterDynamicFeaturesPluginTest {
     assertThat(lockfile).doesNotContain("project-dependency:library:unspecified=debugRuntimeClasspath,releaseRuntimeClasspath")
   }
 
+  @Test fun `custom lockfile location is written correctly`() {
+    val integrationRoot = File("src/test/fixtures/custom-lockfile")
+    val baseProject = integrationRoot.resolve("base")
+    val customLockfile = baseProject.resolve("custom.lockfile")
+    customLockfile.takeIf { it.exists() }?.delete()
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .withArguments("clean", ":base:writeLockfile")
+
+    // Generate lockfile first, and then run dependencies task
+    gradleRunner.build()
+    val result = gradleRunner.withArguments(":base:dependencies").build()
+
+    assertThat(result.output).contains("com.squareup.okhttp3:okhttp:4.9.3")
+    assertThat(customLockfile.readText()).isEqualTo(
+      """
+      |# This is a Gradle generated file for dependency locking.
+      |# Manual edits can break the build and are not advised.
+      |# This file is expected to be part of source control.
+      |com.squareup.okhttp3:okhttp:4.9.3=debugRuntimeClasspath,releaseRuntimeClasspath
+      |com.squareup.okio:okio:2.8.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-common:1.4.10=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib:1.4.10=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains:annotations:13.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |empty=
+      """.trimMargin(),
+    )
+  }
+
   private fun clearLockfile(root: File) {
     root.lockfile().takeIf { it.exists() }?.delete()
   }
