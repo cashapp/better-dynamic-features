@@ -47,10 +47,10 @@ abstract class BaseLockfileWriterTask : DefaultTask() {
         null -> graphMap[node.artifact] = node
         else -> {
           if (node.version > existing.version) {
-            node.walk { it.configurations += existing.configurations }
+            node.configurations += existing.configurations
             graphMap[node.artifact] = node
           } else {
-            existing.walk { it.configurations += node.configurations }
+            existing.configurations += node.configurations
           }
         }
       }
@@ -60,16 +60,14 @@ abstract class BaseLockfileWriterTask : DefaultTask() {
       val existing = graphMap[node.artifact]
       // We only care about the conflicting dependencies that actually exist in the base
       if (existing != null && node.version > existing.version) {
-        node.walk { it.configurations += existing.configurations }
+        node.configurations += existing.configurations
         graphMap[node.artifact] = node
       }
     }
 
-    return graphMap.map { (_, entry) -> LockfileEntry(entry.artifact, entry.version, entry.configurations) }
-  }
-
-  private fun Node.walk(callback: (Node) -> Unit) {
-    listOf(this).walkAll(callback)
+    return graphMap
+      .filter { (_, entry) -> !entry.isProjectModule }
+      .map { (_, entry) -> LockfileEntry(entry.artifact, entry.version, entry.configurations) }
   }
 
   private tailrec fun List<Node>.walkAll(callback: (Node) -> Unit) {

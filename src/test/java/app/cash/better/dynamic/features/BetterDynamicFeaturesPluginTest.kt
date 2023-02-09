@@ -162,7 +162,7 @@ class BetterDynamicFeaturesPluginTest {
     assertThat(result.task(":library:jar")?.outcome).isNull()
   }
 
-  @Test fun `conflict check looks at transitive dependencies`() {
+  @Test fun `lockfile includes transitive dependencies from feature dependencies`() {
     val integrationRoot = File("src/test/fixtures/transitive-dependency")
 
     val baseProject = integrationRoot.resolve("base")
@@ -184,6 +184,68 @@ class BetterDynamicFeaturesPluginTest {
       |# This file is expected to be part of source control.
       |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugRuntimeClasspath,releaseRuntimeClasspath
       |com.squareup.okio:okio:2.9.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-common:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains:annotations:13.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |empty=
+      """.trimMargin(),
+    )
+  }
+
+  @Test fun `lockfile includes transitive dependencies from base module project dependencies`() {
+    val integrationRoot = File("src/test/fixtures/transitive-dependency-on-base")
+
+    val baseProject = integrationRoot.resolve("base")
+    clearLockfile(baseProject)
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .withArguments("clean", ":base:writeLockfile")
+
+    // Generate lockfile first, and then run dependencies task
+    gradleRunner.build()
+    val result = gradleRunner.withArguments(":base:dependencies").build()
+
+    assertThat(result.output).contains("com.squareup.okhttp3:okhttp:4.9.3 -> 5.0.0-alpha.2")
+    assertThat(baseProject.lockfile().readText()).isEqualTo(
+      """
+      |# This is a Gradle generated file for dependency locking.
+      |# Manual edits can break the build and are not advised.
+      |# This file is expected to be part of source control.
+      |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugRuntimeClasspath,releaseRuntimeClasspath
+      |com.squareup.okio:okio:2.9.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-common:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains:annotations:13.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |empty=
+      """.trimMargin(),
+    )
+  }
+
+  @Test fun `variant-specific transitive dependencies from base module project dependencies are handled`() {
+    val integrationRoot = File("src/test/fixtures/transitive-dependency-on-base-variant-aware")
+
+    val baseProject = integrationRoot.resolve("base")
+    clearLockfile(baseProject)
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .withArguments("clean", ":base:writeLockfile")
+
+    // Generate lockfile first, and then run dependencies task
+    gradleRunner.build()
+    assertThat(baseProject.lockfile().readText()).isEqualTo(
+      """
+      |# This is a Gradle generated file for dependency locking.
+      |# Manual edits can break the build and are not advised.
+      |# This file is expected to be part of source control.
+      |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugRuntimeClasspath,releaseRuntimeClasspath
+      |com.squareup.okio:okio:2.9.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |com.squareup.retrofit2:retrofit:2.9.0=debugRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib-common:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath

@@ -59,7 +59,7 @@ abstract class PartialLockfileWriterTask : DefaultTask() {
     topLevel
       .asSequence()
       .filterIsInstance<ResolvedDependencyResult>()
-      .filter { it.resolvedVariant.owner !is ProjectComponentIdentifier && it.key !in visited }
+      .filter { it.key !in visited }
       .onEach { visited += it.key }
       .map {
         val info = it.selected.moduleVersion!!
@@ -68,6 +68,7 @@ abstract class PartialLockfileWriterTask : DefaultTask() {
           info.version,
           mutableSetOf(configuration),
           children = buildDependencyGraph(it.selected.getDependenciesForVariant(it.resolvedVariant), configuration, visited),
+          isProjectModule = it.resolvedVariant.owner is ProjectComponentIdentifier,
         )
       }
       .toList()
