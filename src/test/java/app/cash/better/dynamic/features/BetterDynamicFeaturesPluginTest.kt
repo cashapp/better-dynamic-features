@@ -339,6 +339,63 @@ class BetterDynamicFeaturesPluginTest {
     )
   }
 
+  @Test fun `new transitive dependency is recorded in lockfile`() {
+    val integrationRoot = File("src/test/fixtures/new-transitive-dependency")
+    val baseProject = integrationRoot.resolve("base")
+    clearLockfile(baseProject)
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .withArguments("clean", ":base:writeLockfile")
+
+    // Generate lockfile first, and then run dependencies task
+    gradleRunner.build()
+    val result = gradleRunner.withArguments(":base:dependencies").build()
+
+    assertThat(result.output).contains("com.google.android.material:material:1.2.0 -> 1.7.0")
+    // Dynamic animation is a new transitive dependency of material added after 1.2.0
+    assertThat(result.output).contains("androidx.dynamicanimation:dynamicanimation:1.0.0")
+    assertThat(baseProject.lockfile().readText()).isEqualTo(
+      """
+      |# This is a Gradle generated file for dependency locking.
+      |# Manual edits can break the build and are not advised.
+      |# This file is expected to be part of source control.
+      |androidx.activity:activity:1.5.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.annotation:annotation-experimental:1.1.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.annotation:annotation:1.3.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.appcompat:appcompat-resources:1.5.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.appcompat:appcompat:1.5.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.arch.core:core-common:2.1.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.arch.core:core-runtime:2.1.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.cardview:cardview:1.0.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.collection:collection:1.1.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.coordinatorlayout:coordinatorlayout:1.1.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.core:core:1.8.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.cursoradapter:cursoradapter:1.0.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.customview:customview:1.1.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.drawerlayout:drawerlayout:1.1.1=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.fragment:fragment:1.3.6=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.interpolator:interpolator:1.0.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.lifecycle:lifecycle-common:2.5.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.lifecycle:lifecycle-livedata-core:2.5.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.lifecycle:lifecycle-livedata:2.0.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.lifecycle:lifecycle-runtime:2.5.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.lifecycle:lifecycle-viewmodel:2.5.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.loader:loader:1.0.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.recyclerview:recyclerview:1.1.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.savedstate:savedstate:1.2.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.transition:transition:1.2.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.vectordrawable:vectordrawable-animated:1.1.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.vectordrawable:vectordrawable:1.1.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.versionedparcelable:versionedparcelable:1.1.1=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.viewpager2:viewpager2:1.0.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.viewpager:viewpager:1.0.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |com.google.android.material:material:1.7.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |empty=
+      """.trimMargin(),
+    )
+  }
+
   private fun clearLockfile(root: File) {
     root.lockfile().takeIf { it.exists() }?.delete()
   }
