@@ -1,6 +1,7 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
   alias(libs.plugins.kotlin)
+  alias(libs.plugins.ksp)
   id("java-gradle-plugin")
   alias(libs.plugins.publish)
   alias(libs.plugins.spotless)
@@ -31,9 +32,13 @@ gradlePlugin {
 }
 
 dependencies {
+  ksp(libs.moshi.codegen)
+
   implementation gradleApi()
   implementation(libs.agp)
   implementation(libs.kotlin)
+  implementation(libs.moshi.core)
+  implementation(libs.moshi.kotlin)
 
   compileOnly(libs.google.guava)
   compileOnly(libs.google.gson)

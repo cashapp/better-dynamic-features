@@ -162,7 +162,7 @@ class BetterDynamicFeaturesPluginTest {
     assertThat(result.task(":library:jar")?.outcome).isNull()
   }
 
-  @Test fun `conflict check looks at transitive dependencies`() {
+  @Test fun `lockfile includes transitive dependencies from feature dependencies`() {
     val integrationRoot = File("src/test/fixtures/transitive-dependency")
 
     val baseProject = integrationRoot.resolve("base")
@@ -184,6 +184,68 @@ class BetterDynamicFeaturesPluginTest {
       |# This file is expected to be part of source control.
       |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugRuntimeClasspath,releaseRuntimeClasspath
       |com.squareup.okio:okio:2.9.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-common:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains:annotations:13.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |empty=
+      """.trimMargin(),
+    )
+  }
+
+  @Test fun `lockfile includes transitive dependencies from base module project dependencies`() {
+    val integrationRoot = File("src/test/fixtures/transitive-dependency-on-base")
+
+    val baseProject = integrationRoot.resolve("base")
+    clearLockfile(baseProject)
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .withArguments("clean", ":base:writeLockfile")
+
+    // Generate lockfile first, and then run dependencies task
+    gradleRunner.build()
+    val result = gradleRunner.withArguments(":base:dependencies").build()
+
+    assertThat(result.output).contains("com.squareup.okhttp3:okhttp:4.9.3 -> 5.0.0-alpha.2")
+    assertThat(baseProject.lockfile().readText()).isEqualTo(
+      """
+      |# This is a Gradle generated file for dependency locking.
+      |# Manual edits can break the build and are not advised.
+      |# This file is expected to be part of source control.
+      |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugRuntimeClasspath,releaseRuntimeClasspath
+      |com.squareup.okio:okio:2.9.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-common:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains:annotations:13.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |empty=
+      """.trimMargin(),
+    )
+  }
+
+  @Test fun `variant-specific transitive dependencies from base module project dependencies are handled`() {
+    val integrationRoot = File("src/test/fixtures/transitive-dependency-on-base-variant-aware")
+
+    val baseProject = integrationRoot.resolve("base")
+    clearLockfile(baseProject)
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .withArguments("clean", ":base:writeLockfile")
+
+    // Generate lockfile first, and then run dependencies task
+    gradleRunner.build()
+    assertThat(baseProject.lockfile().readText()).isEqualTo(
+      """
+      |# This is a Gradle generated file for dependency locking.
+      |# Manual edits can break the build and are not advised.
+      |# This file is expected to be part of source control.
+      |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugRuntimeClasspath,releaseRuntimeClasspath
+      |com.squareup.okio:okio:2.9.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |com.squareup.retrofit2:retrofit:2.9.0=debugRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib-common:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
@@ -334,6 +396,63 @@ class BetterDynamicFeaturesPluginTest {
       |org.jetbrains.kotlin:kotlin-stdlib-common:1.4.10=debugRuntimeClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib:1.4.10=debugRuntimeClasspath,releaseRuntimeClasspath
       |org.jetbrains:annotations:13.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |empty=
+      """.trimMargin(),
+    )
+  }
+
+  @Test fun `new transitive dependency is recorded in lockfile`() {
+    val integrationRoot = File("src/test/fixtures/new-transitive-dependency")
+    val baseProject = integrationRoot.resolve("base")
+    clearLockfile(baseProject)
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .withArguments("clean", ":base:writeLockfile")
+
+    // Generate lockfile first, and then run dependencies task
+    gradleRunner.build()
+    val result = gradleRunner.withArguments(":base:dependencies").build()
+
+    assertThat(result.output).contains("com.google.android.material:material:1.2.0 -> 1.7.0")
+    // Dynamic animation is a new transitive dependency of material added after 1.2.0
+    assertThat(result.output).contains("androidx.dynamicanimation:dynamicanimation:1.0.0")
+    assertThat(baseProject.lockfile().readText()).isEqualTo(
+      """
+      |# This is a Gradle generated file for dependency locking.
+      |# Manual edits can break the build and are not advised.
+      |# This file is expected to be part of source control.
+      |androidx.activity:activity:1.5.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.annotation:annotation-experimental:1.1.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.annotation:annotation:1.3.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.appcompat:appcompat-resources:1.5.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.appcompat:appcompat:1.5.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.arch.core:core-common:2.1.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.arch.core:core-runtime:2.1.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.cardview:cardview:1.0.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.collection:collection:1.1.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.coordinatorlayout:coordinatorlayout:1.1.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.core:core:1.8.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.cursoradapter:cursoradapter:1.0.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.customview:customview:1.1.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.drawerlayout:drawerlayout:1.1.1=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.fragment:fragment:1.3.6=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.interpolator:interpolator:1.0.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.lifecycle:lifecycle-common:2.5.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.lifecycle:lifecycle-livedata-core:2.5.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.lifecycle:lifecycle-livedata:2.0.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.lifecycle:lifecycle-runtime:2.5.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.lifecycle:lifecycle-viewmodel:2.5.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.loader:loader:1.0.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.recyclerview:recyclerview:1.1.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.savedstate:savedstate:1.2.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.transition:transition:1.2.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.vectordrawable:vectordrawable-animated:1.1.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.vectordrawable:vectordrawable:1.1.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.versionedparcelable:versionedparcelable:1.1.1=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.viewpager2:viewpager2:1.0.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |androidx.viewpager:viewpager:1.0.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |com.google.android.material:material:1.7.0=debugRuntimeClasspath,releaseRuntimeClasspath
       |empty=
       """.trimMargin(),
     )

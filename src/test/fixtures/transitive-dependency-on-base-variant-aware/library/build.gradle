@@ -1,0 +1,13 @@
+apply plugin: 'com.android.library'
+apply plugin: 'org.jetbrains.kotlin.android'
+
+android {
+  namespace "app.cash.better.dynamic.features.integration.library"
+
+  compileSdk 32
+}
+
+dependencies {
+  implementation "com.squareup.okhttp3:okhttp:5.0.0-alpha.2"
+  debugImplementation "com.squareup.retrofit2:retrofit:2.9.0"
+}

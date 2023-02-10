@@ -158,9 +158,10 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
         task.setResolvedLockfileEntriesProvider(
           project.provider {
             variantNames.associateWith {
-              project.configurations.getByName(
-                "${it}RuntimeClasspath",
-              ).resolvedConfiguration
+              project.configurations.getByName("${it}RuntimeClasspath")
+                .incoming
+                .resolutionResult
+                .root
             }
           },
         )
