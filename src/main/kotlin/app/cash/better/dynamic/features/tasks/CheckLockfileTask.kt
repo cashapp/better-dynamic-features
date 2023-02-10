@@ -41,7 +41,8 @@ abstract class CheckLockfileTask : DefaultTask() {
     if (!areTheyEqual) {
       Files.copy(newLockfileFile.toPath(), currentLockfilePath.asFile.get().toPath(), StandardCopyOption.REPLACE_EXISTING)
       if (isCi) {
-        throw IllegalStateException("The lockfile was out of date. Run the '$projectPath:writeLockfile' task and commit the updated lockfile.")
+        // TODO: Revert back to a more generic message when this flag is no longer needed
+        throw IllegalStateException("The lockfile was out of date. Run './gradlew -Dcash.os.dynamicFeatures=true $projectPath:writeLockfile' and commit the updated lockfile.")
       } else {
         throw IllegalStateException("The lockfile was out of date and has been updated. Rerun your build.")
       }
