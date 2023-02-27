@@ -4,7 +4,7 @@ ktlint = "0.46.1"
 moshi = "1.14.0"
 
 [libraries]
-agp = { module = "com.android.tools.build:gradle", version = "7.4.0" }
+agp = { module = "com.android.tools.build:gradle", version = "7.4.2" }
 kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 moshi-core = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
 moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshi" }
@@ -16,8 +16,8 @@ junit = { module = "junit:junit", version = "4.13.2" }
 # AGP things
 google-guava = "com.google.guava:guava:31.1-jre"
 google-gson = "com.google.code.gson:gson:2.9.1"
-android-common = "com.android.tools:common:30.4.0"
-android-sdkCommon = "com.android.tools:sdk-common:30.4.0"
+android-common = "com.android.tools:common:30.4.2"
+android-sdkCommon = "com.android.tools:sdk-common:30.4.2"
 
 [plugins]
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
