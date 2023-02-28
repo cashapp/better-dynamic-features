@@ -1,0 +1,57 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+plugins {
+  alias(libs.plugins.kotlin)
+  alias(libs.plugins.ksp)
+  id("java-gradle-plugin")
+  alias(libs.plugins.publish)
+  alias(libs.plugins.spotless)
+}
+
+gradlePlugin {
+  plugins {
+    betterDynamicFeatures {
+      id = 'app.cash.better.dynamic.features'
+      implementationClass = 'app.cash.better.dynamic.features.BetterDynamicFeaturesPlugin'
+    }
+  }
+}
+
+dependencies {
+  ksp(libs.moshi.codegen)
+
+  implementation gradleApi()
+  implementation(libs.agp)
+  implementation(libs.kotlin)
+  implementation(libs.moshi.core)
+  implementation(libs.moshi.kotlin)
+
+  compileOnly(libs.google.guava)
+  compileOnly(libs.google.gson)
+  compileOnly(libs.android.common)
+  compileOnly(libs.android.sdkCommon)
+
+  testImplementation(libs.junit)
+  testImplementation(libs.truth)
+}
+
+publishing {
+  repositories {
+    maven {
+      name = "installLocally"
+      url = "${rootProject.buildDir}/localMaven"
+    }
+    /**
+     * Want to push to an internal repository for testing?
+     * Set the following properties in ~/.gradle/gradle.properties.
+     *
+     * internalUrl=YOUR_INTERNAL_URL
+     * internalUsername=YOUR_USERNAME
+     * internalPassword=YOUR_PASSWORD
+     */
+    maven {
+      name = "internal"
+      url = providers.gradleProperty("internalUrl")
+      credentials(PasswordCredentials)
+    }
+  }
+}

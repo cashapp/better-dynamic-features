@@ -1,0 +1,14 @@
+dependencyResolutionManagement {
+  versionCatalogs {
+    libs {
+      from(files("../../../../gradle/libs.versions.toml"))
+    }
+  }
+}
+
+
+includeBuild('../../../../../') {
+  dependencySubstitution {
+    substitute module('app.cash:better-dynamic-features') using project(':gradle-plugin')
+  }
+}
