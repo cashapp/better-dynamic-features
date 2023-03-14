@@ -8,14 +8,13 @@ import org.gradle.api.artifacts.result.DependencyResult
 import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Provider
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
-import java.io.File
 
-abstract class PartialLockfileWriterTask : DefaultTask() {
+abstract class DependencyGraphWriterTask : DefaultTask() {
   /**
    * This is only used to trick Gradle into recognizing that this task is no longer up-to-date
    * For actual processing, [graph] is used.
@@ -25,30 +24,19 @@ abstract class PartialLockfileWriterTask : DefaultTask() {
 
   private lateinit var graph: Provider<List<Node>>
 
-  fun setResolvedLockfileEntriesProvider(provider: Provider<Map<String, ResolvedComponentResult>>) {
-    graph = provider.map { configurationMap ->
-      configurationMap.flatMap { (configuration, resolution) ->
-        buildDependencyGraph(resolution.getDependenciesForVariant(resolution.variants.first()), "${configuration}RuntimeClasspath", mutableSetOf())
-      }
+  fun setResolvedLockfileEntriesProvider(provider: Provider<ResolvedComponentResult>, variant: String) {
+    graph = provider.map { resolution ->
+      buildDependencyGraph(resolution.getDependenciesForVariant(resolution.variants.first()), "${variant}RuntimeClasspath", mutableSetOf())
     }
   }
 
-  @get:Input
-  abstract var projectName: String
-
-  @get:Input
-  abstract var rootProjectName: String
-
-  @get:Input
-  abstract var configurationNames: List<String>
-
   @get:OutputFile
-  abstract var partialLockFile: File
+  abstract val partialLockFile: RegularFileProperty
 
   @TaskAction
   fun printList() {
     val moshi = Moshi.Builder().build()
-    partialLockFile.writeText(moshi.adapter(NodeList::class.java).toJson(NodeList(graph.get())))
+    partialLockFile.asFile.get().writeText(moshi.adapter(NodeList::class.java).toJson(NodeList(graph.get())))
   }
 
   private val ResolvedDependencyResult.key: String
