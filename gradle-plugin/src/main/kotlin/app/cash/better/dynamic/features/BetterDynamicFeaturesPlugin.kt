@@ -17,12 +17,12 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.ArtifactCollection
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
-import org.gradle.api.attributes.LibraryElements
+import org.gradle.api.attributes.Attribute
 import org.gradle.api.attributes.Usage
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.configurationcache.extensions.capitalized
 
-@Suppress("UnstableApiUsage", "Unused")
+@Suppress("UnstableApiUsage")
 class BetterDynamicFeaturesPlugin : Plugin<Project> {
   override fun apply(project: Project) {
     check(project.plugins.hasPlugin("com.android.application") || project.plugins.hasPlugin("com.android.dynamic-feature")) {
@@ -39,8 +39,8 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
   private fun applyToFeature(project: Project) {
     val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
 
-    project.createSharedFeatureConfiguration()
-    project.setupFeatureDependencyGraphTasks(androidComponents)
+    val sharedConfiguration = project.createSharedFeatureConfiguration()
+    project.setupFeatureDependencyGraphTasks(androidComponents, sharedConfiguration)
   }
 
   private fun applyToApplication(project: Project) {
@@ -147,41 +147,33 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       task.group = GROUP
     }
 
-  private fun Project.createSharedFeatureConfiguration() {
+  private fun Project.createSharedFeatureConfiguration(): Configuration =
     configurations.create(CONFIGURATION_BDF).apply {
       isCanBeConsumed = true
       isCanBeResolved = false
       attributes.apply {
         attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(Usage::class.java, ATTRIBUTE_USAGE_METADATA))
       }
-      outgoing.variants.create("feature-dependencies").apply {
-        attributes.apply {
-          attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, project.objects.named(LibraryElements::class.java, ATTRIBUTE_FEATURE_DEPENDENCIES))
-        }
-      }
+      outgoing.variants.create(VARIANT_DEPENDENCY_GRAPHS)
     }
-  }
 
   private fun Project.createSharedBaseConfiguration(): Configuration =
     configurations.create(CONFIGURATION_BDF).apply {
-      isCanBeConsumed = false
+      isCanBeConsumed = true
       isCanBeResolved = true
       attributes.apply {
         attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(Usage::class.java, ATTRIBUTE_USAGE_METADATA))
       }
-      outgoing.variants.create("base-dependencies").apply {
-        attributes.apply {
-          attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, project.objects.named(LibraryElements::class.java, ATTRIBUTE_BASE_DEPENDENCIES))
-        }
-      }
+      outgoing.variants.create(VARIANT_DEPENDENCY_GRAPHS)
     }
 
-  private fun Project.setupFeatureDependencyGraphTasks(androidComponents: AndroidComponentsExtension<*, *, *>) {
+  private fun Project.setupFeatureDependencyGraphTasks(androidComponents: AndroidComponentsExtension<*, *, *>, configuration: Configuration) {
     androidComponents.onVariants { variant ->
       val task = configureDependencyGraphTask(variant)
-      artifacts { handler ->
-        handler.add(CONFIGURATION_BDF, task.flatMap { it.partialLockFile }) {
+      configuration.outgoing.variants.getByName(VARIANT_DEPENDENCY_GRAPHS) { configurationVariant ->
+        configurationVariant.artifact(task.flatMap { it.partialLockFile }) {
           it.builtBy(task)
+          it.type = ARTIFACT_TYPE_FEATURE_DEPENDENCY_GRAPH
         }
       }
     }
@@ -189,31 +181,27 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
 
   private fun Project.setupBaseDependencyGraphTasks(androidComponents: AndroidComponentsExtension<*, *, *>, featureProjects: List<Project>, configuration: Configuration) {
     featureProjects.forEach { dependencies.add(CONFIGURATION_BDF, it) }
+    dependencies.add(CONFIGURATION_BDF, this)
 
     androidComponents.onVariants { variant ->
       val task = configureDependencyGraphTask(variant)
-      artifacts { handler ->
-        handler.add(CONFIGURATION_BDF, task.flatMap { it.partialLockFile }) {
+      configuration.outgoing.variants.getByName(VARIANT_DEPENDENCY_GRAPHS) { configurationVariant ->
+        configurationVariant.artifact(task.flatMap { it.partialLockFile }) {
           it.builtBy(task)
+          it.type = ARTIFACT_TYPE_BASE_DEPENDENCY_GRAPH
         }
       }
     }
 
     val featureDependencyArtifacts = configuration.incoming.artifactView { config ->
       config.attributes { container ->
-        container.attribute(
-          LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-          project.objects.named(LibraryElements::class.java, ATTRIBUTE_FEATURE_DEPENDENCIES),
-        )
+        container.attribute(ARTIFACT_TYPE, ARTIFACT_TYPE_FEATURE_DEPENDENCY_GRAPH)
       }
     }.artifacts.artifactFiles
 
     val baseDependencyArtifacts = configuration.incoming.artifactView { config ->
       config.attributes { container ->
-        container.attribute(
-          LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE,
-          project.objects.named(LibraryElements::class.java, ATTRIBUTE_BASE_DEPENDENCIES),
-        )
+        container.attribute(ARTIFACT_TYPE, ARTIFACT_TYPE_BASE_DEPENDENCY_GRAPH)
       }
     }.artifacts.artifactFiles
 
@@ -238,12 +226,16 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     tasks.named("preBuild").dependsOn(checkLockfileTask)
   }
 
-  internal companion object {
-    const val GROUP = "Better Dynamic Features"
+  companion object {
+    internal const val GROUP = "Better Dynamic Features"
 
-    const val ATTRIBUTE_BASE_DEPENDENCIES = "base-dependencies"
-    const val ATTRIBUTE_FEATURE_DEPENDENCIES = "feature-dependencies"
-    const val ATTRIBUTE_USAGE_METADATA = "better-dynamic-features-metadata"
-    const val CONFIGURATION_BDF = "betterDynamicFeatures"
+    private const val ATTRIBUTE_USAGE_METADATA = "better-dynamic-features-metadata"
+    private const val CONFIGURATION_BDF = "betterDynamicFeatures"
+
+    private val ARTIFACT_TYPE = Attribute.of("artifactType", String::class.java)
+    private const val ARTIFACT_TYPE_FEATURE_DEPENDENCY_GRAPH = "feature-dependency-graph"
+    private const val ARTIFACT_TYPE_BASE_DEPENDENCY_GRAPH = "base-dependency-graph"
+
+    private const val VARIANT_DEPENDENCY_GRAPHS = "dependency-graphs"
   }
 }
