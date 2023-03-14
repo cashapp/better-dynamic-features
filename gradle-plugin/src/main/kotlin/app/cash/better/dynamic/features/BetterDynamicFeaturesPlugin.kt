@@ -39,19 +39,21 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
   private fun applyToFeature(project: Project) {
     val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
 
-    project.setupFeatureDependencyConfiguration(androidComponents)
+    project.createSharedFeatureConfiguration()
+    project.setupFeatureDependencyGraphTasks(androidComponents)
   }
 
   private fun applyToApplication(project: Project) {
     val pluginExtension = project.extensions.create("betterDynamicFeatures", BetterDynamicFeaturesExtension::class.java)
 
     val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
+    val sharedConfiguration = project.createSharedBaseConfiguration()
 
     androidComponents.finalizeDsl { extension ->
       check(extension is ApplicationExtension)
       val featureProjects = extension.dynamicFeatures.map { project.project(it) }
 
-      project.setupBaseDependencyConfiguration(androidComponents, featureProjects)
+      project.setupBaseDependencyGraphTasks(androidComponents, featureProjects, sharedConfiguration)
     }
 
     androidComponents.onVariants { variant ->
@@ -145,7 +147,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       task.group = GROUP
     }
 
-  private fun Project.setupFeatureDependencyConfiguration(androidComponents: AndroidComponentsExtension<*, *, *>) {
+  private fun Project.createSharedFeatureConfiguration() {
     configurations.create(CONFIGURATION_BDF).apply {
       isCanBeConsumed = true
       isCanBeResolved = false
@@ -158,19 +160,10 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
         }
       }
     }
-
-    androidComponents.onVariants { variant ->
-      val task = configureDependencyGraphTask(variant)
-      artifacts { handler ->
-        handler.add(CONFIGURATION_BDF, task.flatMap { it.partialLockFile }) {
-          it.builtBy(task)
-        }
-      }
-    }
   }
 
-  private fun Project.setupBaseDependencyConfiguration(androidComponents: AndroidComponentsExtension<*, *, *>, featureProjects: List<Project>) {
-    val configuration = configurations.create(CONFIGURATION_BDF).apply {
+  private fun Project.createSharedBaseConfiguration(): Configuration =
+    configurations.create(CONFIGURATION_BDF).apply {
       isCanBeConsumed = false
       isCanBeResolved = true
       attributes.apply {
@@ -182,6 +175,19 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
         }
       }
     }
+
+  private fun Project.setupFeatureDependencyGraphTasks(androidComponents: AndroidComponentsExtension<*, *, *>) {
+    androidComponents.onVariants { variant ->
+      val task = configureDependencyGraphTask(variant)
+      artifacts { handler ->
+        handler.add(CONFIGURATION_BDF, task.flatMap { it.partialLockFile }) {
+          it.builtBy(task)
+        }
+      }
+    }
+  }
+
+  private fun Project.setupBaseDependencyGraphTasks(androidComponents: AndroidComponentsExtension<*, *, *>, featureProjects: List<Project>, configuration: Configuration) {
     featureProjects.forEach { dependencies.add(CONFIGURATION_BDF, it) }
 
     androidComponents.onVariants { variant ->
