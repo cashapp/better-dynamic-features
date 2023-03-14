@@ -181,6 +181,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
 
   private fun Project.setupBaseDependencyGraphTasks(androidComponents: AndroidComponentsExtension<*, *, *>, featureProjects: List<Project>, configuration: Configuration) {
     featureProjects.forEach { dependencies.add(CONFIGURATION_BDF, it) }
+    // This allows us to access artifacts created in this project's tasks via the artifactView APIs
     dependencies.add(CONFIGURATION_BDF, this)
 
     androidComponents.onVariants { variant ->
