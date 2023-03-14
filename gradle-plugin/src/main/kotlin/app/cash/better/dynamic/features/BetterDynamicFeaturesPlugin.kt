@@ -4,11 +4,12 @@ package app.cash.better.dynamic.features
 import app.cash.better.dynamic.features.tasks.BaseLockfileWriterTask
 import app.cash.better.dynamic.features.tasks.CheckExternalResourcesTask
 import app.cash.better.dynamic.features.tasks.CheckLockfileTask
+import app.cash.better.dynamic.features.tasks.DependencyGraphWriterTask
 import app.cash.better.dynamic.features.tasks.GenerateExternalResourcesTask
-import app.cash.better.dynamic.features.tasks.PartialLockfileWriterTask
 import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.variant.AndroidComponentsExtension
+import com.android.build.api.variant.Variant
 import com.android.build.gradle.internal.publishing.AndroidArtifacts
 import com.android.build.gradle.internal.tasks.factory.dependsOn
 import org.gradle.api.Plugin
@@ -16,9 +17,10 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.ArtifactCollection
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
-import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.attributes.Attribute
+import org.gradle.api.attributes.Usage
+import org.gradle.api.tasks.TaskProvider
 import org.gradle.configurationcache.extensions.capitalized
-import java.io.File
 
 @Suppress("UnstableApiUsage")
 class BetterDynamicFeaturesPlugin : Plugin<Project> {
@@ -37,48 +39,23 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
   private fun applyToFeature(project: Project) {
     val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
 
-    project.setupListingTask(androidComponents)
+    val sharedConfiguration = project.createSharedFeatureConfiguration()
+    project.setupFeatureDependencyGraphTasks(androidComponents, sharedConfiguration)
   }
 
   private fun applyToApplication(project: Project) {
     val pluginExtension = project.extensions.create("betterDynamicFeatures", BetterDynamicFeaturesExtension::class.java)
 
     val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
+    val sharedConfiguration = project.createSharedBaseConfiguration()
 
     androidComponents.finalizeDsl { extension ->
       check(extension is ApplicationExtension)
       val featureProjects = extension.dynamicFeatures.map { project.project(it) }
 
-      val realLockfile = project.dependencyLocking.lockFile
-      val tempLockfile = project.objects.fileProperty().apply {
-        set(project.buildDir.resolve("tmp/gradle.lockfile"))
-      }
-
-      project.tasks.register("writeLockfile", BaseLockfileWriterTask::class.java) { task ->
-        task.configure(project, featureProjects, realLockfile)
-      }
-
-      val tempLockfileTask =
-        project.tasks.register("writeTempLockfile", BaseLockfileWriterTask::class.java) { task ->
-          task.configure(project, featureProjects, tempLockfile)
-        }
-
-      val checkLockfileTask =
-        project.tasks.register("checkLockfile", CheckLockfileTask::class.java) { task ->
-          task.currentLockfilePath.set(realLockfile)
-          task.newLockfile.set(tempLockfile)
-          task.outputFile = project.buildDir.resolve("tmp/lockfile_check")
-
-          task.dependsOn(tempLockfileTask)
-          task.group = GROUP
-          task.isCi = project.providers.systemProperty("ci").orElse("false").get().toBoolean()
-          task.projectPath = project.path
-        }
-
-      project.tasks.named("preBuild").dependsOn(checkLockfileTask)
+      project.setupBaseDependencyGraphTasks(androidComponents, featureProjects, sharedConfiguration)
     }
 
-    project.setupListingTask(androidComponents)
     androidComponents.onVariants { variant ->
       // We only want to enforce the lockfile if we aren't explicitly trying to update it
       if (project.gradle.startParameter.taskNames.none {
@@ -133,49 +110,6 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     }
   }
 
-  private fun Project.setupListingTask(androidComponents: AndroidComponentsExtension<*, *, *>) {
-    val variantNames = mutableSetOf<String>()
-
-    androidComponents.onVariants { variant ->
-      variantNames += variant.name
-    }
-
-    afterEvaluate {
-      project.tasks.register(
-        "writePartialLockfile",
-        PartialLockfileWriterTask::class.java,
-      ) { task ->
-        val artifactCollections = variantNames.associateWith {
-          project.configurations.getByName("${it}RuntimeClasspath")
-            .getConfigurationArtifactCollection()
-        }
-
-        task.dependencyFileCollection.setFrom(
-          artifactCollections.map { (_, value) -> value.artifactFiles }
-            .reduce { acc, fileCollection -> acc + fileCollection },
-        )
-
-        task.setResolvedLockfileEntriesProvider(
-          project.provider {
-            variantNames.associateWith {
-              project.configurations.getByName("${it}RuntimeClasspath")
-                .incoming
-                .resolutionResult
-                .root
-            }
-          },
-        )
-
-        task.projectName = this.name
-        task.rootProjectName = this.rootProject.name
-        task.partialLockFile = this.partialLockfilePath()
-        task.configurationNames = variantNames.map { "${it}RuntimeClasspath" }.sorted()
-
-        task.group = GROUP
-      }
-    }
-  }
-
   private fun Configuration.getConfigurationArtifactCollection(): ArtifactCollection =
     incoming.artifactView { config ->
       config.attributes { container ->
@@ -189,30 +123,120 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       config.componentFilter { it !is ProjectComponentIdentifier }
     }.artifacts
 
-  private fun BaseLockfileWriterTask.configure(
-    project: Project,
-    featureProjects: List<Project>,
-    output: RegularFileProperty,
-  ) {
-    dependsOn(project.tasks.named("writePartialLockfile"))
+  private fun Project.configureDependencyGraphTask(variant: Variant): TaskProvider<DependencyGraphWriterTask> =
+    tasks.register(
+      "write${variant.name.capitalized()}DependencyGraph",
+      DependencyGraphWriterTask::class.java,
+    ) { task ->
+      val artifactCollections = project.configurations.getByName("${variant.name}RuntimeClasspath")
+        .getConfigurationArtifactCollection()
 
-    featureProjects.forEach { featureProject ->
-      check(featureProject.plugins.hasPlugin("app.cash.better.dynamic.features")) {
-        "Plugin 'app.cash.better.dynamic.features' needs to be applied to $featureProject"
-      }
-      dependsOn(featureProject.tasks.named("writePartialLockfile"))
+      task.dependencyFileCollection.setFrom(artifactCollections.artifactFiles)
+
+      task.setResolvedLockfileEntriesProvider(
+        project.provider {
+          project.configurations.getByName("${variant.name}RuntimeClasspath")
+            .incoming
+            .resolutionResult
+            .root
+        },
+        variant.name,
+      )
+
+      task.partialLockFile.set { buildDir.resolve("betterDynamicFeatures/deps/${variant.name}DependencyGraph.json") }
+      task.group = GROUP
     }
 
-    outputLockfile.set(output)
-    partialFeatureLockfiles = featureProjects.map { it.partialLockfilePath() }
-    partialBaseLockfile = project.partialLockfilePath()
+  private fun Project.createSharedFeatureConfiguration(): Configuration =
+    configurations.create(CONFIGURATION_BDF).apply {
+      isCanBeConsumed = true
+      isCanBeResolved = false
+      attributes.apply {
+        attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(Usage::class.java, ATTRIBUTE_USAGE_METADATA))
+      }
+      outgoing.variants.create(VARIANT_DEPENDENCY_GRAPHS)
+    }
 
-    group = GROUP
+  private fun Project.createSharedBaseConfiguration(): Configuration =
+    configurations.create(CONFIGURATION_BDF).apply {
+      isCanBeConsumed = true
+      isCanBeResolved = true
+      attributes.apply {
+        attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(Usage::class.java, ATTRIBUTE_USAGE_METADATA))
+      }
+      outgoing.variants.create(VARIANT_DEPENDENCY_GRAPHS)
+    }
+
+  private fun Project.setupFeatureDependencyGraphTasks(androidComponents: AndroidComponentsExtension<*, *, *>, configuration: Configuration) {
+    androidComponents.onVariants { variant ->
+      val task = configureDependencyGraphTask(variant)
+      configuration.outgoing.variants.getByName(VARIANT_DEPENDENCY_GRAPHS) { configurationVariant ->
+        configurationVariant.artifact(task.flatMap { it.partialLockFile }) {
+          it.builtBy(task)
+          it.type = ARTIFACT_TYPE_FEATURE_DEPENDENCY_GRAPH
+        }
+      }
+    }
   }
 
-  private fun Project.partialLockfilePath(): File = buildDir.resolve("tmp/gradle.lockfile.partial")
+  private fun Project.setupBaseDependencyGraphTasks(androidComponents: AndroidComponentsExtension<*, *, *>, featureProjects: List<Project>, configuration: Configuration) {
+    featureProjects.forEach { dependencies.add(CONFIGURATION_BDF, it) }
+    // This allows us to access artifacts created in this project's tasks via the artifactView APIs
+    dependencies.add(CONFIGURATION_BDF, this)
 
-  internal companion object {
-    const val GROUP = "Better Dynamic Features"
+    androidComponents.onVariants { variant ->
+      val task = configureDependencyGraphTask(variant)
+      configuration.outgoing.variants.getByName(VARIANT_DEPENDENCY_GRAPHS) { configurationVariant ->
+        configurationVariant.artifact(task.flatMap { it.partialLockFile }) {
+          it.builtBy(task)
+          it.type = ARTIFACT_TYPE_BASE_DEPENDENCY_GRAPH
+        }
+      }
+    }
+
+    val featureDependencyArtifacts = configuration.incoming.artifactView { config ->
+      config.attributes { container ->
+        container.attribute(ARTIFACT_TYPE, ARTIFACT_TYPE_FEATURE_DEPENDENCY_GRAPH)
+      }
+    }.artifacts.artifactFiles
+
+    val baseDependencyArtifacts = configuration.incoming.artifactView { config ->
+      config.attributes { container ->
+        container.attribute(ARTIFACT_TYPE, ARTIFACT_TYPE_BASE_DEPENDENCY_GRAPH)
+      }
+    }.artifacts.artifactFiles
+
+    project.tasks.register("writeLockfile", BaseLockfileWriterTask::class.java) { task ->
+      task.outputLockfile.set(dependencyLocking.lockFile)
+      task.featureDependencyGraphFiles.setFrom(featureDependencyArtifacts)
+      task.baseDependencyGraphFiles.setFrom(baseDependencyArtifacts)
+
+      task.group = GROUP
+    }
+
+    val checkLockfileTask = project.tasks.register("checkLockfile", CheckLockfileTask::class.java) { task ->
+      task.currentLockfilePath.set(dependencyLocking.lockFile)
+      task.outputFile.set { project.buildDir.resolve("betterDynamicFeatures/deps/lockfile_check") }
+      task.featureDependencyGraphFiles.setFrom(featureDependencyArtifacts)
+      task.baseDependencyGraphFiles.setFrom(baseDependencyArtifacts)
+
+      task.group = GROUP
+      task.runningOnCi.set(project.providers.systemProperty("ci").orElse("false").map { it.toBoolean() })
+      task.projectPath.set(project.path)
+    }
+    tasks.named("preBuild").dependsOn(checkLockfileTask)
+  }
+
+  companion object {
+    internal const val GROUP = "Better Dynamic Features"
+
+    private const val ATTRIBUTE_USAGE_METADATA = "better-dynamic-features-metadata"
+    private const val CONFIGURATION_BDF = "betterDynamicFeatures"
+
+    private val ARTIFACT_TYPE = Attribute.of("artifactType", String::class.java)
+    private const val ARTIFACT_TYPE_FEATURE_DEPENDENCY_GRAPH = "feature-dependency-graph"
+    private const val ARTIFACT_TYPE_BASE_DEPENDENCY_GRAPH = "base-dependency-graph"
+
+    private const val VARIANT_DEPENDENCY_GRAPHS = "dependency-graphs"
   }
 }

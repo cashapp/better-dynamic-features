@@ -458,6 +458,20 @@ class BetterDynamicFeaturesPluginTest {
     )
   }
 
+  @Test fun `writeLockfile task passes with configureondemand enabled`() {
+    val integrationRoot = File("src/test/fixtures/same-versions")
+    val baseProject = integrationRoot.resolve("base")
+    clearLockfile(baseProject)
+
+    // We run the clean task only on :base to avoid direct configuration of the :feature module
+    // This tests that the :feature module is configured indirectly through being depended on by :base
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .withArguments("-Dorg.gradle.configureondemand=true", ":base:clean", ":base:writeLockfile")
+
+    gradleRunner.build()
+  }
+
   private fun clearLockfile(root: File) {
     root.lockfile().takeIf { it.exists() }?.delete()
   }
