@@ -7,6 +7,7 @@ import org.gradle.api.artifacts.ArtifactCollection
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.Directory
 import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
@@ -30,8 +31,8 @@ abstract class CheckExternalResourcesTask : DefaultTask() {
   @get:InputFiles
   abstract val incomingResourcesCollection: ConfigurableFileCollection
 
-  private lateinit var incomingResources: ArtifactCollection
-  fun setIncomingResources(collection: ArtifactCollection) {
+  private lateinit var incomingResources: Provider<ArtifactCollection>
+  fun setIncomingResources(collection: Provider<ArtifactCollection>) {
     this.incomingResources = collection
   }
 
@@ -39,11 +40,11 @@ abstract class CheckExternalResourcesTask : DefaultTask() {
   abstract val manifestFile: RegularFileProperty
 
   @get:Input
-  abstract var externalDeclarations: List<String>
+  abstract val externalDeclarations: ListProperty<String>
 
   @get:Input
   @get:Optional
-  abstract var localResources: Provider<List<Collection<Directory>>>?
+  abstract val localResources: ListProperty<Collection<Directory>>
 
   @TaskAction
   fun generateExternalDeclarations() {
@@ -54,7 +55,7 @@ abstract class CheckExternalResourcesTask : DefaultTask() {
     // Parsing XML? Haha. No.
     val styleMatches = STYLE_PATTERN.findAll(manifestContents)
 
-    val resourceModules = incomingResources.artifactFiles.files
+    val resourceModules = incomingResources.get().artifactFiles.files
       .map { file ->
         val allLines = file.readLines()
         val namespace = allLines.first()
@@ -87,7 +88,7 @@ abstract class CheckExternalResourcesTask : DefaultTask() {
     // Styles referenced in the manifest minus the ones that are present in the incoming resources
     val externallyDefined = styles - includedStyles
 
-    val missing = externallyDefined - externalDeclarations.map(::transformStyleReference).toSet()
+    val missing = externallyDefined - externalDeclarations.get().map(::transformStyleReference).toSet()
     check(missing.isEmpty()) {
       """
         |Some resources are defined externally but not declared as external.
@@ -103,7 +104,7 @@ abstract class CheckExternalResourcesTask : DefaultTask() {
   }
 
   private fun checkOverwrittenStyles(resourceModules: List<ResourceModule>) {
-    val externalsSet = externalDeclarations.toSet()
+    val externalsSet = externalDeclarations.get().toSet()
 
     val overwritten = resourceModules.flatMap { (_, resources) ->
       val moduleStyles = resources["style"] ?: emptySet()
