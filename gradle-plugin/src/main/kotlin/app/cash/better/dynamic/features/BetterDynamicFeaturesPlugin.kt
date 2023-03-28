@@ -11,6 +11,7 @@ import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.api.variant.Variant
 import com.android.build.gradle.internal.publishing.AndroidArtifacts
+import com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask
 import com.android.build.gradle.internal.tasks.factory.dependsOn
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -68,46 +69,9 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
           it.resolutionStrategy.activateDependencyLocking()
         }
       }
-
-      val generateTask = project.tasks.register(
-        "generate${variant.name.capitalized()}ExternalResources",
-        GenerateExternalResourcesTask::class.java,
-      ) { task ->
-        task.outputDirectory.set(project.layout.buildDirectory.dir("gen"))
-        task.declarations = pluginExtension.externalStyles
-        task.group = GROUP
-      }
-      variant.sources.res?.addGeneratedSourceDirectory(generateTask, GenerateExternalResourcesTask::outputDirectory)
-
-      project.afterEvaluate {
-        val externalsTask = project.tasks.register(
-          "check${variant.name.capitalized()}ExternalResources",
-          CheckExternalResourcesTask::class.java,
-        ) { task ->
-          val configuration = project.configurations.getByName("${variant.name}RuntimeClasspath")
-          val artifacts = configuration.incoming.artifactView { config ->
-            config.attributes { container ->
-              container.attribute(
-                AndroidArtifacts.ARTIFACT_TYPE,
-                AndroidArtifacts.ArtifactType.SYMBOL_LIST_WITH_PACKAGE_NAME.type,
-              )
-            }
-          }.artifacts
-
-          task.setIncomingResources(artifacts)
-          task.incomingResourcesCollection.setFrom(artifacts.artifactFiles)
-          task.manifestFile.set(variant.artifacts.get(SingleArtifact.MERGED_MANIFEST))
-          task.externalDeclarations = pluginExtension.externalStyles
-          task.localResources = variant.sources.res?.all
-          task.group = GROUP
-        }
-
-        project.tasks.named("process${variant.name.capitalized()}Resources").dependsOn(externalsTask)
-
-        // https://issuetracker.google.com/issues/223240936#comment40
-        project.tasks.named("map${variant.name.capitalized()}SourceSetPaths").dependsOn(generateTask)
-      }
     }
+
+    project.setupBaseResourcesCheckingTasks(androidComponents, pluginExtension)
   }
 
   private fun Configuration.getConfigurationArtifactCollection(): ArtifactCollection =
@@ -225,6 +189,47 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       task.projectPath.set(project.path)
     }
     tasks.named("preBuild").dependsOn(checkLockfileTask)
+  }
+
+  private fun Project.setupBaseResourcesCheckingTasks(androidComponents: AndroidComponentsExtension<*, *, *>, pluginExtension: BetterDynamicFeaturesExtension) {
+    androidComponents.onVariants { variant ->
+      val generateResourcesTask = tasks.register("generate${variant.name.capitalized()}ExternalResources", GenerateExternalResourcesTask::class.java) { task ->
+        task.outputDirectory.set(layout.buildDirectory.dir("betterDynamicFeatures/resources/${variant.name}"))
+        task.declarations.set(provider { pluginExtension.externalStyles })
+        task.group = GROUP
+      }
+      variant.sources.res?.addGeneratedSourceDirectory(generateResourcesTask, GenerateExternalResourcesTask::outputDirectory)
+
+      val checkExternalResourcesTask = tasks.register("check${variant.name.capitalized()}ExternalResources", CheckExternalResourcesTask::class.java) { task ->
+        val configuration = project.configurations.named("${variant.name}RuntimeClasspath")
+
+        val artifactsProvider = configuration.map {
+          it.incoming.artifactView { config ->
+            config.attributes { container ->
+              container.attribute(
+                AndroidArtifacts.ARTIFACT_TYPE,
+                AndroidArtifacts.ArtifactType.SYMBOL_LIST_WITH_PACKAGE_NAME.type,
+              )
+            }
+          }.artifacts
+        }
+
+        task.setIncomingResources(artifactsProvider)
+        task.incomingResourcesCollection.setFrom(artifactsProvider.map { it.artifactFiles })
+        task.manifestFile.set(variant.artifacts.get(SingleArtifact.MERGED_MANIFEST))
+        task.externalDeclarations.set(provider { pluginExtension.externalStyles })
+        variant.sources.res?.all?.let { task.localResources.set(it) }
+
+        task.group = GROUP
+      }
+
+      // Run the check task before the AGP `process[VariantName]Resources` task.
+      tasks.withType(LinkApplicationAndroidResourcesTask::class.java).configureEach {
+        if (it.name.contains(variant.name, ignoreCase = true)) {
+          it.dependsOn(checkExternalResourcesTask)
+        }
+      }
+    }
   }
 
   companion object {
