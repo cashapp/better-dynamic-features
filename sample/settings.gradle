@@ -1,0 +1,29 @@
+pluginManagement {
+    repositories {
+        mavenCentral()
+        google()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+      mavenCentral()
+      google()
+    }
+}
+
+includeBuild("../") {
+  dependencySubstitution {
+    substitute module('app.cash.better.dynamic.features:app.cash.better.dynamic.features.gradle.plugin') using project(':gradle-plugin')
+  }
+}
+
+rootProject.name = 'boxapp'
+
+enableFeaturePreview('TYPESAFE_PROJECT_ACCESSORS')
+
+include ':app'
+include ':bigboxfeature'
+include ':bigboxfeature:api'
+include ':smallboxfeature'
