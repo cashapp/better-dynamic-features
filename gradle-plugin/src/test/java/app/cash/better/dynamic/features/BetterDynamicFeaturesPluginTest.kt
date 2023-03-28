@@ -17,7 +17,8 @@ class BetterDynamicFeaturesPluginTest {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", ":base:writeLockfile")
+      .cleaned()
+      .withArguments(":base:writeLockfile")
 
     // Generate lockfile first, and then run dependencies task
     gradleRunner.build()
@@ -46,7 +47,8 @@ class BetterDynamicFeaturesPluginTest {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", ":base:writeLockfile")
+      .cleaned()
+      .withArguments(":base:writeLockfile")
 
     // Generate lockfile first, and then run dependencies task
     gradleRunner.build()
@@ -75,7 +77,8 @@ class BetterDynamicFeaturesPluginTest {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", ":base:writeLockfile")
+      .cleaned()
+      .withArguments(":base:writeLockfile")
 
     // Generate lockfile first, and then run dependencies task
     gradleRunner.build()
@@ -104,7 +107,8 @@ class BetterDynamicFeaturesPluginTest {
 
     val result = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", ":base:writeLockfile")
+      .cleaned()
+      .withArguments(":base:writeLockfile")
       .build()
 
     assertThat(result.output).contains("BUILD SUCCESSFUL")
@@ -155,7 +159,8 @@ class BetterDynamicFeaturesPluginTest {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", ":base:writeLockfile")
+      .cleaned()
+      .withArguments(":base:writeLockfile")
 
     val result = gradleRunner.build()
     assertThat(result.output).contains("BUILD SUCCESSFUL")
@@ -170,7 +175,8 @@ class BetterDynamicFeaturesPluginTest {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", ":base:writeLockfile")
+      .cleaned()
+      .withArguments(":base:writeLockfile")
 
     // Generate lockfile first, and then run dependencies task
     gradleRunner.build()
@@ -202,7 +208,8 @@ class BetterDynamicFeaturesPluginTest {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", ":base:writeLockfile")
+      .cleaned()
+      .withArguments(":base:writeLockfile")
 
     // Generate lockfile first, and then run dependencies task
     gradleRunner.build()
@@ -234,7 +241,8 @@ class BetterDynamicFeaturesPluginTest {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", ":base:writeLockfile")
+      .cleaned()
+      .withArguments(":base:writeLockfile")
 
     // Generate lockfile first, and then run dependencies task
     gradleRunner.build()
@@ -261,7 +269,8 @@ class BetterDynamicFeaturesPluginTest {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", ":base:build")
+      .cleaned()
+      .withArguments(":base:build")
 
     val result = gradleRunner.buildAndFail()
 
@@ -277,7 +286,8 @@ class BetterDynamicFeaturesPluginTest {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", ":base:writeLockfile")
+      .cleaned()
+      .withArguments(":base:writeLockfile")
 
     // Generate lockfile first, and then run dependencies task
     gradleRunner.build()
@@ -313,7 +323,8 @@ class BetterDynamicFeaturesPluginTest {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", ":base:installDebug")
+      .cleaned()
+      .withArguments(":base:installDebug")
 
     val result = gradleRunner.buildAndFail()
     assertThat(result.output).contains("The lockfile was out of date and has been updated. Rerun your build.")
@@ -328,7 +339,8 @@ class BetterDynamicFeaturesPluginTest {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", ":base:preBuild")
+      .cleaned()
+      .withArguments(":base:preBuild")
 
     gradleRunner.build()
 
@@ -345,8 +357,8 @@ class BetterDynamicFeaturesPluginTest {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withDebug(true)
-      .withArguments("clean", ":base:writeLockfile")
+      .cleaned()
+      .withArguments(":base:writeLockfile")
 
     gradleRunner.build()
 
@@ -362,8 +374,8 @@ class BetterDynamicFeaturesPluginTest {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withDebug(true)
-      .withArguments("clean", ":base:writeLockfile")
+      .cleaned()
+      .withArguments(":base:writeLockfile")
 
     gradleRunner.build()
 
@@ -379,7 +391,8 @@ class BetterDynamicFeaturesPluginTest {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", ":base:writeLockfile")
+      .cleaned()
+      .withArguments(":base:writeLockfile")
 
     // Generate lockfile first, and then run dependencies task
     gradleRunner.build()
@@ -408,7 +421,8 @@ class BetterDynamicFeaturesPluginTest {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("clean", ":base:writeLockfile")
+      .cleaned()
+      .withArguments(":base:writeLockfile")
 
     // Generate lockfile first, and then run dependencies task
     gradleRunner.build()
@@ -467,9 +481,23 @@ class BetterDynamicFeaturesPluginTest {
     // This tests that the :feature module is configured indirectly through being depended on by :base
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
-      .withArguments("-Dorg.gradle.configureondemand=true", ":base:clean", ":base:writeLockfile")
+      .cleaned(module = "base")
+      .withArguments("-Dorg.gradle.configureondemand=true", ":base:writeLockfile")
 
     gradleRunner.build()
+  }
+
+  @Test fun `updating lockfile while with other tasks fails`() {
+    val integrationRoot = File("src/test/fixtures/same-versions")
+    val baseProject = integrationRoot.resolve("base")
+    clearLockfile(baseProject)
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .withArguments("clean", ":base:writeLockfile")
+
+    val result = gradleRunner.buildAndFail()
+    assertThat(result.output).contains("Updating the lockfile and running other tasks together is an error. Update the lockfile first, and then run your other tasks separately.")
   }
 
   private fun clearLockfile(root: File) {

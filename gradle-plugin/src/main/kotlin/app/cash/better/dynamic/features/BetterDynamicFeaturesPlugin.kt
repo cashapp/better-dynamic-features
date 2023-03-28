@@ -29,6 +29,10 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       "Plugin 'com.android.application' or 'com.android.dynamic-feature' must also be applied before this plugin"
     }
 
+    val hasLockfileStartTask = project.gradle.startParameter.taskNames.any { it.contains("writeLockfile", ignoreCase = true) || it.contains(WRITE_DEPENDENCY_GRAPH_REGEX) }
+    val startTaskCount = project.gradle.startParameter.taskNames.count()
+    require(!hasLockfileStartTask || startTaskCount == 1) { "Updating the lockfile and running other tasks together is an error. Update the lockfile first, and then run your other tasks separately." }
+
     if (project.plugins.hasPlugin("com.android.application")) {
       applyToApplication(project)
     } else {
@@ -60,7 +64,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       // We only want to enforce the lockfile if we aren't explicitly trying to update it
       if (project.gradle.startParameter.taskNames.none {
         it.contains("writeLockfile", ignoreCase = true) ||
-          it.contains("writePartialLockfile", ignoreCase = true) ||
+          it.contains(WRITE_DEPENDENCY_GRAPH_REGEX) ||
           it.contains("checkLockfile", ignoreCase = true)
       }
       ) {
@@ -238,5 +242,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     private const val ARTIFACT_TYPE_BASE_DEPENDENCY_GRAPH = "base-dependency-graph"
 
     private const val VARIANT_DEPENDENCY_GRAPHS = "dependency-graphs"
+
+    private val WRITE_DEPENDENCY_GRAPH_REGEX = Regex("write(.+)DependencyGraph", RegexOption.IGNORE_CASE)
   }
 }
