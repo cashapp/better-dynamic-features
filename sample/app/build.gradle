@@ -1,0 +1,42 @@
+plugins {
+  alias(libs.plugins.android.application)
+  alias(libs.plugins.kotlin.android)
+  alias(libs.plugins.ksp)
+  alias(libs.plugins.betterDynamicFeatures)
+}
+
+android {
+  namespace "app.cash.boxapp"
+
+  dynamicFeatures = [":bigboxfeature", ":smallboxfeature", ":bigboxfeature:api"]
+
+  compileSdk libs.versions.compileSdk.get() as int
+
+  defaultConfig {
+    minSdk libs.versions.minSdk.get() as int
+    targetSdk libs.versions.compileSdk.get() as int
+
+    applicationId 'app.cash.boxapp'
+
+    versionCode 1
+    versionName "1.0"
+  }
+
+  buildFeatures {
+    compose true
+  }
+
+  kotlinOptions {
+    jvmTarget = "1.8"
+    freeCompilerArgs += '-Xexplicit-api=strict'
+  }
+
+  composeOptions {
+    kotlinCompilerExtensionVersion libs.versions.compose.get()
+  }
+}
+
+dependencies {
+  implementation libs.compose.activity
+  implementation libs.compose.material
+}

@@ -1,0 +1,15 @@
+*.iml
+gen/
+out/
+.gradle/
+.idea/
+lib/
+build/
+.DS_Store
+local.properties
+
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build

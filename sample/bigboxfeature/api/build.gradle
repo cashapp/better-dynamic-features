@@ -1,0 +1,34 @@
+plugins {
+  alias(libs.plugins.android.dynamic.feature)
+  alias(libs.plugins.kotlin.android)
+  alias(libs.plugins.ksp)
+  alias(libs.plugins.betterDynamicFeatures)
+}
+
+android {
+  namespace "app.cash.boxapp.bigboxfeature.api"
+
+  compileSdk libs.versions.compileSdk.get() as int
+
+  defaultConfig {
+    minSdk libs.versions.minSdk.get() as int
+  }
+
+  buildFeatures {
+    compose true
+  }
+
+  kotlinOptions {
+    jvmTarget = "1.8"
+  }
+
+  composeOptions {
+    kotlinCompilerExtensionVersion libs.versions.compose.get()
+  }
+}
+
+dependencies {
+  implementation projects.app
+
+  implementation libs.compose.runtime
+}
