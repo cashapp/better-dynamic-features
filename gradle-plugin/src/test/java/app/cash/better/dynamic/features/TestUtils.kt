@@ -40,3 +40,13 @@ internal fun androidHome(): String {
 }
 
 internal fun String.withInvariantPathSeparators() = replace("\\", "/")
+
+fun GradleRunner.withFreshLockfile(module: String = "base"): GradleRunner {
+  withArguments("$module:writeLockfile").build()
+  return this
+}
+
+fun GradleRunner.cleaned(module: String? = null): GradleRunner {
+  withArguments(if (module == null) "clean" else "$module:clean").build()
+  return this
+}
