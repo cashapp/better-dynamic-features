@@ -22,7 +22,7 @@ class SmallBoxFeature : BoxAppFeature {
         .size(width = 100.dp, height = 40.dp)
         .background(Color(255, 222, 133))
         .padding(start = 10.dp, end = 10.dp),
-      contentAlignment = Alignment.CenterStart
+      contentAlignment = Alignment.CenterStart,
     ) {
       Text("Small Box Feature!")
     }

@@ -23,13 +23,13 @@ import java.util.ServiceLoader
   Column(
     modifier = Modifier
       .padding(10.dp)
-      .background(color = Color(196, 255, 233))
+      .background(color = Color(196, 255, 233)),
   ) {
     // The "My Boxes" tab.
     Row(modifier = Modifier.weight(1f)) {
       Column(
         modifier = Modifier.padding(10.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp),
       ) {
         ServiceLoader.load(BoxAppFeature::class.java).forEach {
           it.Tile()
@@ -42,18 +42,18 @@ import java.util.ServiceLoader
       modifier = Modifier
         .padding(10.dp)
         .background(color = Color(128, 255, 206))
-        .padding(10.dp)
+        .padding(10.dp),
     ) {
       Spacer(modifier = Modifier.weight(1f))
       Box(
         modifier = Modifier
           .size(40.dp)
           .clip(CircleShape)
-          .background(Color(83, 163, 133))
+          .background(Color(83, 163, 133)),
       ) {
         Text(
           text = "A",
-          modifier = Modifier.align(Alignment.Center)
+          modifier = Modifier.align(Alignment.Center),
         )
       }
       Spacer(modifier = Modifier.weight(1f))
@@ -61,11 +61,11 @@ import java.util.ServiceLoader
         modifier = Modifier
           .size(40.dp)
           .clip(CircleShape)
-          .background(Color(83, 163, 133))
+          .background(Color(83, 163, 133)),
       ) {
         Text(
           text = "B",
-          modifier = Modifier.align(Alignment.Center)
+          modifier = Modifier.align(Alignment.Center),
         )
       }
       Spacer(modifier = Modifier.weight(1f))
@@ -77,7 +77,7 @@ import java.util.ServiceLoader
       ) {
         Text(
           text = "C",
-          modifier = Modifier.align(Alignment.Center)
+          modifier = Modifier.align(Alignment.Center),
         )
       }
       Spacer(modifier = Modifier.weight(1f))

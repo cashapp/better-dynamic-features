@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
   Box(
     modifier = Modifier.size(200.dp, 100.dp)
       .background(Color.White),
-    contentAlignment = Alignment.Center
+    contentAlignment = Alignment.Center,
   ) {
     Text(text = "Small Box Widget")
   }

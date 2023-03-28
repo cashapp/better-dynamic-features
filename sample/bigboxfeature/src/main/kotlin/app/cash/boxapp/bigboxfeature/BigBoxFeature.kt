@@ -22,7 +22,7 @@ class BigBoxFeature : BoxAppFeature {
         .size(width = 200.dp, height = 60.dp)
         .background(Color(255, 222, 133))
         .padding(20.dp)
-        .clickable { navigator.goTo { BigBoxScreen() } }
+        .clickable { navigator.goTo { BigBoxScreen() } },
     ) {
       Text("Big Box Feature!")
     }
