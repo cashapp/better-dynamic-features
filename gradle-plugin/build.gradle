@@ -24,6 +24,7 @@ dependencies {
   implementation(libs.kotlin)
   implementation(libs.moshi.core)
   implementation(libs.moshi.kotlin)
+  implementation(files("libs/ARSCLib-1.1.5.jar"))
 
   compileOnly(libs.google.guava)
   compileOnly(libs.google.gson)
