@@ -361,8 +361,9 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
 
           task.mode.set(MagicRFixingTask.Mode.ProtoXml)
           task.dependsOn(tasks.named("process${variant.name.capitalized()}Resources"))
+          task.dependsOn(tasks.named(taskName("bundle", variant, "Resources")))
         }
-        tasks.named("bundle${variant.name.capitalized()}Resources").dependsOn(protohNoTask)
+        tasks.named(taskName("build", variant, "PreBundle")).dependsOn(protohNoTask)
       }
     }
   }
