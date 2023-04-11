@@ -4,7 +4,6 @@ import com.squareup.moshi.Moshi
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.tasks.InputFiles
-import org.gradle.api.tasks.Internal
 
 abstract class DependencyGraphConsumingTask : DefaultTask() {
   private val moshi = Moshi.Builder().build()
