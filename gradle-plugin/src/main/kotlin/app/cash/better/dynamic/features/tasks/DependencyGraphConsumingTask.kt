@@ -22,17 +22,11 @@ abstract class DependencyGraphConsumingTask : DefaultTask() {
   @get:InputFiles
   abstract val baseDependencyGraphFiles: ConfigurableFileCollection
 
-  @get:Internal
-  protected val baseGraph by lazy {
-    baseDependencyGraphFiles.map {
-      adapter.fromJson(it.readText())?.nodes ?: error("Could not read graph from $it")
-    }.flatten()
-  }
+  protected fun baseGraph() = baseDependencyGraphFiles.map {
+    adapter.fromJson(it.readText())?.nodes ?: error("Could not read graph from $it")
+  }.flatten()
 
-  @get:Internal
-  protected val featureGraphs by lazy {
-    featureDependencyGraphFiles.map {
-      adapter.fromJson(it.readText())?.nodes ?: error("Could not read graph from $it")
-    }
+  protected fun featureGraphs() = featureDependencyGraphFiles.map {
+    adapter.fromJson(it.readText())?.nodes ?: error("Could not read graph from $it")
   }
 }

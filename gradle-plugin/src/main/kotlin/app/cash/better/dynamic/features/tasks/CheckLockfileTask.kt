@@ -30,7 +30,7 @@ abstract class CheckLockfileTask : DependencyGraphConsumingTask() {
 
   @TaskAction
   fun checkLockfiles() {
-    val currentEntries = mergeGraphs(baseGraph, featureGraphs)
+    val currentEntries = mergeGraphs(baseGraph(), featureGraphs())
     val areTheyEqual = currentEntries.toText() == currentLockfile?.readText()
 
     outputFile.asFile.get().writeText(areTheyEqual.toString())

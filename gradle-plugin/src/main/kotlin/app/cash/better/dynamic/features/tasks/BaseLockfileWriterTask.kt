@@ -10,7 +10,7 @@ abstract class BaseLockfileWriterTask : DependencyGraphConsumingTask() {
 
   @TaskAction
   fun generateLockfile() {
-    val entries = mergeGraphs(baseGraph, featureGraphs)
+    val entries = mergeGraphs(baseGraph(), featureGraphs())
     outputLockfile.get().asFile.writeText(entries.toText())
   }
 }
