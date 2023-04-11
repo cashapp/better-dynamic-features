@@ -24,3 +24,5 @@ kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version = "1.7.20-1.0.8" }
 publish = { id = "com.vanniktech.maven.publish", version = "0.20.0" }
 spotless = { id = "com.diffplug.spotless", version = "6.12.0" }
+# TODO: Stuck on an older version until we upgrade to Kotlin 1.8
+wire = { id = "com.squareup.wire", version = "4.4.3" }

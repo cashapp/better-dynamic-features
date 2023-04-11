@@ -1,5 +1,7 @@
 package app.cash.better.dynamic.features.magic
 
+import com.android.aapt.XmlElement
+import com.android.aapt.XmlNode
 import com.reandroid.archive.APKArchive
 import com.reandroid.archive.FileInputSource
 import com.reandroid.arsc.chunk.xml.ResXmlAttribute
@@ -14,6 +16,11 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
+import java.nio.file.FileSystems
+import java.nio.file.Files
+import kotlin.io.path.inputStream
+import kotlin.io.path.isDirectory
+import kotlin.io.path.outputStream
 
 /**
  * This task rewrites the compiled layout resource files to use the correct `attr` and `id` references.
@@ -46,9 +53,58 @@ abstract class MagicRFixingTask : DefaultTask() {
   fun rewrite() {
     when (mode.get()) {
       Mode.BinaryXml -> rewriteBinaryXml()
-      Mode.ProtoXml -> logger.warn("Proto XML rewriting is currently unimplemented.")
+      Mode.ProtoXml -> rewriteProtoXml()
       null -> {}
     }
+  }
+
+  private fun rewriteProtoXml() {
+    val copyFile = temporaryDir.resolve("copy.ap_")
+    copyFile.delete()
+    val copy = processedResourceArchive.asFile.get().copyTo(copyFile)
+
+    val zip = FileSystems.newFileSystem(copy.toPath(), this::class.java.classLoader)
+    Files.walk(zip.getPath("")).filter {
+      it.startsWith(zip.getPath("res", "layout")) && !it.isDirectory()
+    }.forEach {
+      val rootNode = it.inputStream().use { input -> XmlNode.ADAPTER.decode(input) }
+      val result = processProtoFile(rootNode)
+
+      it.outputStream().use { output -> XmlNode.ADAPTER.encode(output, result) }
+    }
+
+    zip.close()
+    copyFile.copyTo(outputArchive.get().asFile, overwrite = true)
+  }
+
+  private fun processProtoFile(root: XmlNode): XmlNode {
+    val mappedXmlNode = root.walkElements { element ->
+      val mappedAttributes = element.attribute.map { attr ->
+        if (resourceMapping.containsKey(attr.resource_id)) {
+          logger.info("Replaced attribute %s %x with %x".format(attr.name, attr.resource_id, resourceMapping.getValue(attr.resource_id)))
+          return@map attr.copy(resource_id = resourceMapping.getValue(attr.resource_id))
+        }
+
+        // TODO: Map "id" resource references
+        attr
+      }
+
+      element.copy(attribute = mappedAttributes)
+    }
+
+    return mappedXmlNode
+  }
+
+  private fun XmlNode.walkElements(block: (element: XmlElement) -> XmlElement): XmlNode {
+    if (element == null) return this
+    val mappedElement = block(element)
+
+    val children = mappedElement.child.toMutableList()
+    for (i in 0..children.lastIndex) {
+      children[i] = children[i].walkElements(block)
+    }
+
+    return this.copy(element = mappedElement.copy(child = children))
   }
 
   private fun rewriteBinaryXml() {
