@@ -27,9 +27,13 @@ class ResourceRewriteTests {
 
     val mappingFile =
       integrationRoot.resolve("app/build/betterDynamicFeatures/resource-mapping/debug/mapping.txt")
+    val mappingContent = mappingFile.readText()
 
     // Validate that the affected attr resource was identified in the build process
-    assertThat(mappingFile.readLines()).contains("attr/specialText 2113994752 2130904007")
+    assertThat(mappingContent).containsMatch(ATTR_REGEX)
+
+    // The generated IDs aren't guaranteed to be stable between different machines, so we have to read the real value like this
+    val mappedId = Regex(ATTR_REGEX).find(mappingContent)!!.value.split(" ").last()
 
     val apkOutput = integrationRoot.resolve("feature/build/outputs/apk/debug/feature-debug.apk")
     val module = ApkModule.loadApkFile(apkOutput)
@@ -43,8 +47,12 @@ class ResourceRewriteTests {
     assertThat(jsonRoot.resolve("res/layout/fragment_feature.xml.json").readText())
       .contains(
         """|      "name": "specialText",
-           |      "id": 2130904007,
+           |      "id": $mappedId,
         """.trimMargin(),
       )
+  }
+
+  private companion object {
+    const val ATTR_REGEX = """attr\/specialText \d+ \d+"""
   }
 }

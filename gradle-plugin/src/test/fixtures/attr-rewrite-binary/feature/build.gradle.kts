@@ -5,9 +5,9 @@ import com.android.build.gradle.tasks.ProcessAndroidResources
 import org.gradle.configurationcache.extensions.capitalized
 
 plugins {
-  alias(libs.plugins.com.android.dynamic.feature)
-  alias(libs.plugins.org.jetbrains.kotlin.android)
-  alias(libs.plugins.betterDynamicFeatures)
+  id("com.android.dynamic-feature")
+  id("org.jetbrains.kotlin.android")
+  id("app.cash.better.dynamic.features")
 }
 android {
   namespace = "com.example.attr.feature"
@@ -35,14 +35,11 @@ android {
 
 dependencies {
   implementation(project(":app"))
-  implementation(libs.core.ktx)
-  implementation(libs.material)
-  implementation(libs.appcompat)
-  implementation(libs.constraintlayout)
-  implementation(libs.navigation.fragment.ktx)
-  implementation(libs.navigation.ui.ktx)
-  testImplementation(libs.junit)
-  androidTestImplementation(libs.androidx.test.ext.junit)
-  androidTestImplementation(libs.espresso.core)
-  androidTestImplementation(libs.annotation)
+
+  implementation("androidx.core:core-ktx:1.10.0")
+  implementation("com.google.android.material:material:1.8.0")
+  implementation("androidx.appcompat:appcompat:1.6.1")
+  implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+  implementation("androidx.navigation:navigation-fragment-ktx:2.5.3")
+  implementation("androidx.navigation:navigation-ui-ktx:2.5.3")
 }

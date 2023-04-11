@@ -1,9 +1,9 @@
 import com.android.build.gradle.tasks.PackageApplication
 
 plugins {
-  alias(libs.plugins.com.android.application)
-  alias(libs.plugins.org.jetbrains.kotlin.android)
-  alias(libs.plugins.betterDynamicFeatures)
+  id("com.android.application")
+  id("org.jetbrains.kotlin.android")
+  id("app.cash.better.dynamic.features")
 }
 
 android {
@@ -40,19 +40,10 @@ android {
 }
 
 dependencies {
-
-  implementation(libs.core.ktx)
-  implementation(libs.appcompat)
-  implementation(libs.material)
-  implementation(libs.constraintlayout)
-  implementation(libs.navigation.fragment.ktx)
-  implementation(libs.navigation.ui.ktx)
-  testImplementation(libs.junit)
-  androidTestImplementation(libs.androidx.test.ext.junit)
-  androidTestImplementation(libs.espresso.core)
-}
-
-tasks.withType(PackageApplication::class.java).configureEach {
-  println("Configured: ${this.name}")
-//  this.transformationRequest
+  implementation("androidx.core:core-ktx:1.10.0")
+  implementation("com.google.android.material:material:1.8.0")
+  implementation("androidx.appcompat:appcompat:1.6.1")
+  implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+  implementation("androidx.navigation:navigation-fragment-ktx:2.5.3")
+  implementation("androidx.navigation:navigation-ui-ktx:2.5.3")
 }
