@@ -10,5 +10,6 @@ dependencyResolutionManagement {
 includeBuild('../../../../../') {
   dependencySubstitution {
     substitute module('app.cash:better-dynamic-features') using project(':gradle-plugin')
+    substitute module("app.cash.better.dynamic.features:app.cash.better.dynamic.features.gradle.plugin") using project(":gradle-plugin")
   }
 }

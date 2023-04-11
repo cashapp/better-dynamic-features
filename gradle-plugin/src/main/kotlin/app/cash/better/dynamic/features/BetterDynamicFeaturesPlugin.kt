@@ -1,6 +1,9 @@
 // Copyright Square, Inc.
 package app.cash.better.dynamic.features
 
+import app.cash.better.dynamic.features.magic.AaptMagic
+import app.cash.better.dynamic.features.magic.MagicRFixingTask
+import app.cash.better.dynamic.features.magic.ResourceClashFinderTask
 import app.cash.better.dynamic.features.tasks.BaseLockfileWriterTask
 import app.cash.better.dynamic.features.tasks.CheckExternalResourcesTask
 import app.cash.better.dynamic.features.tasks.CheckLockfileTask
@@ -17,6 +20,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ArtifactCollection
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.attributes.Usage
@@ -30,7 +34,12 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       "Plugin 'com.android.application' or 'com.android.dynamic-feature' must also be applied before this plugin"
     }
 
-    val hasLockfileStartTask = project.gradle.startParameter.taskNames.any { it.contains("writeLockfile", ignoreCase = true) || it.contains(WRITE_DEPENDENCY_GRAPH_REGEX) }
+    val hasLockfileStartTask = project.gradle.startParameter.taskNames.any {
+      it.contains(
+        "writeLockfile",
+        ignoreCase = true,
+      ) || it.contains(WRITE_DEPENDENCY_GRAPH_REGEX)
+    }
     val startTaskCount = project.gradle.startParameter.taskNames.count()
     require(!hasLockfileStartTask || startTaskCount == 1) { "Updating the lockfile and running other tasks together is an error. Update the lockfile first, and then run your other tasks separately." }
 
@@ -41,15 +50,19 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     }
   }
 
+  @OptIn(AaptMagic::class)
   private fun applyToFeature(project: Project) {
     val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
 
     val sharedConfiguration = project.createSharedFeatureConfiguration()
     project.setupFeatureDependencyGraphTasks(androidComponents, sharedConfiguration)
+    project.setupFeatureRMagicTask(androidComponents)
   }
 
+  @OptIn(AaptMagic::class)
   private fun applyToApplication(project: Project) {
-    val pluginExtension = project.extensions.create("betterDynamicFeatures", BetterDynamicFeaturesExtension::class.java)
+    val pluginExtension =
+      project.extensions.create("betterDynamicFeatures", BetterDynamicFeaturesExtension::class.java)
 
     val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
     val sharedConfiguration = project.createSharedBaseConfiguration()
@@ -59,6 +72,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       val featureProjects = extension.dynamicFeatures.map { project.project(it) }
 
       project.setupBaseDependencyGraphTasks(androidComponents, featureProjects, sharedConfiguration)
+      project.setupBaseResourceClashTask(androidComponents, featureProjects)
     }
 
     androidComponents.onVariants { variant ->
@@ -120,7 +134,10 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       isCanBeConsumed = true
       isCanBeResolved = false
       attributes.apply {
-        attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(Usage::class.java, ATTRIBUTE_USAGE_METADATA))
+        attribute(
+          Usage.USAGE_ATTRIBUTE,
+          project.objects.named(Usage::class.java, ATTRIBUTE_USAGE_METADATA),
+        )
       }
       outgoing.variants.create(VARIANT_DEPENDENCY_GRAPHS)
     }
@@ -130,12 +147,18 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       isCanBeConsumed = true
       isCanBeResolved = true
       attributes.apply {
-        attribute(Usage.USAGE_ATTRIBUTE, project.objects.named(Usage::class.java, ATTRIBUTE_USAGE_METADATA))
+        attribute(
+          Usage.USAGE_ATTRIBUTE,
+          project.objects.named(Usage::class.java, ATTRIBUTE_USAGE_METADATA),
+        )
       }
       outgoing.variants.create(VARIANT_DEPENDENCY_GRAPHS)
     }
 
-  private fun Project.setupFeatureDependencyGraphTasks(androidComponents: AndroidComponentsExtension<*, *, *>, configuration: Configuration) {
+  private fun Project.setupFeatureDependencyGraphTasks(
+    androidComponents: AndroidComponentsExtension<*, *, *>,
+    configuration: Configuration,
+  ) {
     androidComponents.onVariants { variant ->
       val task = configureDependencyGraphTask(variant)
       configuration.outgoing.variants.getByName(VARIANT_DEPENDENCY_GRAPHS) { configurationVariant ->
@@ -147,7 +170,11 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     }
   }
 
-  private fun Project.setupBaseDependencyGraphTasks(androidComponents: AndroidComponentsExtension<*, *, *>, featureProjects: List<Project>, configuration: Configuration) {
+  private fun Project.setupBaseDependencyGraphTasks(
+    androidComponents: AndroidComponentsExtension<*, *, *>,
+    featureProjects: List<Project>,
+    configuration: Configuration,
+  ) {
     featureProjects.forEach { dependencies.add(CONFIGURATION_BDF, it) }
     // This allows us to access artifacts created in this project's tasks via the artifactView APIs
     dependencies.add(CONFIGURATION_BDF, this)
@@ -182,29 +209,45 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       task.group = GROUP
     }
 
-    val checkLockfileTask = project.tasks.register("checkLockfile", CheckLockfileTask::class.java) { task ->
-      task.currentLockfilePath.set(dependencyLocking.lockFile)
-      task.outputFile.set { project.buildDir.resolve("betterDynamicFeatures/deps/lockfile_check") }
-      task.featureDependencyGraphFiles.setFrom(featureDependencyArtifacts)
-      task.baseDependencyGraphFiles.setFrom(baseDependencyArtifacts)
+    val checkLockfileTask =
+      project.tasks.register("checkLockfile", CheckLockfileTask::class.java) { task ->
+        task.currentLockfilePath.set(dependencyLocking.lockFile)
+        task.outputFile.set { project.buildDir.resolve("betterDynamicFeatures/deps/lockfile_check") }
+        task.featureDependencyGraphFiles.setFrom(featureDependencyArtifacts)
+        task.baseDependencyGraphFiles.setFrom(baseDependencyArtifacts)
 
-      task.group = GROUP
-      task.runningOnCi.set(project.providers.systemProperty("ci").orElse("false").map { it.toBoolean() })
-      task.projectPath.set(project.path)
-    }
+        task.group = GROUP
+        task.runningOnCi.set(
+          project.providers.systemProperty("ci").orElse("false").map { it.toBoolean() },
+        )
+        task.projectPath.set(project.path)
+      }
     tasks.named("preBuild").dependsOn(checkLockfileTask)
   }
 
-  private fun Project.setupBaseResourcesCheckingTasks(androidComponents: AndroidComponentsExtension<*, *, *>, pluginExtension: BetterDynamicFeaturesExtension) {
+  @AaptMagic
+  private fun Project.setupBaseResourcesCheckingTasks(
+    androidComponents: AndroidComponentsExtension<*, *, *>,
+    pluginExtension: BetterDynamicFeaturesExtension,
+  ) {
     androidComponents.onVariants { variant ->
-      val generateResourcesTask = tasks.register("generate${variant.name.capitalized()}ExternalResources", GenerateExternalResourcesTask::class.java) { task ->
+      val generateResourcesTask = tasks.register(
+        "generate${variant.name.capitalized()}ExternalResources",
+        GenerateExternalResourcesTask::class.java,
+      ) { task ->
         task.outputDirectory.set(layout.buildDirectory.dir("betterDynamicFeatures/resources/${variant.name}"))
         task.declarations.set(provider { pluginExtension.externalStyles })
         task.group = GROUP
       }
-      variant.sources.res?.addGeneratedSourceDirectory(generateResourcesTask, GenerateExternalResourcesTask::outputDirectory)
+      variant.sources.res?.addGeneratedSourceDirectory(
+        generateResourcesTask,
+        GenerateExternalResourcesTask::outputDirectory,
+      )
 
-      val checkExternalResourcesTask = tasks.register("check${variant.name.capitalized()}ExternalResources", CheckExternalResourcesTask::class.java) { task ->
+      val checkExternalResourcesTask = tasks.register(
+        "check${variant.name.capitalized()}ExternalResources",
+        CheckExternalResourcesTask::class.java,
+      ) { task ->
         val configuration = project.configurations.named("${variant.name}RuntimeClasspath")
 
         val artifactsProvider = configuration.map {
@@ -236,6 +279,102 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     }
   }
 
+  @AaptMagic
+  private fun Project.setupBaseResourceClashTask(
+    androidComponents: AndroidComponentsExtension<*, *, *>,
+    featureProjects: List<Project>,
+  ) {
+    androidComponents.onVariants { variant ->
+      afterEvaluate {
+        tasks.register(
+          taskName("find", variant, "ResourceClashes"),
+          ResourceClashFinderTask::class.java,
+        ) { task ->
+          val linkTask = tasks.named(
+            taskName("process", variant, "Resources"),
+            LinkApplicationAndroidResourcesTask::class.java,
+          )
+          task.baseSymbolList.set { linkTask.get().getTextSymbolOutputFile()!! }
+
+          task.featureSymbolLists.setFrom(
+            featureProjects.map {
+              it.buildDir.resolve("intermediates/runtime_symbol_list/${variant.name}/R.txt")
+            },
+          )
+          featureProjects.forEach {
+            task.dependsOn(it.tasks.named(taskName("process", variant, "Resources")))
+          }
+          task.dependsOn(tasks.named(taskName("process", variant, "Resources")))
+          task.resourceMappingFile.set(buildDir.resolve("betterDynamicFeatures/resource-mapping/${variant.name}/mapping.txt"))
+        }
+      }
+    }
+  }
+
+  @AaptMagic
+  private fun Project.setupFeatureRMagicTask(androidComponents: AndroidComponentsExtension<*, *, *>) {
+    androidComponents.onVariants { variant ->
+      afterEvaluate {
+        val baseProject = configurations
+          .getByName("${variant.name}RuntimeClasspath")
+          .allDependencies
+          .filterIsInstance<ProjectDependency>()
+          .first { it.dependencyProject.plugins.hasPlugin("com.android.application") }
+          .dependencyProject
+
+        // This task rewrites Android Binary XML files when assembling APKs
+        val ohNoTask = tasks.register(
+          "magicRewrite${variant.name.capitalized()}BinaryResources",
+          MagicRFixingTask::class.java,
+        ) { task ->
+          task.processedResourceArchive.set { buildDir.resolve("intermediates/processed_res/${variant.name}/out/resources-${variant.name}.ap_") }
+          task.outputArchive.set { buildDir.resolve("intermediates/processed_res/${variant.name}/out/resources-${variant.name}.ap_") }
+
+          // I'm in Spain without the S
+          task.resourceMappingFile.set(
+            baseProject.tasks.named(
+              "find${variant.name.capitalized()}ResourceClashes",
+              ResourceClashFinderTask::class.java,
+            ).flatMap { it.resourceMappingFile },
+          )
+
+          task.mode.set(MagicRFixingTask.Mode.BinaryXml)
+          task.dependsOn(tasks.named("process${variant.name.capitalized()}Resources"))
+        }
+        tasks.named("assemble${variant.name.capitalized()}").dependsOn(ohNoTask)
+
+        // This task rewrites Proto XML files when producing an app bundle
+        val protohNoTask = tasks.register(
+          "magicRewrite${variant.name.capitalized()}ProtoResources",
+          MagicRFixingTask::class.java,
+        ) { task ->
+          task.processedResourceArchive.set { buildDir.resolve("intermediates/linked_res_for_bundle/${variant.name}/bundled-res.ap_") }
+          task.outputArchive.set { buildDir.resolve("intermediates/linked_res_for_bundle/${variant.name}/bundled-res.ap_") }
+
+          // Bread in French
+          task.resourceMappingFile.set(
+            baseProject.tasks.named(
+              "find${variant.name.capitalized()}ResourceClashes",
+              ResourceClashFinderTask::class.java,
+            ).flatMap { it.resourceMappingFile },
+          )
+
+          task.mode.set(MagicRFixingTask.Mode.ProtoXml)
+          task.dependsOn(tasks.named("process${variant.name.capitalized()}Resources"))
+          task.dependsOn(tasks.named(taskName("bundle", variant, "Resources")))
+        }
+        tasks.named(taskName("build", variant, "PreBundle")).dependsOn(protohNoTask)
+      }
+    }
+  }
+
+  private fun taskName(vararg args: Any) = args.mapIndexed { index, arg ->
+    when (arg) {
+      is Variant -> if (index != 0) arg.name.replaceFirstChar { it.uppercase() } else arg.name
+      else -> arg.toString()
+    }
+  }.joinToString(separator = "")
+
   companion object {
     internal const val GROUP = "Better Dynamic Features"
 
@@ -248,6 +387,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
 
     private const val VARIANT_DEPENDENCY_GRAPHS = "dependency-graphs"
 
-    private val WRITE_DEPENDENCY_GRAPH_REGEX = Regex("write(.+)DependencyGraph", RegexOption.IGNORE_CASE)
+    private val WRITE_DEPENDENCY_GRAPH_REGEX =
+      Regex("write(.+)DependencyGraph", RegexOption.IGNORE_CASE)
   }
 }
