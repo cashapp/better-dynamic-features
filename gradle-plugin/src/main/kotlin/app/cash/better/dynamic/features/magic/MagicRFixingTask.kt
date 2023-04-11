@@ -42,23 +42,23 @@ abstract class MagicRFixingTask : DefaultTask() {
   @get:Input
   abstract val mode: Property<Mode>
 
-  private val resourceMapping: Map<Int, Int> by lazy {
+  private fun readResourceMapping(): Map<Int, Int> =
     resourceMappingFile.asFile.get()
       .readLines()
       .map { it.split(" ") }
       .associate { (_, key, value) -> key.toInt() to value.toInt() }
-  }
 
   @TaskAction
   fun rewrite() {
+    val resourceMapping = readResourceMapping()
     when (mode.get()) {
-      Mode.BinaryXml -> rewriteBinaryXml()
-      Mode.ProtoXml -> rewriteProtoXml()
+      Mode.BinaryXml -> rewriteBinaryXml(resourceMapping)
+      Mode.ProtoXml -> rewriteProtoXml(resourceMapping)
       null -> {}
     }
   }
 
-  private fun rewriteProtoXml() {
+  private fun rewriteProtoXml(resourceMapping: Map<Int, Int>) {
     val copyFile = temporaryDir.resolve("copy.ap_")
     copyFile.delete()
     val copy = processedResourceArchive.asFile.get().copyTo(copyFile)
@@ -68,7 +68,7 @@ abstract class MagicRFixingTask : DefaultTask() {
       it.startsWith(zip.getPath("res", "layout")) && !it.isDirectory()
     }.forEach {
       val rootNode = it.inputStream().use { input -> XmlNode.ADAPTER.decode(input) }
-      val result = processProtoFile(rootNode)
+      val result = processProtoFile(rootNode, resourceMapping)
 
       it.outputStream().use { output -> XmlNode.ADAPTER.encode(output, result) }
     }
@@ -77,7 +77,7 @@ abstract class MagicRFixingTask : DefaultTask() {
     copyFile.copyTo(outputArchive.get().asFile, overwrite = true)
   }
 
-  private fun processProtoFile(root: XmlNode): XmlNode {
+  private fun processProtoFile(root: XmlNode, resourceMapping: Map<Int, Int>): XmlNode {
     val mappedXmlNode = root.walkElements { element ->
       val mappedAttributes = element.attribute.map { attr ->
         if (resourceMapping.containsKey(attr.resource_id)) {
@@ -107,7 +107,7 @@ abstract class MagicRFixingTask : DefaultTask() {
     return this.copy(element = mappedElement.copy(child = children))
   }
 
-  private fun rewriteBinaryXml() {
+  private fun rewriteBinaryXml(resourceMapping: Map<Int, Int>) {
     val copyFile = temporaryDir.resolve("copy.ap_")
     copyFile.delete()
     val copy = processedResourceArchive.asFile.get().copyTo(copyFile)
@@ -118,7 +118,7 @@ abstract class MagicRFixingTask : DefaultTask() {
 
     apkArchive.listInputSources().filter { it.name.startsWith("res/layout") }.forEach { source ->
       val document = source.openStream().use { ResXmlDocument().apply { readBytes(it) } }
-      processLayoutFile(document)
+      processLayoutFile(document, resourceMapping)
 
       val tempFile = temporaryDir.resolve(source.name)
       tempFile.parentFile.mkdirs()
@@ -132,7 +132,7 @@ abstract class MagicRFixingTask : DefaultTask() {
     apkArchive.writeApk(outputArchive.outputStream())
   }
 
-  private fun processLayoutFile(xmlDocument: ResXmlDocument) {
+  private fun processLayoutFile(xmlDocument: ResXmlDocument, resourceMapping: Map<Int, Int>) {
     xmlDocument.walkElements { element ->
       element.listAttributes().forEach { attr ->
         println(attr.name)

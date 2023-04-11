@@ -12,3 +12,7 @@ dependencies {
   implementation "com.squareup.okhttp3:okhttp:4.9.3"
   debugImplementation "com.jakewharton.picnic:picnic:0.5.0"
 }
+
+betterDynamicFeatures {
+  baseProject.set(project(":base"))
+}

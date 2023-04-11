@@ -33,6 +33,10 @@ android {
   }
 }
 
+betterDynamicFeatures {
+  baseProject.set(project(":app"))
+}
+
 dependencies {
   implementation(project(":app"))
 

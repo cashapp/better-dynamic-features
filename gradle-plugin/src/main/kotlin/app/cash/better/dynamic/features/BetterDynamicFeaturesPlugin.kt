@@ -20,7 +20,6 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ArtifactCollection
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.attributes.Usage
@@ -52,11 +51,15 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
 
   @OptIn(AaptMagic::class)
   private fun applyToFeature(project: Project) {
+    val pluginExtension = project.extensions.create(
+      "betterDynamicFeatures",
+      BetterDynamicFeaturesFeatureExtension::class.java,
+    )
     val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
 
     val sharedConfiguration = project.createSharedFeatureConfiguration()
     project.setupFeatureDependencyGraphTasks(androidComponents, sharedConfiguration)
-    project.setupFeatureRMagicTask(androidComponents)
+    project.setupFeatureRMagicTask(androidComponents, pluginExtension)
   }
 
   @OptIn(AaptMagic::class)
@@ -312,15 +315,24 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
   }
 
   @AaptMagic
-  private fun Project.setupFeatureRMagicTask(androidComponents: AndroidComponentsExtension<*, *, *>) {
+  private fun Project.setupFeatureRMagicTask(
+    androidComponents: AndroidComponentsExtension<*, *, *>,
+    pluginExtension: BetterDynamicFeaturesFeatureExtension,
+  ) {
     androidComponents.onVariants { variant ->
       afterEvaluate {
-        val baseProject = configurations
-          .getByName("${variant.name}RuntimeClasspath")
-          .allDependencies
-          .filterIsInstance<ProjectDependency>()
-          .first { it.dependencyProject.plugins.hasPlugin("com.android.application") }
-          .dependencyProject
+        val baseProject = pluginExtension.baseProject.orNull
+        require(baseProject != null) {
+          """
+            |A base project has not been set for this feature module! This will result in undefined runtime behaviour.
+            |Add a reference to your base module in the feature module configuration:
+            |
+            |betterDynamicFeatures {
+            |  baseProject.set(project(":app"))
+            |}
+          """.trimMargin()
+          return@afterEvaluate
+        }
 
         // This task rewrites Android Binary XML files when assembling APKs
         val ohNoTask = tasks.register(

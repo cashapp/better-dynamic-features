@@ -11,3 +11,7 @@ dependencies {
   implementation project(":base")
   implementation "com.squareup.sqldelight:runtime:1.5.4"
 }
+
+betterDynamicFeatures {
+  baseProject.set(project(":base"))
+}
