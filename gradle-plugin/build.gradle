@@ -1,3 +1,6 @@
+import com.google.devtools.ksp.gradle.KspTaskJvm
+import com.squareup.wire.gradle.WireTask
+
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
   alias(libs.plugins.kotlin)
@@ -5,6 +8,7 @@ plugins {
   id("java-gradle-plugin")
   alias(libs.plugins.publish)
   alias(libs.plugins.spotless)
+  alias(libs.plugins.wire)
 }
 
 gradlePlugin {
@@ -54,5 +58,16 @@ publishing {
       url = providers.gradleProperty("internalUrl")
       credentials(PasswordCredentials)
     }
+  }
+}
+
+wire {
+  kotlin {}
+}
+
+// https://github.com/square/wire/issues/2335
+afterEvaluate {
+  tasks.withType(KspTaskJvm).configureEach {
+    dependsOn(tasks.withType(WireTask))
   }
 }
