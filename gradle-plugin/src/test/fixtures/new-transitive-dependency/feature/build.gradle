@@ -11,3 +11,7 @@ dependencies {
   implementation project(":base")
   implementation "com.google.android.material:material:1.7.0"
 }
+
+betterDynamicFeatures {
+  baseProject.set(project(":base"))
+}

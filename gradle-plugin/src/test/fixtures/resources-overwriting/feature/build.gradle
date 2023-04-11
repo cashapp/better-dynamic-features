@@ -13,3 +13,7 @@ dependencies {
   implementation project(":library")
   implementation "com.squareup.okhttp3:okhttp:4.9.3"
 }
+
+betterDynamicFeatures {
+  baseProject.set(project(":base"))
+}
