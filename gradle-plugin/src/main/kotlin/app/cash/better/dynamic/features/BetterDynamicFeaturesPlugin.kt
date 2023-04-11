@@ -23,6 +23,7 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.attributes.Usage
+import org.gradle.api.file.Directory
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.configurationcache.extensions.capitalized
 
@@ -268,7 +269,8 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
         task.incomingResourcesCollection.setFrom(artifactsProvider.map { it.artifactFiles })
         task.manifestFile.set(variant.artifacts.get(SingleArtifact.MERGED_MANIFEST))
         task.externalDeclarations.set(provider { pluginExtension.externalStyles })
-        variant.sources.res?.all?.let { task.localResources.set(it) }
+        task.result.set(project.layout.buildDirectory.file("betterDynamicFeatures/resourcesCheck/${variant.name}/result.txt"))
+        variant.sources.res?.all?.let { task.localResources.setFrom(it.map(List<Collection<Directory>>::flatten)) }
 
         task.group = GROUP
       }

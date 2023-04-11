@@ -5,13 +5,13 @@ import app.cash.better.dynamic.features.BetterDynamicFeaturesExtension
 import org.gradle.api.DefaultTask
 import org.gradle.api.artifacts.ArtifactCollection
 import org.gradle.api.file.ConfigurableFileCollection
-import org.gradle.api.file.Directory
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
 /**
@@ -42,9 +42,12 @@ abstract class CheckExternalResourcesTask : DefaultTask() {
   @get:Input
   abstract val externalDeclarations: ListProperty<String>
 
-  @get:Input
+  @get:InputFiles
   @get:Optional
-  abstract val localResources: ListProperty<Collection<Directory>>
+  abstract val localResources: ConfigurableFileCollection
+
+  @get:OutputFile
+  abstract val result: RegularFileProperty
 
   @TaskAction
   fun generateExternalDeclarations() {
@@ -74,8 +77,14 @@ abstract class CheckExternalResourcesTask : DefaultTask() {
 
     val manifestStyles = styleMatches.map { match -> transformStyleReference(match.value) }.toSet()
 
-    checkMissingExternals(resourceModules, manifestStyles)
-    checkOverwrittenStyles(resourceModules)
+    try {
+      checkMissingExternals(resourceModules, manifestStyles)
+      checkOverwrittenStyles(resourceModules)
+      result.get().asFile.writeText("success")
+    } catch (e: IllegalStateException) {
+      result.get().asFile.writeText("failed")
+      throw e
+    }
   }
 
   private fun checkMissingExternals(resourceModules: List<ResourceModule>, styles: Set<String>) {
@@ -122,10 +131,7 @@ abstract class CheckExternalResourcesTask : DefaultTask() {
   }
 
   private fun computeLocalResources(): ResourceModule? {
-    val localResources = localResources?.get() ?: return null
-
-    val localStyles = localResources.flatten()
-      .map { it.asFile }
+    val localStyles = localResources.files
       .filter {
         // Exclude the resources we generate
         "ExternalResources" !in it.path && it.exists()
