@@ -12,6 +12,7 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
 /**
@@ -46,6 +47,9 @@ abstract class CheckExternalResourcesTask : DefaultTask() {
   @get:Optional
   abstract val localResources: ListProperty<Collection<Directory>>
 
+  @get:OutputFile
+  abstract val result: RegularFileProperty
+
   @TaskAction
   fun generateExternalDeclarations() {
     val localResourceModule = computeLocalResources()
@@ -74,8 +78,14 @@ abstract class CheckExternalResourcesTask : DefaultTask() {
 
     val manifestStyles = styleMatches.map { match -> transformStyleReference(match.value) }.toSet()
 
-    checkMissingExternals(resourceModules, manifestStyles)
-    checkOverwrittenStyles(resourceModules)
+    try {
+      checkMissingExternals(resourceModules, manifestStyles)
+      checkOverwrittenStyles(resourceModules)
+      result.get().asFile.writeText("success")
+    } catch (e: IllegalStateException) {
+      result.get().asFile.writeText("failed")
+      throw e
+    }
   }
 
   private fun checkMissingExternals(resourceModules: List<ResourceModule>, styles: Set<String>) {

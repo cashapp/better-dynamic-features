@@ -265,6 +265,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
         task.incomingResourcesCollection.setFrom(artifactsProvider.map { it.artifactFiles })
         task.manifestFile.set(variant.artifacts.get(SingleArtifact.MERGED_MANIFEST))
         task.externalDeclarations.set(provider { pluginExtension.externalStyles })
+        task.result.set(project.layout.buildDirectory.file("betterDynamicFeatures/resourcesCheck/${variant.name}/result.txt"))
         variant.sources.res?.all?.let { task.localResources.set(it) }
 
         task.group = GROUP
