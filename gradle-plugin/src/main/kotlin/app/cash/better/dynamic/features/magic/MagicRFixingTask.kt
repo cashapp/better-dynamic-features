@@ -9,6 +9,7 @@ import com.reandroid.arsc.chunk.xml.ResXmlDocument
 import com.reandroid.arsc.chunk.xml.ResXmlElement
 import com.reandroid.arsc.chunk.xml.ResXmlIDMap
 import com.reandroid.arsc.container.SingleBlockContainer
+import com.reandroid.arsc.value.ValueType
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
@@ -85,8 +86,18 @@ abstract class MagicRFixingTask : DefaultTask() {
           return@map attr.copy(resource_id = resourceMapping.getValue(attr.resource_id))
         }
 
-        // TODO: Map "id" resource references
-        attr
+        if (attr.compiled_item?.ref?.id != null && resourceMapping.containsKey(attr.compiled_item.ref.id)) {
+          logger.info("Updated attr ${attr.name} reference of %x with %x".format(attr.compiled_item.ref.id, resourceMapping.getValue(attr.compiled_item.ref.id)))
+          return@map attr.copy(
+            compiled_item = attr.compiled_item.copy(
+              ref = attr.compiled_item.ref.copy(
+                id = resourceMapping.getValue(attr.compiled_item.ref.id),
+              ),
+            ),
+          )
+        }
+
+        return@map attr
       }
 
       element.copy(attribute = mappedAttributes)
@@ -145,11 +156,10 @@ abstract class MagicRFixingTask : DefaultTask() {
           logger.info("Replaced attribute %s %x with %x".format(attr.name, original, attr.nameResourceID))
         }
 
-        // Rewrite ID IDs (the resource ID of android:id attributes)
-        // TODO: This will require rewriting the R class as well
-        // if (attr.name == "id" && attr.namePrefix == "android" && resourceMapping.containsKey(attr.data)) {
-        //   attr.data = resourceMapping.getValue(attr.data)
-        // }
+        if (attr.valueType == ValueType.REFERENCE && resourceMapping.containsKey(attr.data)) {
+          logger.info("Updated attr ${attr.fullName} reference of %x with %x".format(attr.data, resourceMapping.getValue(attr.data)))
+          attr.setValueAsResourceId(resourceMapping.getValue(attr.data))
+        }
       }
     }
 
