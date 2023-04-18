@@ -145,13 +145,7 @@ class ResourceRewriteTests {
     val mappedId = Regex(ID_REGEX).find(mappingContent)!!.value.split(" ").last()
 
     val apkOutput = integrationRoot.resolve("app/build/outputs/apk_from_bundle/debug/app-debug-universal.apk")
-    val zipFs = FileSystems.newFileSystem(apkOutput.toPath(), javaClass.classLoader)
-
-    val tempFile = dexDir.newFile("classes.dex")
-    zipFs.getPath("classes5.dex").copyTo(tempFile.toPath(), overwrite = true)
-    zipFs.close()
-
-    val dexContent = dexdump(tempFile)
+    val dexContent = dexdump(apkOutput)
 
     assertThat(dexContent).contains(
       """
