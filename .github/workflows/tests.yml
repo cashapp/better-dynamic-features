@@ -25,7 +25,7 @@ jobs:
         if: failure()
         with:
           name: error-report
-          path: "**/build/reports/tests/test/*.html"
+          path: "**/build/reports/tests/test/**/*.html"
 
   bundle_sample:
     runs-on: ubuntu-latest
