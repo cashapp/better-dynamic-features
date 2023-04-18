@@ -412,7 +412,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
 
           task.dependsOn(tasks.named("process${variant.name.capitalized()}Resources"))
         }
-        tasks.named(taskName("compile", variant, "Kotlin")).dependsOn(rClassTask)
+        tasks.named(taskName("compile", variant, "JavaWithJavac")).dependsOn(rClassTask)
       }
     }
   }
