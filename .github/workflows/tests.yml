@@ -18,7 +18,14 @@ jobs:
           java-version: 11
 
       - name: Run tests
-        run: ./gradlew check
+        run: ./gradlew check --stacktrace
+
+      - name: Store Test Results
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: error-report
+          path: "**/build/reports/tests/test/*.html"
 
   bundle_sample:
     runs-on: ubuntu-latest
