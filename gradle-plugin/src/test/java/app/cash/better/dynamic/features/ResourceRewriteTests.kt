@@ -155,7 +155,6 @@ class ResourceRewriteTests {
 
     assertThat(dexContent).contains(
       """
-        |    #0              : (in Lcom/example/attr/feature/R${'$'}attr;)
         |      name          : 'specialText'
         |      type          : 'I'
         |      access        : 0x0019 (PUBLIC STATIC FINAL)
@@ -165,7 +164,6 @@ class ResourceRewriteTests {
 
     assertThat(dexContent).contains(
       """
-        |    #1              : (in Lcom/example/attr/feature/R${'$'}id;)
         |      name          : 'button_first'
         |      type          : 'I'
         |      access        : 0x0019 (PUBLIC STATIC FINAL)

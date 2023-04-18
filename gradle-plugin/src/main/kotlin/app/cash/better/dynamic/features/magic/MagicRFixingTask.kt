@@ -146,7 +146,6 @@ abstract class MagicRFixingTask : DefaultTask() {
   private fun processLayoutFile(xmlDocument: ResXmlDocument, resourceMapping: Map<Int, Int>) {
     xmlDocument.walkElements { element ->
       element.listAttributes().forEach { attr ->
-        println(attr.name)
         // Rewrite attribute IDs
         if (resourceMapping.containsKey(attr.nameResourceID)) {
           val original = attr.nameResourceID
