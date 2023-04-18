@@ -9,10 +9,8 @@ import org.junit.rules.TemporaryFolder
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
-import java.nio.file.FileSystems
 import java.nio.file.Files
 import kotlin.io.path.Path
-import kotlin.io.path.copyTo
 
 class ResourceRewriteTests {
 
