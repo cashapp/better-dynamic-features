@@ -9,6 +9,7 @@ import org.gradle.api.tasks.Internal
 abstract class DependencyGraphConsumingTask : DefaultTask() {
   @field:Internal
   private val moshi = Moshi.Builder().build()
+
   @field:Internal
   private val adapter = moshi.adapter(NodeList::class.java)
 
