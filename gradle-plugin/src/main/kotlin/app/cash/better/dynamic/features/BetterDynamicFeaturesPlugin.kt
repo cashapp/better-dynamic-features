@@ -325,6 +325,8 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
   ) {
     androidComponents.onVariants { variant ->
       afterEvaluate {
+        if (!pluginExtension.enableResourceRewriting.getOrElse(false)) return@afterEvaluate
+
         val baseProject = pluginExtension.baseProject.orNull
         require(baseProject != null) {
           """
