@@ -2,8 +2,10 @@
 package app.cash.better.dynamic.features
 
 import app.cash.better.dynamic.features.magic.AaptMagic
+import app.cash.better.dynamic.features.magic.MagicRClassFixingTask
 import app.cash.better.dynamic.features.magic.MagicRFixingTask
 import app.cash.better.dynamic.features.magic.ResourceClashFinderTask
+import app.cash.better.dynamic.features.magic.ResourceStyleableMapperTask
 import app.cash.better.dynamic.features.tasks.BaseLockfileWriterTask
 import app.cash.better.dynamic.features.tasks.CheckExternalResourcesTask
 import app.cash.better.dynamic.features.tasks.CheckLockfileTask
@@ -336,6 +338,23 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
           return@afterEvaluate
         }
 
+        val styleableTask = tasks.register(taskName("extract", variant, "StyleableResources"), ResourceStyleableMapperTask::class.java) { task ->
+          task.resourceMappingFile.set(
+            baseProject.tasks.named(
+              "find${variant.name.capitalized()}ResourceClashes",
+              ResourceClashFinderTask::class.java,
+            ).flatMap { it.resourceMappingFile },
+          )
+          task.styleableArraysFile.set(buildDir.resolve("betterDynamicFeatures/resource-mapping/${variant.name}/styleables.txt"))
+          val linkTask = tasks.named(
+            taskName("process", variant, "Resources"),
+            LinkApplicationAndroidResourcesTask::class.java,
+          )
+          task.runtimeSymbolList.set { linkTask.get().getTextSymbolOutputFile()!! }
+
+          task.dependsOn(tasks.named(taskName("process", variant, "Resources")))
+        }
+
         // This task rewrites Android Binary XML files when assembling APKs
         val ohNoTask = tasks.register(
           "magicRewrite${variant.name.capitalized()}BinaryResources",
@@ -353,7 +372,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
           )
 
           task.mode.set(MagicRFixingTask.Mode.BinaryXml)
-          task.dependsOn(tasks.named("process${variant.name.capitalized()}Resources"))
+          task.dependsOn(styleableTask)
         }
         tasks.named("assemble${variant.name.capitalized()}").dependsOn(ohNoTask)
 
@@ -374,10 +393,26 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
           )
 
           task.mode.set(MagicRFixingTask.Mode.ProtoXml)
-          task.dependsOn(tasks.named("process${variant.name.capitalized()}Resources"))
+          task.dependsOn(styleableTask)
           task.dependsOn(tasks.named(taskName("bundle", variant, "Resources")))
         }
         tasks.named(taskName("build", variant, "PreBundle")).dependsOn(protohNoTask)
+
+        val rClassTask = tasks.register(taskName("magicRewrite", variant, "RClasses"), MagicRClassFixingTask::class.java) { task ->
+          task.resourceMappingFile.set(
+            baseProject.tasks.named(
+              "find${variant.name.capitalized()}ResourceClashes",
+              ResourceClashFinderTask::class.java,
+            ).flatMap { it.resourceMappingFile },
+          )
+          task.styleableMappingFile.set(styleableTask.flatMap { it.styleableArraysFile })
+
+          task.jar.set(buildDir.resolve("intermediates/compile_and_runtime_not_namespaced_r_class_jar/${variant.name}/R.jar"))
+          task.output.set(buildDir.resolve("intermediates/compile_and_runtime_not_namespaced_r_class_jar/${variant.name}/R.jar"))
+
+          task.dependsOn(tasks.named("process${variant.name.capitalized()}Resources"))
+        }
+        tasks.named(taskName("compile", variant, "JavaWithJavac")).dependsOn(rClassTask)
       }
     }
   }

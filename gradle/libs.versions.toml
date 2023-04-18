@@ -5,6 +5,7 @@ moshi = "1.14.0"
 
 [libraries]
 agp = { module = "com.android.tools.build:gradle", version = "7.4.2" }
+javassist = { module = "org.javassist:javassist", version = "3.29.1-GA" }
 kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 moshi-core = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
 moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshi" }

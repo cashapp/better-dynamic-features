@@ -48,11 +48,11 @@ abstract class ResourceClashFinderTask : DefaultTask() {
     )
   }
 
-  private fun parseSymbols(file: File) = file.readLines().map { line ->
+  private fun parseSymbols(file: File) = file.readLines().mapNotNull { line ->
     val parts = line.split(" ")
+    if (parts[0] == "int[]") return@mapNotNull null
 
-    // TODO: handle int[] resources
-    val id = if (parts[0] == "int[]") 0 else parts[3].removePrefix("0x").toInt(16)
+    val id = parts[3].removePrefix("0x").toInt(16)
     Symbol(parts[1], parts[2], id)
   }
 
