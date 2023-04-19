@@ -34,6 +34,7 @@ android {
 }
 
 betterDynamicFeatures {
+  enableResourceRewriting.set(true)
   baseProject.set(project(":app"))
 }
 
