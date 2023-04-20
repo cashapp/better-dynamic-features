@@ -190,10 +190,10 @@ class BetterDynamicFeaturesPluginTest {
       |# This file is expected to be part of source control.
       |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugRuntimeClasspath,releaseRuntimeClasspath
       |com.squareup.okio:okio:2.9.0=debugRuntimeClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-common:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-common:1.8.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib:1.8.20=debugRuntimeClasspath,releaseRuntimeClasspath
       |org.jetbrains:annotations:13.0=debugRuntimeClasspath,releaseRuntimeClasspath
       |empty=
       """.trimMargin(),
@@ -223,10 +223,10 @@ class BetterDynamicFeaturesPluginTest {
       |# This file is expected to be part of source control.
       |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugRuntimeClasspath,releaseRuntimeClasspath
       |com.squareup.okio:okio:2.9.0=debugRuntimeClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-common:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-common:1.8.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib:1.8.20=debugRuntimeClasspath,releaseRuntimeClasspath
       |org.jetbrains:annotations:13.0=debugRuntimeClasspath,releaseRuntimeClasspath
       |empty=
       """.trimMargin(),
@@ -254,10 +254,10 @@ class BetterDynamicFeaturesPluginTest {
       |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugRuntimeClasspath,releaseRuntimeClasspath
       |com.squareup.okio:okio:2.9.0=debugRuntimeClasspath,releaseRuntimeClasspath
       |com.squareup.retrofit2:retrofit:2.9.0=debugRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-common:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib:1.7.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-common:1.8.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib:1.8.20=debugRuntimeClasspath,releaseRuntimeClasspath
       |org.jetbrains:annotations:13.0=debugRuntimeClasspath,releaseRuntimeClasspath
       |empty=
       """.trimMargin(),

@@ -1,5 +1,5 @@
 [versions]
-kotlin = "1.7.20"
+kotlin = "1.8.20"
 ktlint = "0.46.1"
 moshi = "1.14.0"
 
@@ -22,8 +22,7 @@ android-sdkCommon = "com.android.tools:sdk-common:30.4.2"
 
 [plugins]
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-ksp = { id = "com.google.devtools.ksp", version = "1.7.20-1.0.8" }
+ksp = { id = "com.google.devtools.ksp", version = "1.8.20-1.0.11" }
 publish = { id = "com.vanniktech.maven.publish", version = "0.20.0" }
 spotless = { id = "com.diffplug.spotless", version = "6.12.0" }
-# TODO: Stuck on an older version until we upgrade to Kotlin 1.8
-wire = { id = "com.squareup.wire", version = "4.4.3" }
+wire = { id = "com.squareup.wire", version = "4.5.5" }

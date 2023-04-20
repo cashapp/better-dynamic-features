@@ -205,7 +205,7 @@ class ResourceRewriteTests {
     val process = Runtime.getRuntime().exec(arrayOf(dexdumpPath, file.absolutePath))
     val stdInput = BufferedReader(InputStreamReader(process.inputStream))
 
-    val result = stdInput.readLines().joinToString(separator = "\n")
+    val result = stdInput.readText()
     check(process.waitFor() == 0) { "dexdump failed" }
     return result
   }
