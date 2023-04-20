@@ -377,6 +377,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
           task.dependsOn(styleableTask)
         }
         tasks.named("assemble${variant.name.capitalized()}").dependsOn(ohNoTask)
+        tasks.named(taskName("package", variant)).dependsOn(ohNoTask)
 
         // This task rewrites Proto XML files when producing an app bundle
         val protohNoTask = tasks.register(
