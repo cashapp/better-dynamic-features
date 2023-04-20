@@ -36,6 +36,7 @@ import com.android.builder.dexing.ClassFileInput
 import com.android.builder.dexing.ClassFileInputs
 import com.android.builder.dexing.DependencyGraphUpdater
 import com.android.builder.dexing.DexArchiveBuilder
+import com.android.builder.dexing.DexFilePerClassFile
 import com.android.builder.dexing.DexParameters
 import com.android.builder.dexing.MutableDependencyGraph
 import com.android.builder.dexing.isJarFile
@@ -92,15 +93,14 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
     @get:Optional
     @get:Input
     val libConfiguration: Property<String>
+    @get:Input
+    val enableGlobalSynthetics: Property<Boolean>
   }
 
   @get:Inject
   abstract val inputChanges: InputChanges
 
-  // Use RELATIVE path sensitivity since we use [FileChange.normalizedPath] to calculate the
-  // derived dex file relative path. This will ensure we find the derived file when deletion is
-  // required. Revert to CLASSPATH once Gradle 7.5 is used : b/224524454
-  @get:PathSensitive(PathSensitivity.RELATIVE)
+  @get:Classpath
   @get:InputArtifact
   @get:Incremental
   abstract val primaryInput: Provider<FileSystemLocation>
@@ -108,9 +108,9 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
   protected abstract fun computeClasspathFiles(): List<Path>
 
   override fun transform(outputs: TransformOutputs) {
-    // TODO(b/162813654) record transform execution span
+    //TODO(b/162813654) record transform execution span
     val input = primaryInput.get().asFile
-    // TODO(derek): Remove this entire buildSrc setup
+    // TODO(derekellis): Remove this entire buildSrc setup
     // appends a hash of the full artifact path to the output name to work around this issue
     // https://github.com/gradle/gradle/issues/17213 by providing a unique but stable name for each artifact
     // This might be fixed in Gradle 8.0? Maybe we can upstream this into AGP? Who knows.
@@ -123,15 +123,18 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
       parameters.libConfiguration.isPresent && !parameters.debuggable.get()
     val provideIncrementalSupport = !isJarFile(inputFile) && !outputKeepRulesEnabled
 
-    val dexOutputDir =
-      if (outputKeepRulesEnabled) {
-        outputDir.resolve(DEX_DIR_NAME)
-      } else {
-        outputDir
-      }
+    val dexOutputDir = if (outputKeepRulesEnabled || parameters.enableGlobalSynthetics.get()) {
+      outputDir.resolve(computeDexDirName(outputDir))
+    } else {
+      outputDir
+    }
+    val globalSyntheticsDir = if (parameters.enableGlobalSynthetics.get()) {
+      outputDir.resolve(computeGlobalSyntheticsDirName(outputDir))
+    } else null
+
     val keepRulesOutputFile =
       if (outputKeepRulesEnabled) {
-        outputDir.resolve(KEEP_RULES_FILE_NAME)
+        outputDir.resolve(computeKeepRulesFileName(outputDir))
       } else null
     // desugarGraphFile != null iff provideIncrementalSupport == true
     val desugarGraphFile =
@@ -154,6 +157,7 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
         inputChanges.getFileChanges(primaryInput).toSerializable(),
         classpathChanges.toSerializable(),
         dexOutputDir,
+        globalSyntheticsDir,
         desugarGraphFile!!
       )
     } else {
@@ -161,6 +165,7 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
         inputFile,
         dexOutputDir,
         keepRulesOutputFile,
+        globalSyntheticsDir,
         provideIncrementalSupport,
         desugarGraphFile
       )
@@ -172,6 +177,7 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
     inputChanges: SerializableFileChanges,
     classpathChanges: SerializableFileChanges,
     dexOutputDir: File,
+    globalSyntheticsOutput: File?,
     desugarGraphFile: File
   ) {
     val desugarGraph = try {
@@ -182,7 +188,14 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
           " Cause: ${e.javaClass.simpleName}, message: ${e.message}.\n" +
           "Fall back to non-incremental mode."
       )
-      processNonIncrementally(input, dexOutputDir, null, true, desugarGraphFile)
+      processNonIncrementally(
+        input,
+        dexOutputDir,
+        null,
+        globalSyntheticsOutput,
+        true,
+        desugarGraphFile
+      )
       return
     }
 
@@ -198,14 +211,27 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
     val removedModifiedOrImpactedFiles =
       removedFiles + modifiedFiles + unchangedButImpactedFiles
 
-    // Remove stale dex outputs (not including those that will be overwritten)
-    inputChanges.removedFiles.forEach {
-      if (ClassFileInput.CLASS_MATCHER.test(it.file.path)) {
-        val staleOutputFile =
-          dexOutputDir.resolve(ClassFileEntry.withDexExtension(it.normalizedPath))
-        FileUtils.deleteRecursivelyIfExists(staleOutputFile)
+    // Remove outputs of removed, modified, and unchanged-but-impacted class files
+    check(input.isDirectory) { "In incremental mode, input must be a directory: ${input.path}" }
+    (inputChanges.removedFiles.map { it.file } + input.walk().toList())
+      .filter {
+        ClassFileInput.CLASS_MATCHER.test(it.path) && it in removedModifiedOrImpactedFiles
       }
-    }
+      .forEach { classFile ->
+        // We are in DexFilePerClassFile output mode
+        DexFilePerClassFile.getDexOutputRelativePathsOfClassFile(
+          classFileRelativePath = classFile.toRelativeString(input)
+        ).forEach { outputRelativePath ->
+          FileUtils.deleteIfExists(dexOutputDir.resolve(outputRelativePath))
+        }
+        globalSyntheticsOutput?.let {
+          DexFilePerClassFile.getGlobalOutputRelativePathOfClassFile(
+            classFile.toRelativeString(input)
+          ).let { outputRelativePath ->
+            FileUtils.deleteIfExists(it.resolve(outputRelativePath))
+          }
+        }
+      }
 
     // Remove stale nodes in the desugaring graph
     removedModifiedOrImpactedFiles.forEach {
@@ -213,11 +239,20 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
     }
 
     // Process only input files that are modified, added, or unchanged-but-impacted
-    val filter: (File, String) -> Boolean = { rootPath: File, relativePath: String ->
-      rootPath in modifiedImpactedOrAddedFiles /* for jars (we don't track class files in jars) */ ||
-        rootPath.resolve(relativePath) in modifiedImpactedOrAddedFiles /* for class files in dirs */
+    val filter: (File, String) -> Boolean = { inputDir: File, relativePath: String ->
+      check(inputDir.isDirectory)
+      inputDir.resolve(relativePath) in modifiedImpactedOrAddedFiles
     }
-    process(input, filter, dexOutputDir, null, true, desugarGraph)
+
+    process(
+      input,
+      filter,
+      dexOutputDir,
+      null,
+      globalSyntheticsOutput,
+      true,
+      desugarGraph
+    )
 
     // Store the desugaring graph for use in the next build. If dexing failed earlier, it is
     // intended that we will not store the graph as it is only meant to contain info about a
@@ -229,11 +264,16 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
     input: File,
     dexOutputDir: File,
     keepRulesOutputFile: File?,
+    globalSyntheticsOutput: File?,
     provideIncrementalSupport: Boolean,
     desugarGraphFile: File? // desugarGraphFile != null iff provideIncrementalSupport == true
   ) {
     FileUtils.deleteRecursivelyIfExists(dexOutputDir)
     FileUtils.mkdirs(dexOutputDir)
+    globalSyntheticsOutput?.let {
+      FileUtils.deleteRecursivelyIfExists(it)
+      FileUtils.mkdirs(it)
+    }
     keepRulesOutputFile?.let {
       FileUtils.deleteIfExists(it)
       FileUtils.mkdirs(it.parentFile)
@@ -252,6 +292,7 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
       { _, _ -> true },
       dexOutputDir,
       keepRulesOutputFile,
+      globalSyntheticsOutput,
       provideIncrementalSupport,
       desugarGraph
     )
@@ -269,6 +310,7 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
     inputFilter: (File, String) -> Boolean,
     dexOutputDir: File,
     keepRulesOutputFile: File?,
+    globalSyntheticsOutput: File?,
     provideIncrementalSupport: Boolean,
     // desugarGraphUpdater != null iff provideIncrementalSupport == true
     desugarGraphUpdater: DependencyGraphUpdater<File>?
@@ -303,6 +345,7 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
           d8DexBuilder.convert(
             classesInput,
             dexOutputDir.toPath(),
+            globalSyntheticsOutput?.toPath(),
             desugarGraphUpdater
           )
         }
@@ -338,19 +381,20 @@ fun getDexingArtifactConfigurations(components: Collection<ComponentCreationConf
 
 fun getDexingArtifactConfiguration(creationConfig: ApkCreationConfig): DexingArtifactConfiguration {
   return DexingArtifactConfiguration(
-    minSdk = creationConfig.minSdkVersionForDexing.getFeatureLevel(),
+    minSdk = creationConfig.dexingCreationConfig.minSdkVersionForDexing.getFeatureLevel(),
     isDebuggable = creationConfig.debuggable,
     enableDesugaring =
-    creationConfig.getJava8LangSupportType() == Java8LangSupport.D8,
-    enableCoreLibraryDesugaring = creationConfig.isCoreLibraryDesugaringEnabled,
-    needsShrinkDesugarLibrary = creationConfig.needsShrinkDesugarLibrary,
+    creationConfig.dexingCreationConfig.java8LangSupportType == Java8LangSupport.D8,
+    enableCoreLibraryDesugaring = creationConfig.dexingCreationConfig.isCoreLibraryDesugaringEnabled,
+    needsShrinkDesugarLibrary = creationConfig.dexingCreationConfig.needsShrinkDesugarLibrary,
     asmTransformedVariant =
     if (creationConfig.instrumentationCreationConfig?.dependenciesClassesAreInstrumented == true) {
       creationConfig.name
     } else {
       null
     },
-    useJacocoTransformInstrumentation = creationConfig.useJacocoTransformInstrumentation
+    useJacocoTransformInstrumentation = creationConfig.useJacocoTransformInstrumentation,
+    enableGlobalSynthetics = creationConfig.global.enableGlobalSynthetics
   )
 }
 
@@ -361,7 +405,8 @@ data class DexingArtifactConfiguration(
   private val enableCoreLibraryDesugaring: Boolean,
   private val needsShrinkDesugarLibrary: Boolean,
   private val asmTransformedVariant: String?,
-  private val useJacocoTransformInstrumentation: Boolean
+  private val useJacocoTransformInstrumentation: Boolean,
+  private val enableGlobalSynthetics: Boolean,
 ) {
 
   // If we want to do desugaring and our minSdk (or the API level of the device we're deploying
@@ -389,6 +434,7 @@ data class DexingArtifactConfiguration(
         if (enableCoreLibraryDesugaring) {
           parameters.libConfiguration.set(libConfiguration)
         }
+        parameters.enableGlobalSynthetics.set(enableGlobalSynthetics)
       }
       // There are 2 transform flows for DEX:
       //   1. (JACOCO_)CLASSES_DIR -> (JACOCO_)CLASSES -> DEX
@@ -439,11 +485,9 @@ data class DexingArtifactConfiguration(
         ARTIFACT_FORMAT,
         inputArtifact.type
       )
-      if (needsShrinkDesugarLibrary) {
-        spec.to.attribute(
-          ARTIFACT_FORMAT,
-          AndroidArtifacts.ArtifactType.DEX_AND_KEEP_RULES.type
-        )
+
+      if (enableGlobalSynthetics || needsShrinkDesugarLibrary) {
+        spec.to.attribute(ARTIFACT_FORMAT, AndroidArtifacts.ArtifactType.D8_OUTPUTS.type)
       } else {
         spec.to.attribute(ARTIFACT_FORMAT, AndroidArtifacts.ArtifactType.DEX.type)
       }
