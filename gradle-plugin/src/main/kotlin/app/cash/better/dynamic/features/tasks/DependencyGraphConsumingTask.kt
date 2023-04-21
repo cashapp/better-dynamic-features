@@ -7,7 +7,7 @@ import org.gradle.api.tasks.InputFiles
 
 abstract class DependencyGraphConsumingTask : DefaultTask() {
   private val moshi = Moshi.Builder().build()
-  private val adapter = moshi.adapter(NodeList::class.java)
+  private fun adapter() = moshi.adapter(NodeList::class.java)
 
   /**
    * Dependency graph files for each AGP variant of every feature module.
@@ -22,10 +22,10 @@ abstract class DependencyGraphConsumingTask : DefaultTask() {
   abstract val baseDependencyGraphFiles: ConfigurableFileCollection
 
   protected fun baseGraph() = baseDependencyGraphFiles.map {
-    adapter.fromJson(it.readText())?.nodes ?: error("Could not read graph from $it")
+    adapter().fromJson(it.readText())?.nodes ?: error("Could not read graph from $it")
   }.flatten()
 
   protected fun featureGraphs() = featureDependencyGraphFiles.map {
-    adapter.fromJson(it.readText())?.nodes ?: error("Could not read graph from $it")
+    adapter().fromJson(it.readText())?.nodes ?: error("Could not read graph from $it")
   }
 }
