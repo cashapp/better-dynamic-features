@@ -1,9 +1,8 @@
 import com.google.devtools.ksp.gradle.KspTaskJvm
 import com.squareup.wire.gradle.WireTask
 
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
-  alias(libs.plugins.kotlin)
+  id("app.cash.better-dynamic-features.convention")
   alias(libs.plugins.ksp)
   id("java-gradle-plugin")
   alias(libs.plugins.publish)
