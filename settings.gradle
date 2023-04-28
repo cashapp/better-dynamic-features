@@ -16,3 +16,6 @@ dependencyResolutionManagement {
 rootProject.name = "better-dynamic-features"
 
 include(":gradle-plugin")
+include(":runtime")
+
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
