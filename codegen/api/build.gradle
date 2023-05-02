@@ -1,0 +1,10 @@
+plugins {
+  alias(libs.plugins.kotlin)
+  alias(libs.plugins.ksp)
+}
+
+dependencies {
+  ksp(libs.moshi.codegen)
+
+  implementation(libs.moshi.core)
+}

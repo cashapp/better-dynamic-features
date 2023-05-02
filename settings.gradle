@@ -22,6 +22,9 @@ rootProject.name = "better-dynamic-features"
 
 includeBuild("buildLogic")
 
+include(":codegen")
+include(":codegen:api")
+include(":codegen:ksp")
 include(":gradle-plugin")
 include(":runtime")
 
