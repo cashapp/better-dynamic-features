@@ -25,4 +25,4 @@ kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version = "1.8.20-1.0.11" }
 publish = { id = "com.vanniktech.maven.publish", version = "0.20.0" }
 spotless = { id = "com.diffplug.spotless", version = "6.12.0" }
-wire = { id = "com.squareup.wire", version = "4.5.5" }
+wire = { id = "com.squareup.wire", version = "4.6.0" }
