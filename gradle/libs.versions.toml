@@ -1,13 +1,23 @@
 [versions]
 agp = "7.4.2"
+compilerTesting = "0.2.1"
 kotlin = "1.8.20"
+kotlinPoet = "1.13.1"
+ksp = "1.8.20-1.0.11"
 ktlint = "0.46.1"
 moshi = "1.14.0"
 
 [libraries]
 agp = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 javassist = { module = "org.javassist:javassist", version = "3.29.1-GA" }
-kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+compiler-testing-core = { module = "dev.zacsweers.kctfork:core", version.ref = "compilerTesting" }
+compiler-testing-ksp = { module = "dev.zacsweers.kctfork:ksp", version.ref = "compilerTesting" }
+kotlin-gradle = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlin-compiler = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin" }
+kotlinPoet-core = { module = "com.squareup:kotlinpoet", version.ref = "kotlinPoet" }
+kotlinPoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "kotlinPoet" }
+ksp-api = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
+ksp-gradlePlugin = { module = "com.google.devtools.ksp:symbol-processing-gradle-plugin", version.ref = "ksp" }
 moshi-core = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
 moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshi" }
 moshi-codegen = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "moshi" }
@@ -23,7 +33,7 @@ android-sdkCommon = "com.android.tools:sdk-common:30.4.2"
 
 [plugins]
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-ksp = { id = "com.google.devtools.ksp", version = "1.8.20-1.0.11" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 publish = { id = "com.vanniktech.maven.publish", version = "0.20.0" }
-spotless = { id = "com.diffplug.spotless", version = "6.12.0" }
+spotless = { id = "com.diffplug.spotless", version = "6.18.0" }
 wire = { id = "com.squareup.wire", version = "4.6.0" }
