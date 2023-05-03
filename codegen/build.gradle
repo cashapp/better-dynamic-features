@@ -1,0 +1,16 @@
+plugins {
+  alias(libs.plugins.kotlin)
+}
+
+dependencies {
+  implementation(projects.codegen.api)
+
+  implementation(libs.ksp.api)
+  implementation(libs.kotlinPoet.core)
+  implementation(libs.kotlinPoet.ksp)
+  implementation(libs.moshi.core)
+  implementation(libs.moshi.kotlin)
+
+  testImplementation(libs.junit)
+  testImplementation(libs.truth)
+}

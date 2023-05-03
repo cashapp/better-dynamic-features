@@ -30,7 +30,7 @@ dependencies {
   implementation gradleApi()
   implementation(libs.agp)
   implementation(libs.javassist)
-  implementation(libs.kotlin)
+  implementation(libs.kotlin.gradle)
   implementation(libs.moshi.core)
   implementation(libs.moshi.kotlin)
   implementation(files("libs/ARSCLib-1.1.5.jar"))

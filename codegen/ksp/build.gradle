@@ -1,0 +1,17 @@
+plugins {
+  alias(libs.plugins.kotlin)
+}
+
+dependencies {
+  implementation(libs.ksp.api)
+  implementation(libs.moshi.core)
+  implementation(libs.moshi.kotlin)
+
+  implementation(projects.codegen.api)
+
+  testImplementation(libs.compiler.testing.core)
+  testImplementation(libs.compiler.testing.ksp)
+  testImplementation(libs.junit)
+  testImplementation(libs.truth)
+  testRuntimeOnly(projects.runtime)
+}

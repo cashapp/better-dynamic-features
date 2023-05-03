@@ -5,6 +5,6 @@ project.buildscript.repositories {
 
 project.buildscript.dependencies {
   classpath 'app.cash:better-dynamic-features:+'
-  classpath libs.kotlin
+  classpath libs.kotlin.gradle
   classpath libs.agp
 }
