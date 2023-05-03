@@ -6,11 +6,11 @@ import org.gradle.testkit.runner.GradleRunner
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import java.io.BufferedReader
 import java.io.File
-import java.io.InputStreamReader
 import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.bufferedReader
 
 class ResourceRewriteTests {
 
@@ -145,23 +145,20 @@ class ResourceRewriteTests {
     val apkOutput = integrationRoot.resolve("app/build/outputs/apk_from_bundle/debug/app-debug-universal.apk")
     val dexContent = dexdump(apkOutput)
 
-    assertThat(dexContent).contains(
-      """
-        |      name          : 'specialText'
-        |      type          : 'I'
-        |      access        : 0x0019 (PUBLIC STATIC FINAL)
-        |      value         : $mappedAttr
-      """.trimMargin(),
-    )
+    assertThat(dexContent.bufferedReader().lineSequence().asIterable())
+      .containsAtLeast(
+        """      name          : 'specialText'""",
+        """      type          : 'I'""",
+        """      access        : 0x0019 (PUBLIC STATIC FINAL)""",
+        """      value         : $mappedAttr""",
+      ).inOrder()
 
-    assertThat(dexContent).contains(
-      """
-        |      name          : 'button_first'
-        |      type          : 'I'
-        |      access        : 0x0019 (PUBLIC STATIC FINAL)
-        |      value         : $mappedId
-      """.trimMargin(),
-    )
+    assertThat(dexContent.bufferedReader().lineSequence().asIterable()).containsAtLeast(
+      """      name          : 'button_first'""",
+      """      type          : 'I'""",
+      """      access        : 0x0019 (PUBLIC STATIC FINAL)""",
+      """      value         : $mappedId""",
+    ).inOrder()
   }
 
   @Test
@@ -197,16 +194,21 @@ class ResourceRewriteTests {
     const val ID_REGEX = """id\/button_first \d+ \d+"""
   }
 
-  private fun dexdump(file: File): String {
+  private fun dexdump(file: File): Path {
+    val outputPath = Files.createTempFile("dexdump", "txt")
+
     val buildToolsVersion = Class.forName("com.android.SdkConstants").getDeclaredField("CURRENT_BUILD_TOOLS_VERSION").get(null)
     val dexdumpPath = "${System.getenv("ANDROID_SDK_ROOT")}/build-tools/$buildToolsVersion/dexdump"
     check(Files.exists(Path(dexdumpPath))) { "Could not find 'dexdump' binary. Checked $dexdumpPath" }
 
-    val process = Runtime.getRuntime().exec(arrayOf(dexdumpPath, file.absolutePath))
-    val stdInput = BufferedReader(InputStreamReader(process.inputStream))
+    val process = ProcessBuilder()
+      .apply {
+        command(dexdumpPath, file.absolutePath)
+        redirectOutput(outputPath.toFile())
+      }
+      .start()
 
-    val result = stdInput.readText()
     check(process.waitFor() == 0) { "dexdump failed" }
-    return result
+    return outputPath
   }
 }
