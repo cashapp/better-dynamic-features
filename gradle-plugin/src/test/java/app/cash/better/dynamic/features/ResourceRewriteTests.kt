@@ -1,5 +1,6 @@
 package app.cash.better.dynamic.features
 
+import app.cash.better.dynamic.features.utils.assertThat
 import com.google.common.truth.Truth.assertThat
 import com.reandroid.apk.ApkModule
 import org.gradle.testkit.runner.GradleRunner
@@ -145,20 +146,21 @@ class ResourceRewriteTests {
     val apkOutput = integrationRoot.resolve("app/build/outputs/apk_from_bundle/debug/app-debug-universal.apk")
     val dexContent = dexdump(apkOutput)
 
-    assertThat(dexContent.bufferedReader().lineSequence().asIterable())
-      .containsAtLeast(
+    assertThat(dexContent.bufferedReader().lineSequence())
+      .containsInConsecutiveOrder(
         """      name          : 'specialText'""",
         """      type          : 'I'""",
         """      access        : 0x0019 (PUBLIC STATIC FINAL)""",
         """      value         : $mappedAttr""",
-      ).inOrder()
+      )
 
-    assertThat(dexContent.bufferedReader().lineSequence().asIterable()).containsAtLeast(
-      """      name          : 'button_first'""",
-      """      type          : 'I'""",
-      """      access        : 0x0019 (PUBLIC STATIC FINAL)""",
-      """      value         : $mappedId""",
-    ).inOrder()
+    assertThat(dexContent.bufferedReader().lineSequence())
+      .containsInConsecutiveOrder(
+        """      name          : 'button_first'""",
+        """      type          : 'I'""",
+        """      access        : 0x0019 (PUBLIC STATIC FINAL)""",
+        """      value         : $mappedId""",
+      )
   }
 
   @Test
