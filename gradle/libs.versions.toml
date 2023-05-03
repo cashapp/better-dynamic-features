@@ -1,10 +1,11 @@
 [versions]
+agp = "7.4.2"
 kotlin = "1.8.20"
 ktlint = "0.46.1"
 moshi = "1.14.0"
 
 [libraries]
-agp = { module = "com.android.tools.build:gradle", version = "7.4.2" }
+agp = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 javassist = { module = "org.javassist:javassist", version = "3.29.1-GA" }
 kotlin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 moshi-core = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }

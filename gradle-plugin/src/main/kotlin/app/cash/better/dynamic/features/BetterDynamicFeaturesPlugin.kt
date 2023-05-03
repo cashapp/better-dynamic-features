@@ -11,6 +11,7 @@ import app.cash.better.dynamic.features.tasks.CheckExternalResourcesTask
 import app.cash.better.dynamic.features.tasks.CheckLockfileTask
 import app.cash.better.dynamic.features.tasks.DependencyGraphWriterTask
 import app.cash.better.dynamic.features.tasks.GenerateExternalResourcesTask
+import com.android.Version
 import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.variant.AndroidComponentsExtension
@@ -34,6 +35,11 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
   override fun apply(project: Project) {
     check(project.plugins.hasPlugin("com.android.application") || project.plugins.hasPlugin("com.android.dynamic-feature")) {
       "Plugin 'com.android.application' or 'com.android.dynamic-feature' must also be applied before this plugin"
+    }
+
+    // Do a strict version check to ensure that our monkey-patching will work correctly.
+    check(Version.ANDROID_GRADLE_PLUGIN_VERSION == TARGET_AGP_VERSION) {
+      "This version of the Android Gradle Plugin (${Version.ANDROID_GRADLE_PLUGIN_VERSION}) is not supported by the better-dynamic-features plugin. Only version $TARGET_AGP_VERSION is supported."
     }
 
     val hasLockfileStartTask = project.gradle.startParameter.taskNames.any {

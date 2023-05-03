@@ -1,5 +1,6 @@
 import com.google.devtools.ksp.gradle.KspTaskJvm
 import com.squareup.wire.gradle.WireTask
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   id("app.cash.better-dynamic-features.convention")
@@ -17,6 +18,10 @@ gradlePlugin {
       implementationClass = 'app.cash.better.dynamic.features.BetterDynamicFeaturesPlugin'
     }
   }
+}
+
+sourceSets {
+  main.kotlin.srcDir "$buildDir/gen"
 }
 
 dependencies {
@@ -60,6 +65,26 @@ publishing {
     }
   }
 }
+
+def pluginVersion = tasks.register("pluginVersion") {
+  def outputDir = file("$buildDir/gen")
+
+  inputs.property 'version', version
+  outputs.dir outputDir
+
+  doLast {
+    def versionFile = file("$outputDir/app/cash/better/dynamic/features/Version.kt")
+    versionFile.parentFile.mkdirs()
+    versionFile.text = """// Generated file. Do not edit!
+package app.cash.better.dynamic.features
+
+val TARGET_AGP_VERSION = "${libs.versions.agp.get()}"
+"""
+  }
+}
+
+tasks.withType(KotlinCompile).configureEach { dependsOn(pluginVersion) }
+tasks.withType(KspTaskJvm).configureEach { dependsOn(pluginVersion) }
 
 wire {
   kotlin {}
