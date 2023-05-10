@@ -10,26 +10,37 @@ fun List<LockfileEntry>.toText(): String = """
 
 fun mergeGraphs(base: List<Node>, others: List<List<Node>>): List<LockfileEntry> {
   val graphMap = mutableMapOf<String, Node>()
-  base.walkAll { node ->
-    when (val existing = graphMap[node.artifact]) {
-      null -> graphMap[node.artifact] = node
-      else -> {
-        if (node.version > existing.version) {
-          node.configurations += existing.configurations
-          graphMap[node.artifact] = node
-        } else {
-          existing.configurations += node.configurations
+
+  fun registerNodes(nodes: List<Node>) {
+    nodes.walkAll { node ->
+      when (val existing = graphMap[node.artifact]) {
+        null -> graphMap[node.artifact] = node
+        else -> {
+          if (node.version > existing.version) {
+            node.configurations += existing.configurations
+            graphMap[node.artifact] = node
+          } else {
+            existing.configurations += node.configurations
+          }
         }
       }
     }
   }
 
+  // Register the initial set of dependencies
+  registerNodes(base)
+
   others.flatten().walkAll { node ->
     val existing = graphMap[node.artifact]
     // We only care about the conflicting dependencies that actually exist in the base
-    if (existing != null && node.version > existing.version) {
+    if (existing != null) {
+      if (node.version > existing.version) {
+        graphMap[node.artifact] = node
+      }
       node.configurations += existing.configurations
-      graphMap[node.artifact] = node
+
+      // Register any new transitive dependencies
+      registerNodes(node.children)
     }
   }
 
