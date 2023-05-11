@@ -13,6 +13,7 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
+import org.gradle.internal.component.external.model.DefaultModuleComponentIdentifier
 
 abstract class DependencyGraphWriterTask : DefaultTask() {
   /**
@@ -42,12 +43,11 @@ abstract class DependencyGraphWriterTask : DefaultTask() {
   private val ResolvedDependencyResult.key: String
     get() = selected.moduleVersion?.let { info -> "${info.group}:${info.name}" } ?: ""
 
-  @Suppress("UnstableApiUsage")
   private fun buildDependencyGraph(topLevel: List<DependencyResult>, configuration: String, visited: MutableSet<String>): List<Node> =
     topLevel
       .asSequence()
       .filterIsInstance<ResolvedDependencyResult>()
-      .filter { it.key !in visited }
+      .filter { !it.isConstraint && it.key !in visited }
       .onEach { visited += it.key }
       .map {
         val info = it.selected.moduleVersion!!
