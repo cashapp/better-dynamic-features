@@ -10,6 +10,7 @@ import app.cash.better.dynamic.features.tasks.BaseLockfileWriterTask
 import app.cash.better.dynamic.features.tasks.CheckExternalResourcesTask
 import app.cash.better.dynamic.features.tasks.CheckLockfileTask
 import app.cash.better.dynamic.features.tasks.DependencyGraphWriterTask
+import app.cash.better.dynamic.features.tasks.DependencyGraphWriterTask.ResolvedComponentResultPair
 import app.cash.better.dynamic.features.tasks.GenerateExternalResourcesTask
 import com.android.Version
 import com.android.build.api.artifact.SingleArtifact
@@ -98,6 +99,9 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
         project.configurations.named("${variant.name}RuntimeClasspath").configure {
           it.resolutionStrategy.activateDependencyLocking()
         }
+        project.configurations.named("${variant.name}CompileClasspath").configure {
+          it.resolutionStrategy.activateDependencyLocking()
+        }
       }
     }
 
@@ -129,10 +133,17 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
 
       task.setResolvedLockfileEntriesProvider(
         project.provider {
-          project.configurations.getByName("${variant.name}RuntimeClasspath")
+          val runtime = project.configurations.getByName("${variant.name}RuntimeClasspath")
             .incoming
             .resolutionResult
             .root
+
+          val compile = project.configurations.getByName("${variant.name}CompileClasspath")
+            .incoming
+            .resolutionResult
+            .root
+
+          ResolvedComponentResultPair(runtime, compile)
         },
         variant.name,
       )

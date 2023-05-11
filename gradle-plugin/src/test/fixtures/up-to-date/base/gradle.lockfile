@@ -1,9 +1,9 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
-com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugRuntimeClasspath,releaseRuntimeClasspath
-com.squareup.okio:okio:2.9.0=debugRuntimeClasspath,releaseRuntimeClasspath
-org.jetbrains.kotlin:kotlin-stdlib-common:1.4.21=debugRuntimeClasspath,releaseRuntimeClasspath
-org.jetbrains.kotlin:kotlin-stdlib:1.4.21=debugRuntimeClasspath,releaseRuntimeClasspath
-org.jetbrains:annotations:13.0=debugRuntimeClasspath,releaseRuntimeClasspath
+com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+com.squareup.okio:okio:2.9.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+org.jetbrains.kotlin:kotlin-stdlib-common:1.4.21=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+org.jetbrains.kotlin:kotlin-stdlib:1.4.21=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+org.jetbrains:annotations:13.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
 empty=
