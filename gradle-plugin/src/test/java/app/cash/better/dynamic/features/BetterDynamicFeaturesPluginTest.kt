@@ -447,7 +447,6 @@ class BetterDynamicFeaturesPluginTest {
       .cleaned()
       .withArguments(":base:writeLockfile")
 
-    // Generate lockfile first, and then run dependencies task
     gradleRunner.build()
 
     val lockfileContent = baseProject.lockfile().readText()
