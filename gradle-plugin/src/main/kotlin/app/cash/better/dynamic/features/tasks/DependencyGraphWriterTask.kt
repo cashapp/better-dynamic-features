@@ -13,7 +13,6 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
-import org.gradle.internal.component.external.model.DefaultModuleComponentIdentifier
 
 abstract class DependencyGraphWriterTask : DefaultTask() {
   /**
