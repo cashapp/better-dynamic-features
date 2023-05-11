@@ -437,6 +437,26 @@ class BetterDynamicFeaturesPluginTest {
     assertThat(lockfileContent).contains("androidx.dynamicanimation:dynamicanimation:1.0.0=debugRuntimeClasspath,releaseRuntimeClasspath")
   }
 
+  @Test fun `constraints from BOMs are not pulled into lockfile`() {
+    val integrationRoot = File("src/test/fixtures/has-constraints")
+    val baseProject = integrationRoot.resolve("base")
+    clearLockfile(baseProject)
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .cleaned()
+      .withArguments(":base:writeLockfile")
+
+    gradleRunner.build()
+
+    val lockfileContent = baseProject.lockfile().readText()
+    assertThat(lockfileContent).contains("org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.6.4=debugRuntimeClasspath,releaseRuntimeClasspath")
+    assertThat(lockfileContent).contains("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4=debugRuntimeClasspath,releaseRuntimeClasspath")
+    // These are constraints that exists on the BOM which shouldn't be pulled in
+    assertThat(lockfileContent).doesNotContain("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4=debugRuntimeClasspath,releaseRuntimeClasspath")
+    assertThat(lockfileContent).doesNotContain("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.6.4=debugRuntimeClasspath,releaseRuntimeClasspath")
+  }
+
   @Test fun `writeLockfile task passes with configureondemand enabled`() {
     val integrationRoot = File("src/test/fixtures/same-versions")
     val baseProject = integrationRoot.resolve("base")
