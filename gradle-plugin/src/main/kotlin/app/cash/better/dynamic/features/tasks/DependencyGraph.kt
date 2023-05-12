@@ -10,7 +10,13 @@ data class Node(
   val configurations: MutableSet<String>,
   val children: List<Node>,
   val isProjectModule: Boolean,
+  val type: DependencyType,
 )
+
+enum class DependencyType {
+  Runtime,
+  Compile;
+}
 
 @JsonClass(generateAdapter = true)
 data class NodeList(val nodes: List<Node>)

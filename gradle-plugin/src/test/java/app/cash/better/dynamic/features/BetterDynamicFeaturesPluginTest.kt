@@ -485,6 +485,27 @@ class BetterDynamicFeaturesPluginTest {
     assertThat(result.output).contains("Updating the lockfile and running other tasks together is an error. Update the lockfile first, and then run your other tasks separately.")
   }
 
+  @Test fun `feature module compile classpath does not influence base module runtime classpath`() {
+    val integrationRoot = File("src/test/fixtures/feature-compile-classpath")
+    val baseProject = integrationRoot.resolve("base")
+    clearLockfile(baseProject)
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .cleaned()
+      .withArguments(":base:writeLockfile", "--stacktrace")
+
+    gradleRunner.build()
+
+    assertThat(baseProject.lockfile().readText()).contains(
+      """
+      |org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.7.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.7.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0=debugRuntimeClasspath,releaseRuntimeClasspath
+      """.trimMargin(),
+    )
+  }
+
   private fun clearLockfile(root: File) {
     root.lockfile().takeIf { it.exists() }?.delete()
   }

@@ -1,5 +1,8 @@
 package app.cash.better.dynamic.features.tasks
 
+import app.cash.better.dynamic.features.tasks.DependencyType.Compile
+import app.cash.better.dynamic.features.tasks.DependencyType.Runtime
+
 fun List<LockfileEntry>.toText(): String = """
       |# This is a Gradle generated file for dependency locking.
       |# Manual edits can break the build and are not advised.
@@ -8,7 +11,10 @@ fun List<LockfileEntry>.toText(): String = """
       |empty=
 """.trimMargin()
 
-fun mergeGraphs(base: List<Node>, others: List<List<Node>>): List<LockfileEntry> {
+private fun mergeSingleTypeGraphs(
+  base: List<Node>,
+  others: List<List<Node>>,
+): Map<String, LockfileEntry> {
   val graphMap = mutableMapOf<String, Node>()
 
   fun registerNodes(nodes: List<Node>) {
@@ -46,7 +52,45 @@ fun mergeGraphs(base: List<Node>, others: List<List<Node>>): List<LockfileEntry>
 
   return graphMap
     .filter { (_, entry) -> !entry.isProjectModule }
-    .map { (_, entry) -> LockfileEntry(entry.artifact, entry.version, entry.configurations) }
+    .map { (_, entry) ->
+      "${entry.artifact}:${entry.version}" to LockfileEntry(
+        entry.artifact,
+        entry.version,
+        entry.configurations,
+      )
+    }
+    .toMap()
+}
+
+fun mergeGraphs(base: List<Node>, others: List<List<Node>>): List<LockfileEntry> {
+  val runtimeMap = mergeSingleTypeGraphs(
+    base.filter { it.type == Runtime },
+    others.map { list -> list.filter { it.type == Runtime } },
+  )
+  val compileMap = mergeSingleTypeGraphs(
+    base.filter { it.type == Compile },
+    others.map { list -> list.filter { it.type == Compile } },
+  ).toMutableMap()
+
+  // Merge the runtime and compile graphs
+  val mergedMap = mutableMapOf<String, LockfileEntry>()
+  runtimeMap.forEach { (artifact, entry) ->
+    mergedMap[artifact] = entry
+    val compileEntry = compileMap[artifact] ?: return@forEach
+
+    if (entry.version == compileEntry.version) {
+      mergedMap[artifact] =
+        entry.copy(configurations = entry.configurations + compileEntry.configurations)
+    } else {
+      mergedMap[artifact] = compileEntry
+    }
+    compileMap.remove(artifact)
+  }
+  compileMap.forEach { (artifact, entry) ->
+    mergedMap[artifact] = entry
+  }
+
+  return mergedMap.values.toList()
 }
 
 private tailrec fun List<Node>.walkAll(callback: (Node) -> Unit) {
