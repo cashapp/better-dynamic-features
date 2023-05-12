@@ -45,7 +45,6 @@ private fun mergeSingleTypeGraphs(
 
   others.flatten().walkAll { node ->
     val existing = graphMap[node.artifact]
-    println(node.variants)
     // We only care about the conflicting dependencies that actually exist in the base
     if (existing != null && node.variants.single() in existing.variants) {
       if (node.version > existing.version) {
