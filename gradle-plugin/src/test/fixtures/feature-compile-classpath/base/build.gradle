@@ -1,0 +1,14 @@
+apply plugin: 'com.android.application'
+apply plugin: 'app.cash.better.dynamic.features'
+
+android {
+  namespace "app.cash.better.dynamic.features.integration"
+
+  compileSdk 32
+
+  dynamicFeatures = [':feature']
+}
+
+dependencies {
+  runtimeOnly "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0"
+}

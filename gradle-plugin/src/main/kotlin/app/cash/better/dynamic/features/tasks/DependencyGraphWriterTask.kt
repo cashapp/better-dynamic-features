@@ -26,15 +26,20 @@ abstract class DependencyGraphWriterTask : DefaultTask() {
 
   fun setResolvedLockfileEntriesProvider(provider: Provider<ResolvedComponentResultPair>, variant: String) {
     graph = provider.map { (runtime, compile) ->
-      buildDependencyGraph(
+      val runtimeNodes = if (runtime.variants.isEmpty()) emptyList() else buildDependencyGraph(
         runtime.getDependenciesForVariant(runtime.variants.first()),
         "${variant}RuntimeClasspath",
         mutableSetOf(),
-      ) + buildDependencyGraph(
+        type = DependencyType.Runtime,
+      )
+      val compileNodes = if (compile.variants.isEmpty()) emptyList() else buildDependencyGraph(
         compile.getDependenciesForVariant(compile.variants.first()),
         "${variant}CompileClasspath",
         mutableSetOf(),
+        type = DependencyType.Compile,
       )
+
+      runtimeNodes + compileNodes
     }
   }
 
@@ -50,7 +55,7 @@ abstract class DependencyGraphWriterTask : DefaultTask() {
   private val ResolvedDependencyResult.key: String
     get() = selected.moduleVersion?.let { info -> "${info.group}:${info.name}" } ?: ""
 
-  private fun buildDependencyGraph(topLevel: List<DependencyResult>, configuration: String, visited: MutableSet<String>): List<Node> =
+  private fun buildDependencyGraph(topLevel: List<DependencyResult>, configuration: String, visited: MutableSet<String>, type: DependencyType): List<Node> =
     topLevel
       .asSequence()
       .filterIsInstance<ResolvedDependencyResult>()
@@ -62,8 +67,9 @@ abstract class DependencyGraphWriterTask : DefaultTask() {
           "${info.group}:${info.name}",
           info.version,
           mutableSetOf(configuration),
-          children = buildDependencyGraph(it.selected.getDependenciesForVariant(it.resolvedVariant), configuration, visited),
+          children = buildDependencyGraph(it.selected.getDependenciesForVariant(it.resolvedVariant), configuration, visited, type),
           isProjectModule = it.resolvedVariant.owner is ProjectComponentIdentifier,
+          type = type,
         )
       }
       .toList()
