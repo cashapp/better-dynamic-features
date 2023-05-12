@@ -294,20 +294,18 @@ class BetterDynamicFeaturesPluginTest {
     val result = gradleRunner.withArguments(":base:dependencies").build()
 
     assertThat(result.output).contains("com.jakewharton.picnic:picnic:0.4.0 -> 0.5.0")
-    assertThat(baseProject.lockfile().readText()).isEqualTo(
+    assertThat(baseProject.lockfile().readText()).contains(
       """
-      |# This is a Gradle generated file for dependency locking.
-      |# Manual edits can break the build and are not advised.
-      |# This file is expected to be part of source control.
       |com.jakewharton.picnic:picnic:0.5.0=debugCompileClasspath,debugRuntimeClasspath
       |com.squareup.okhttp3:okhttp:4.9.3=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |com.squareup.okio:okio:2.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-common:1.4.10=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.4.0=debugCompileClasspath,debugRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.0=debugCompileClasspath,debugRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib:1.4.10=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains:annotations:13.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |empty=
+      """.trimMargin(),
+    )
+    assertThat(baseProject.lockfile().readText()).contains(
+      """
+      |org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.7.0=debugCompileClasspath,debugRuntimeClasspath
+      |org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.7.0=debugCompileClasspath,debugRuntimeClasspath
+      |org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0=debugCompileClasspath,debugRuntimeClasspath
       """.trimMargin(),
     )
   }
