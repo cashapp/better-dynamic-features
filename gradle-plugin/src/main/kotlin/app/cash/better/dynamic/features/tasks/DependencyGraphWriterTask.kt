@@ -24,9 +24,17 @@ abstract class DependencyGraphWriterTask : DefaultTask() {
 
   private lateinit var graph: Provider<List<Node>>
 
-  fun setResolvedLockfileEntriesProvider(provider: Provider<ResolvedComponentResult>, variant: String) {
-    graph = provider.map { resolution ->
-      buildDependencyGraph(resolution.getDependenciesForVariant(resolution.variants.first()), "${variant}RuntimeClasspath", mutableSetOf())
+  fun setResolvedLockfileEntriesProvider(provider: Provider<ResolvedComponentResultPair>, variant: String) {
+    graph = provider.map { (runtime, compile) ->
+      buildDependencyGraph(
+        runtime.getDependenciesForVariant(runtime.variants.first()),
+        "${variant}RuntimeClasspath",
+        mutableSetOf(),
+      ) + buildDependencyGraph(
+        compile.getDependenciesForVariant(compile.variants.first()),
+        "${variant}CompileClasspath",
+        mutableSetOf(),
+      )
     }
   }
 
@@ -59,4 +67,6 @@ abstract class DependencyGraphWriterTask : DefaultTask() {
         )
       }
       .toList()
+
+  data class ResolvedComponentResultPair(val runtime: ResolvedComponentResult, val compile: ResolvedComponentResult)
 }
