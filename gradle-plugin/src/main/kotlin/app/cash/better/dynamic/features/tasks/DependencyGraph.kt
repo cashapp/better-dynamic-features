@@ -7,7 +7,7 @@ import com.squareup.moshi.JsonClass
 data class Node(
   val artifact: String,
   val version: String,
-  val configurations: MutableSet<String>,
+  val variants: MutableSet<String>,
   val children: List<Node>,
   val isProjectModule: Boolean,
   val type: DependencyType,

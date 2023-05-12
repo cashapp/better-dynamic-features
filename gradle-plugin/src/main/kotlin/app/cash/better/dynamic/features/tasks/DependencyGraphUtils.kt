@@ -11,6 +11,14 @@ fun List<LockfileEntry>.toText(): String = """
       |empty=
 """.trimMargin()
 
+private val Node.configurationNames
+  get() = variants.mapTo(mutableSetOf()) {
+    when (type) {
+      Compile -> "${it}CompileClasspath"
+      Runtime -> "${it}RuntimeClasspath"
+    }
+  }
+
 private fun mergeSingleTypeGraphs(
   base: List<Node>,
   others: List<List<Node>>,
@@ -23,10 +31,10 @@ private fun mergeSingleTypeGraphs(
         null -> graphMap[node.artifact] = node
         else -> {
           if (node.version > existing.version) {
-            node.configurations += existing.configurations
+            node.variants += existing.variants
             graphMap[node.artifact] = node
           } else {
-            existing.configurations += node.configurations
+            existing.variants += node.variants
           }
         }
       }
@@ -39,11 +47,11 @@ private fun mergeSingleTypeGraphs(
   others.flatten().walkAll { node ->
     val existing = graphMap[node.artifact]
     // We only care about the conflicting dependencies that actually exist in the base
-    if (existing != null) {
+    if (existing != null && node.variants.single() in existing.variants) {
       if (node.version > existing.version) {
         graphMap[node.artifact] = node
       }
-      node.configurations += existing.configurations
+      node.variants += existing.variants
 
       // Register any new transitive dependencies
       registerNodes(node.children)
@@ -56,7 +64,7 @@ private fun mergeSingleTypeGraphs(
       "${entry.artifact}:${entry.version}" to LockfileEntry(
         entry.artifact,
         entry.version,
-        entry.configurations,
+        entry.configurationNames,
       )
     }
     .toMap()

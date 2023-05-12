@@ -28,13 +28,13 @@ abstract class DependencyGraphWriterTask : DefaultTask() {
     graph = provider.map { (runtime, compile) ->
       val runtimeNodes = if (runtime.variants.isEmpty()) emptyList() else buildDependencyGraph(
         runtime.getDependenciesForVariant(runtime.variants.first()),
-        "${variant}RuntimeClasspath",
+        variant,
         mutableSetOf(),
         type = DependencyType.Runtime,
       )
       val compileNodes = if (compile.variants.isEmpty()) emptyList() else buildDependencyGraph(
         compile.getDependenciesForVariant(compile.variants.first()),
-        "${variant}CompileClasspath",
+        variant,
         mutableSetOf(),
         type = DependencyType.Compile,
       )
@@ -55,7 +55,7 @@ abstract class DependencyGraphWriterTask : DefaultTask() {
   private val ResolvedDependencyResult.key: String
     get() = selected.moduleVersion?.let { info -> "${info.group}:${info.name}" } ?: ""
 
-  private fun buildDependencyGraph(topLevel: List<DependencyResult>, configuration: String, visited: MutableSet<String>, type: DependencyType): List<Node> =
+  private fun buildDependencyGraph(topLevel: List<DependencyResult>, variant: String, visited: MutableSet<String>, type: DependencyType): List<Node> =
     topLevel
       .asSequence()
       .filterIsInstance<ResolvedDependencyResult>()
@@ -66,8 +66,8 @@ abstract class DependencyGraphWriterTask : DefaultTask() {
         Node(
           "${info.group}:${info.name}",
           info.version,
-          mutableSetOf(configuration),
-          children = buildDependencyGraph(it.selected.getDependenciesForVariant(it.resolvedVariant), configuration, visited, type),
+          mutableSetOf(variant),
+          children = buildDependencyGraph(it.selected.getDependenciesForVariant(it.resolvedVariant), variant, visited, type),
           isProjectModule = it.resolvedVariant.owner is ProjectComponentIdentifier,
           type = type,
         )
