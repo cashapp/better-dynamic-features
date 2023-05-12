@@ -61,13 +61,13 @@ private fun mergeSingleTypeGraphs(
   return graphMap
     .filter { (_, entry) -> !entry.isProjectModule }
     .map { (_, entry) ->
-      "${entry.artifact}:${entry.version}" to LockfileEntry(
+      LockfileEntry(
         entry.artifact,
         entry.version,
         entry.configurationNames,
       )
     }
-    .toMap()
+    .associateBy { it.artifact }
 }
 
 fun mergeGraphs(base: List<Node>, others: List<List<Node>>): List<LockfileEntry> {
@@ -86,12 +86,11 @@ fun mergeGraphs(base: List<Node>, others: List<List<Node>>): List<LockfileEntry>
     mergedMap[artifact] = entry
     val compileEntry = compileMap[artifact] ?: return@forEach
 
-    if (entry.version == compileEntry.version) {
-      mergedMap[artifact] =
-        entry.copy(configurations = entry.configurations + compileEntry.configurations)
-    } else {
-      mergedMap[artifact] = compileEntry
-    }
+    mergedMap[artifact] = entry.copy(
+      version = maxOf(entry.version, compileEntry.version),
+      configurations = entry.configurations + compileEntry.configurations,
+    )
+
     compileMap.remove(artifact)
   }
   compileMap.forEach { (artifact, entry) ->
