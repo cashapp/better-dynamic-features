@@ -31,10 +31,9 @@ private fun mergeSingleTypeGraphs(
         null -> graphMap[node.artifact] = node
         else -> {
           if (node.version > existing.version) {
-            node.variants += existing.variants
-            graphMap[node.artifact] = node
+            graphMap[node.artifact] = node.copy(variants = node.variants + existing.variants)
           } else {
-            existing.variants += node.variants
+            graphMap[existing.artifact] = existing.copy(variants = existing.variants + node.variants)
           }
         }
       }
@@ -46,12 +45,14 @@ private fun mergeSingleTypeGraphs(
 
   others.flatten().walkAll { node ->
     val existing = graphMap[node.artifact]
+    println(node.variants)
     // We only care about the conflicting dependencies that actually exist in the base
     if (existing != null && node.variants.single() in existing.variants) {
       if (node.version > existing.version) {
-        graphMap[node.artifact] = node
+        graphMap[node.artifact] = node.copy(variants = node.variants + existing.variants)
+      } else {
+        graphMap[existing.artifact] = existing.copy(variants = existing.variants + node.variants)
       }
-      node.variants += existing.variants
 
       // Register any new transitive dependencies
       registerNodes(node.children)
