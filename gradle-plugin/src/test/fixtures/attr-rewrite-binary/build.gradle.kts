@@ -5,3 +5,5 @@ plugins {
   id("com.android.dynamic-feature") version "7.4.2" apply false
   id("app.cash.better.dynamic.features") version "+" apply false
 }
+
+apply(from = "../buildscript.gradle")

@@ -3,6 +3,7 @@ import com.android.build.gradle.tasks.PackageApplication
 plugins {
   id("com.android.application")
   id("org.jetbrains.kotlin.android")
+  id("com.google.devtools.ksp")
   id("app.cash.better.dynamic.features")
 }
 
@@ -25,13 +26,6 @@ android {
       isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
     }
-  }
-  compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
-  }
-  kotlinOptions {
-    jvmTarget = "11"
   }
   buildFeatures {
     viewBinding = true

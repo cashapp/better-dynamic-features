@@ -78,6 +78,8 @@ def pluginVersion = tasks.register("pluginVersion") {
     versionFile.text = """// Generated file. Do not edit!
 package app.cash.better.dynamic.features
 
+val VERSION = "${project.version}"
+val KOTLIN_VERSION = "${libs.versions.kotlin.get()}"
 val TARGET_AGP_VERSION = "${libs.versions.agp.get()}"
 """
   }

@@ -7,6 +7,7 @@ import org.gradle.configurationcache.extensions.capitalized
 plugins {
   id("com.android.dynamic-feature")
   id("org.jetbrains.kotlin.android")
+  id("com.google.devtools.ksp")
   id("app.cash.better.dynamic.features")
 }
 android {
@@ -26,13 +27,6 @@ android {
   }
   buildFeatures {
     viewBinding = true
-  }
-  compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
-  }
-  kotlinOptions {
-    jvmTarget = "11"
   }
 }
 
