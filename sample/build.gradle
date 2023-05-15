@@ -4,3 +4,20 @@ plugins {
   alias(libs.plugins.android.dynamic.feature) apply false
   alias(libs.plugins.kotlin.android) apply false
 }
+
+subprojects {
+  extensions.findByName("kotlin")?.jvmToolchain(17)
+
+  pluginManager.withType("com.android.application") {
+    android.compileOptions {
+      sourceCompatibility(JavaVersion.VERSION_17)
+      targetCompatibility(JavaVersion.VERSION_17)
+    }
+  }
+  pluginManager.withType("com.android.dynamic-feature") {
+    android.compileOptions {
+      sourceCompatibility(JavaVersion.VERSION_17)
+      targetCompatibility(JavaVersion.VERSION_17)
+    }
+  }
+}

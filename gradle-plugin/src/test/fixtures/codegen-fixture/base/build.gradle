@@ -8,6 +8,10 @@ android {
 
   compileSdk 32
 
+  defaultConfig {
+    versionCode 1
+  }
+
   dynamicFeatures = [':feature']
 }
 

@@ -1,6 +1,10 @@
 // Copyright Square, Inc.
 package app.cash.better.dynamic.features
 
+import app.cash.better.dynamic.features.codegen.AndroidVariant
+import app.cash.better.dynamic.features.codegen.TypesafeImplementationsCompilationTask
+import app.cash.better.dynamic.features.codegen.TypesafeImplementationsGeneratorTask
+import app.cash.better.dynamic.features.codegen.api.KSP_REPORT_DIRECTORY_PREFIX
 import app.cash.better.dynamic.features.magic.AaptMagic
 import app.cash.better.dynamic.features.magic.MagicRClassFixingTask
 import app.cash.better.dynamic.features.magic.MagicRFixingTask
@@ -13,14 +17,17 @@ import app.cash.better.dynamic.features.tasks.DependencyGraphWriterTask
 import app.cash.better.dynamic.features.tasks.DependencyGraphWriterTask.ResolvedComponentResultPair
 import app.cash.better.dynamic.features.tasks.GenerateExternalResourcesTask
 import com.android.Version
+import com.android.build.api.artifact.ScopedArtifact
 import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.variant.AndroidComponentsExtension
+import com.android.build.api.variant.ScopedArtifacts
 import com.android.build.api.variant.Variant
 import com.android.build.gradle.internal.publishing.AndroidArtifacts
 import com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask
 import com.android.build.gradle.internal.tasks.factory.dependsOn
 import com.google.devtools.ksp.gradle.KspTask
+import com.google.devtools.ksp.gradle.KspTaskJvm
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ArtifactCollection
@@ -31,6 +38,7 @@ import org.gradle.api.attributes.Usage
 import org.gradle.api.file.Directory
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.configurationcache.extensions.capitalized
+import org.gradle.process.CommandLineArgumentProvider
 
 @Suppress("UnstableApiUsage")
 class BetterDynamicFeaturesPlugin : Plugin<Project> {
@@ -53,6 +61,8 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     val startTaskCount = project.gradle.startParameter.taskNames.count()
     require(!hasLockfileStartTask || startTaskCount == 1) { "Updating the lockfile and running other tasks together is an error. Update the lockfile first, and then run your other tasks separately." }
 
+    project.dependencies.add("implementation", "app.cash.better.dynamic.features:runtime:$VERSION")
+
     if (project.plugins.hasPlugin("com.android.application")) {
       applyToApplication(project)
     } else {
@@ -62,14 +72,19 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
 
   @OptIn(AaptMagic::class)
   private fun applyToFeature(project: Project) {
+    check(project.plugins.hasPlugin("com.google.devtools.ksp")) {
+      "Plugin 'com.google.devtools.ksp' must also be applied before this plugin"
+    }
+
     val pluginExtension = project.extensions.create(
       "betterDynamicFeatures",
       BetterDynamicFeaturesFeatureExtension::class.java,
     )
     val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
-
     val sharedConfiguration = project.createSharedFeatureConfiguration()
+
     project.setupFeatureDependencyGraphTasks(androidComponents, sharedConfiguration)
+    project.setupFeatureKsp(androidComponents)
     project.setupFeatureRMagicTask(androidComponents, pluginExtension)
   }
 
@@ -81,9 +96,15 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
     val sharedConfiguration = project.createSharedBaseConfiguration()
 
+    project.setupBaseCodegen(androidComponents)
+
     androidComponents.finalizeDsl { extension ->
       check(extension is ApplicationExtension)
       val featureProjects = extension.dynamicFeatures.map { project.project(it) }
+      featureProjects.forEach {
+        project.dependencies.add(CONFIGURATION_BDF, it)
+        project.dependencies.add(CONFIGURATION_BDF_IMPLEMENTATIONS, it)
+      }
 
       project.setupBaseDependencyGraphTasks(androidComponents, featureProjects, sharedConfiguration)
       project.setupBaseResourceClashTask(androidComponents, featureProjects)
@@ -157,6 +178,8 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     configurations.create(CONFIGURATION_BDF).apply {
       isCanBeConsumed = true
       isCanBeResolved = false
+      isVisible = false
+
       attributes.apply {
         attribute(
           Usage.USAGE_ATTRIBUTE,
@@ -170,6 +193,8 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     configurations.create(CONFIGURATION_BDF).apply {
       isCanBeConsumed = true
       isCanBeResolved = true
+      isVisible = false
+
       attributes.apply {
         attribute(
           Usage.USAGE_ATTRIBUTE,
@@ -449,6 +474,123 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     }
   }.joinToString(separator = "")
 
+  private fun Project.setupFeatureKsp(
+    androidComponents: AndroidComponentsExtension<*, *, *>,
+  ) {
+    val configuration = configurations.create(CONFIGURATION_BDF_IMPLEMENTATIONS).apply {
+      isCanBeConsumed = true
+      isCanBeResolved = false
+      isVisible = false
+
+      attributes.apply {
+        attribute(
+          Usage.USAGE_ATTRIBUTE,
+          project.objects.named(Usage::class.java, ATTRIBUTE_USAGE_IMPLEMENTATIONS),
+        )
+      }
+    }
+
+    androidComponents.onVariants { androidVariant ->
+      val reportDir =
+        buildDir.resolve("betterDynamicFeatures/implementations/${androidVariant.name}")
+
+      configuration.outgoing.variants.create(VARIANT_FEATURE_IMPLEMENTATION(androidVariant.name)) { variant ->
+        variant.attributes.attribute(
+          AndroidVariant.ANDROID_VARIANT_ATTRIBUTE,
+          objects.named(AndroidVariant::class.java, androidVariant.name),
+        )
+        variant.artifact(project.layout.dir(project.provider { reportDir })) { artifact ->
+          artifact.type = ARTIFACT_TYPE_FEATURE_IMPLEMENTATION_REPORT
+
+          // TODO: Try and do this lazily
+          tasks.withType(KspTaskJvm::class.java) { task ->
+            if (!kspTaskMatchesVariant(task, androidVariant)) return@withType
+
+            logger.debug("Configuring KSP task ${task.path} for variant ${androidVariant.name}")
+
+            task.commandLineArgumentProviders.add(
+              CommandLineArgumentProvider {
+                listOf("$KSP_REPORT_DIRECTORY_PREFIX.${androidVariant.name}=${reportDir.absolutePath}")
+              },
+            )
+            artifact.builtBy(task)
+          }
+        }
+      }
+    }
+    dependencies.add("ksp", "app.cash.better.dynamic.features:codegen-ksp:$VERSION")
+  }
+
+  private fun Project.setupBaseCodegen(
+    androidComponents: AndroidComponentsExtension<*, *, *>,
+  ) {
+    val compileConfiguration = configurations.create(CONFIGURATION_BDF_COMPILE_CLASSPATH).apply {
+      isCanBeConsumed = false
+      isCanBeResolved = true
+      isVisible = false
+    }
+    dependencies.add(
+      CONFIGURATION_BDF_COMPILE_CLASSPATH,
+      "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION",
+    )
+    project.dependencies.add(
+      CONFIGURATION_BDF_COMPILE_CLASSPATH,
+      "app.cash.better.dynamic.features:runtime:$VERSION",
+    )
+
+    val configuration = configurations.create(CONFIGURATION_BDF_IMPLEMENTATIONS).apply {
+      isCanBeConsumed = false
+      isCanBeResolved = true
+      isVisible = false
+
+      attributes.apply {
+        attribute(
+          Usage.USAGE_ATTRIBUTE,
+          project.objects.named(Usage::class.java, ATTRIBUTE_USAGE_IMPLEMENTATIONS),
+        )
+      }
+    }
+
+    androidComponents.onVariants { androidVariant ->
+      val implementationsTask = tasks.register(
+        taskName("typesafe", androidVariant, "Implementations"),
+        TypesafeImplementationsGeneratorTask::class.java,
+      ) { task ->
+        val featureReports = configuration.incoming.artifactView { config ->
+          config.attributes { handler ->
+            handler.attribute(ARTIFACT_TYPE, ARTIFACT_TYPE_FEATURE_IMPLEMENTATION_REPORT)
+            handler.attribute(
+              AndroidVariant.ANDROID_VARIANT_ATTRIBUTE,
+              objects.named(AndroidVariant::class.java, androidVariant.name),
+            )
+          }
+        }
+
+        task.featureImplementationReports.setFrom(featureReports.artifacts.artifactFiles)
+        task.generatedFilesDirectory.set(project.buildDir.resolve("betterDynamicFeatures/generatedImplementations/${androidVariant.name}"))
+
+        task.group = GROUP
+      }
+
+      val processTask = tasks.register(
+        taskName("compile", androidVariant, "Implementations"),
+        TypesafeImplementationsCompilationTask::class.java,
+      ) { task ->
+        task.generatedSources.set(implementationsTask.flatMap { it.generatedFilesDirectory })
+        task.kotlinCompileClasspath.setFrom(project.provider { compileConfiguration.resolvedConfiguration.files })
+      }
+
+      androidVariant.artifacts.forScope(ScopedArtifacts.Scope.PROJECT)
+        .use(processTask)
+        .toTransform(
+          ScopedArtifact.CLASSES,
+          TypesafeImplementationsCompilationTask::projectJars,
+          TypesafeImplementationsCompilationTask::projectClasses,
+          TypesafeImplementationsCompilationTask::output,
+        )
+    }
+  }
+
   private fun kspTaskMatchesVariant(task: KspTask, variant: Variant): Boolean = task.name.contains(
     variant.buildType!!,
     ignoreCase = true,
@@ -463,15 +605,24 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     internal const val GROUP = "Better Dynamic Features"
 
     private const val ATTRIBUTE_USAGE_METADATA = "better-dynamic-features-metadata"
+    private const val ATTRIBUTE_USAGE_IMPLEMENTATIONS = "better-dynamic-features-implementations"
     private const val CONFIGURATION_BDF = "betterDynamicFeatures"
+    private const val CONFIGURATION_BDF_IMPLEMENTATIONS = "betterDynamicFeaturesImplementations"
+    private const val CONFIGURATION_BDF_COMPILE_CLASSPATH = "betterDynamicFeaturesCompileClasspath"
 
     private val ARTIFACT_TYPE = Attribute.of("artifactType", String::class.java)
     private const val ARTIFACT_TYPE_FEATURE_DEPENDENCY_GRAPH = "feature-dependency-graph"
+
     private const val ARTIFACT_TYPE_BASE_DEPENDENCY_GRAPH = "base-dependency-graph"
+    private const val ARTIFACT_TYPE_FEATURE_IMPLEMENTATION_REPORT = "feature-implementation-report"
 
     private const val VARIANT_DEPENDENCY_GRAPHS = "dependency-graphs"
 
     private val WRITE_DEPENDENCY_GRAPH_REGEX =
       Regex("write(.+)DependencyGraph", RegexOption.IGNORE_CASE)
+
+    @Suppress("FunctionName")
+    private fun VARIANT_FEATURE_IMPLEMENTATION(variant: String): String =
+      "$variant-implementations"
   }
 }
