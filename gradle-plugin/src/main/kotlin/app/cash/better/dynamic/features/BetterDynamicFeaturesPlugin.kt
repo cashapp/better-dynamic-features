@@ -432,6 +432,10 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
 
           task.dependsOn(tasks.named("process${variant.name.capitalized()}Resources"))
         }
+        tasks.withType(KspTask::class.java).configureEach { kspTask ->
+          if (!kspTaskMatchesVariant(kspTask, variant)) return@configureEach
+          kspTask.dependsOn(rClassTask)
+        }
         tasks.named(taskName("compile", variant, "JavaWithJavac")).dependsOn(rClassTask)
       }
     }
