@@ -1,5 +1,5 @@
 plugins {
-  alias(libs.plugins.kotlin)
+  id("app.cash.better-dynamic-features.convention")
   alias(libs.plugins.ksp)
 }
 

@@ -31,6 +31,7 @@ dependencies {
   implementation(libs.agp)
   implementation(libs.javassist)
   implementation(libs.kotlin.gradle)
+  implementation(libs.ksp.gradlePlugin)
   implementation(libs.moshi.core)
   implementation(libs.moshi.kotlin)
   implementation(files("libs/ARSCLib-1.1.5.jar"))
@@ -78,6 +79,8 @@ def pluginVersion = tasks.register("pluginVersion") {
     versionFile.text = """// Generated file. Do not edit!
 package app.cash.better.dynamic.features
 
+val VERSION = "${project.version}"
+val KOTLIN_VERSION = "${libs.versions.kotlin.get()}"
 val TARGET_AGP_VERSION = "${libs.versions.agp.get()}"
 """
   }

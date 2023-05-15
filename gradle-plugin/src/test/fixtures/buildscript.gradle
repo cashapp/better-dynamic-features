@@ -4,7 +4,25 @@ project.buildscript.repositories {
 }
 
 project.buildscript.dependencies {
-  classpath 'app.cash:better-dynamic-features:+'
+  classpath 'app.cash.better.dynamic.features:app.cash.better.dynamic.features.gradle.plugin:+'
   classpath libs.kotlin.gradle
   classpath libs.agp
+  classpath "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:${libs.versions.ksp.get()}"
+}
+
+subprojects {
+  extensions.findByName("kotlin")?.jvmToolchain(17)
+
+  pluginManager.withPlugin("com.android.application") {
+    android.compileOptions {
+      sourceCompatibility(JavaVersion.VERSION_17)
+      targetCompatibility(JavaVersion.VERSION_17)
+    }
+  }
+  pluginManager.withPlugin("com.android.dynamic-feature") {
+    android.compileOptions {
+      sourceCompatibility(JavaVersion.VERSION_17)
+      targetCompatibility(JavaVersion.VERSION_17)
+    }
+  }
 }
