@@ -6,7 +6,9 @@ plugins {
 }
 
 subprojects {
-  extensions.findByName("kotlin")?.jvmToolchain(17)
+  pluginManager.withPlugin("org.jetbrains.kotlin.android") {
+    kotlin.jvmToolchain(17)
+  }
 
   pluginManager.withPlugin("com.android.application") {
     android.compileOptions {
