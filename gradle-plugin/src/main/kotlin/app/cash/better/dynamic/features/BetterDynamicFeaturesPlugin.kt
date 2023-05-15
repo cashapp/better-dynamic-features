@@ -20,6 +20,7 @@ import com.android.build.api.variant.Variant
 import com.android.build.gradle.internal.publishing.AndroidArtifacts
 import com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask
 import com.android.build.gradle.internal.tasks.factory.dependsOn
+import com.google.devtools.ksp.gradle.KspTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ArtifactCollection
@@ -447,6 +448,16 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       else -> arg.toString()
     }
   }.joinToString(separator = "")
+
+  private fun kspTaskMatchesVariant(task: KspTask, variant: Variant): Boolean = task.name.contains(
+    variant.buildType!!,
+    ignoreCase = true,
+  ) || variant.productFlavors.any { (_, flavor) ->
+    task.name.contains(
+      flavor,
+      ignoreCase = true,
+    )
+  }
 
   companion object {
     internal const val GROUP = "Better Dynamic Features"
