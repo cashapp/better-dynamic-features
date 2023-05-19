@@ -2,7 +2,7 @@
 
 A plugin for making dynamic feature modules better.
 
-Required version of AGP: **8.0.0**
+Required version of AGP: **8.0.1**
 
 ## Setup
 
