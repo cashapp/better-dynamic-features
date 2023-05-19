@@ -1,7 +1,7 @@
 [versions]
 kotlin = "1.8.20"
-agp = "7.4.2"
-compose = "1.4.1"
+agp = "8.0.0"
+compose = "1.4.6"
 compileSdk = "33"
 minSdk = "24"
 

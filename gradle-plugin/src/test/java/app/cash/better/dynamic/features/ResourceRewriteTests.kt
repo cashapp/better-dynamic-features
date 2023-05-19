@@ -150,7 +150,7 @@ class ResourceRewriteTests {
       .containsInConsecutiveOrder(
         """      name          : 'specialText'""",
         """      type          : 'I'""",
-        """      access        : 0x0019 (PUBLIC STATIC FINAL)""",
+        """      access        : 0x0009 (PUBLIC STATIC)""",
         """      value         : $mappedAttr""",
       )
 
@@ -158,7 +158,7 @@ class ResourceRewriteTests {
       .containsInConsecutiveOrder(
         """      name          : 'button_first'""",
         """      type          : 'I'""",
-        """      access        : 0x0019 (PUBLIC STATIC FINAL)""",
+        """      access        : 0x0009 (PUBLIC STATIC)""",
         """      value         : $mappedId""",
       )
   }
