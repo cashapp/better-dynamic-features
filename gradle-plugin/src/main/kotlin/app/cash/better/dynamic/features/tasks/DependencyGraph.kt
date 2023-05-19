@@ -7,10 +7,16 @@ import com.squareup.moshi.JsonClass
 data class Node(
   val artifact: String,
   val version: String,
-  val configurations: MutableSet<String>,
+  val variants: Set<String>,
   val children: List<Node>,
   val isProjectModule: Boolean,
+  val type: DependencyType,
 )
+
+enum class DependencyType {
+  Runtime,
+  Compile;
+}
 
 @JsonClass(generateAdapter = true)
 data class NodeList(val nodes: List<Node>)

@@ -1,7 +1,7 @@
 [versions]
-kotlin = "1.8.0"
+kotlin = "1.8.20"
 agp = "8.0.0"
-compose = "1.4.1"
+compose = "1.4.6"
 compileSdk = "33"
 minSdk = "24"
 
@@ -16,4 +16,4 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 android-dynamic-feature = { id = "com.android.dynamic-feature", version.ref = "agp" }
 betterDynamicFeatures = { id = "app.cash.better.dynamic.features", version = "0.1.0-alpha17" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-ksp = { id = "com.google.devtools.ksp", version = "1.8.0-1.0.9" }
+ksp = { id = "com.google.devtools.ksp", version = "1.8.20-1.0.11" }

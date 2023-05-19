@@ -10,6 +10,7 @@ import app.cash.better.dynamic.features.tasks.BaseLockfileWriterTask
 import app.cash.better.dynamic.features.tasks.CheckExternalResourcesTask
 import app.cash.better.dynamic.features.tasks.CheckLockfileTask
 import app.cash.better.dynamic.features.tasks.DependencyGraphWriterTask
+import app.cash.better.dynamic.features.tasks.DependencyGraphWriterTask.ResolvedComponentResultPair
 import app.cash.better.dynamic.features.tasks.GenerateExternalResourcesTask
 import com.android.Version
 import com.android.build.api.artifact.SingleArtifact
@@ -19,6 +20,7 @@ import com.android.build.api.variant.Variant
 import com.android.build.gradle.internal.publishing.AndroidArtifacts
 import com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask
 import com.android.build.gradle.internal.tasks.factory.dependsOn
+import com.google.devtools.ksp.gradle.KspTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ArtifactCollection
@@ -98,6 +100,9 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
         project.configurations.named("${variant.name}RuntimeClasspath").configure {
           it.resolutionStrategy.activateDependencyLocking()
         }
+        project.configurations.named("${variant.name}CompileClasspath").configure {
+          it.resolutionStrategy.activateDependencyLocking()
+        }
       }
     }
 
@@ -129,10 +134,17 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
 
       task.setResolvedLockfileEntriesProvider(
         project.provider {
-          project.configurations.getByName("${variant.name}RuntimeClasspath")
+          val runtime = project.configurations.getByName("${variant.name}RuntimeClasspath")
             .incoming
             .resolutionResult
             .root
+
+          val compile = project.configurations.getByName("${variant.name}CompileClasspath")
+            .incoming
+            .resolutionResult
+            .root
+
+          ResolvedComponentResultPair(runtime, compile)
         },
         variant.name,
       )
@@ -421,6 +433,10 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
 
           task.dependsOn(tasks.named("process${variant.name.capitalized()}Resources"))
         }
+        tasks.withType(KspTask::class.java).configureEach { kspTask ->
+          if (!kspTaskMatchesVariant(kspTask, variant)) return@configureEach
+          kspTask.dependsOn(rClassTask)
+        }
         tasks.named(taskName("compile", variant, "JavaWithJavac")).dependsOn(rClassTask)
       }
     }
@@ -432,6 +448,16 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       else -> arg.toString()
     }
   }.joinToString(separator = "")
+
+  private fun kspTaskMatchesVariant(task: KspTask, variant: Variant): Boolean = task.name.contains(
+    variant.buildType!!,
+    ignoreCase = true,
+  ) || variant.productFlavors.any { (_, flavor) ->
+    task.name.contains(
+      flavor,
+      ignoreCase = true,
+    )
+  }
 
   companion object {
     internal const val GROUP = "Better Dynamic Features"

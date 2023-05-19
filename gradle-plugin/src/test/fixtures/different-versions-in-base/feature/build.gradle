@@ -1,4 +1,6 @@
 apply plugin: 'com.android.dynamic-feature'
+apply plugin: 'org.jetbrains.kotlin.android'
+apply plugin: 'com.google.devtools.ksp'
 apply plugin: 'app.cash.better.dynamic.features'
 
 android {

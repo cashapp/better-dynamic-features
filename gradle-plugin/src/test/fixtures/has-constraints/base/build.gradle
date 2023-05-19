@@ -1,0 +1,17 @@
+apply plugin: 'com.android.application'
+apply plugin: 'org.jetbrains.kotlin.android'
+apply plugin: 'com.google.devtools.ksp'
+apply plugin: 'app.cash.better.dynamic.features'
+
+android {
+  namespace "app.cash.better.dynamic.features.integration"
+
+  compileSdk 32
+
+  dynamicFeatures = [':feature']
+}
+
+dependencies {
+  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-bom:1.6.4"
+  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4"
+}

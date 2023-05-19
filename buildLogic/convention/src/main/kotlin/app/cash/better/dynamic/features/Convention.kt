@@ -1,9 +1,8 @@
 package app.cash.better.dynamic.features
 
-import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.jvm.toolchain.JvmVendorSpec
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -25,9 +24,9 @@ class Convention : Plugin<Project> {
       }
     }
 
-    target.extensions.findByType(JavaPluginExtension::class.java)?.apply {
-      sourceCompatibility = JavaVersion.toVersion(TARGET_JDK)
-      targetCompatibility = JavaVersion.toVersion(TARGET_JDK)
+    target.tasks.withType(JavaCompile::class.java).configureEach { task ->
+      task.sourceCompatibility = TARGET_JDK.toString()
+      task.targetCompatibility = TARGET_JDK.toString()
     }
   }
 
