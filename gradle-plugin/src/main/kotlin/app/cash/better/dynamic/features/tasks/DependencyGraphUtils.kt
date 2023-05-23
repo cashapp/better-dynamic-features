@@ -63,7 +63,7 @@ private fun mergeSingleTypeGraphs(
     .map { (_, entry) ->
       LockfileEntry(
         entry.artifact,
-        entry.version,
+        entry.version.toString(),
         entry.configurationNames,
       )
     }

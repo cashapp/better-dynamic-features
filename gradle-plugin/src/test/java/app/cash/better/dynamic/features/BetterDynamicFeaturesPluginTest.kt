@@ -1,6 +1,7 @@
 // Copyright Square, Inc.
 package app.cash.better.dynamic.features
 
+import app.cash.better.dynamic.features.tasks.Version
 import com.google.common.truth.Truth.assertThat
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
@@ -551,6 +552,13 @@ class BetterDynamicFeaturesPluginTest {
       |org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.0=debugRuntimeClasspath,releaseRuntimeClasspath
       """.trimMargin(),
     )
+  }
+
+  @Test fun `semver comparison is correct`() {
+    val low = Version("2.8.7")
+    val high = Version("2.10.1")
+
+    assertThat(high).isGreaterThan(low)
   }
 
   private fun clearLockfile(root: File) {

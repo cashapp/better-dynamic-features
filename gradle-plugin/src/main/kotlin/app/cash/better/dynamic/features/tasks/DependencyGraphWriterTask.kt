@@ -65,7 +65,7 @@ abstract class DependencyGraphWriterTask : DefaultTask() {
         val info = it.selected.moduleVersion!!
         Node(
           "${info.group}:${info.name}",
-          info.version,
+          Version(info.version),
           mutableSetOf(variant),
           children = buildDependencyGraph(it.selected.getDependenciesForVariant(it.resolvedVariant), variant, visited, type),
           isProjectModule = it.resolvedVariant.owner is ProjectComponentIdentifier,
