@@ -17,6 +17,7 @@ includeBuild("../") {
   dependencySubstitution {
     substitute module('app.cash.better.dynamic.features:app.cash.better.dynamic.features.gradle.plugin') using project(':gradle-plugin')
     substitute module('app.cash.better.dynamic.features:runtime') using project(':runtime')
+    substitute module('app.cash.better.dynamic.features:runtime-jvm') using project(':runtime:jvm')
     substitute module('app.cash.better.dynamic.features:codegen') using project(':codegen')
     substitute module('app.cash.better.dynamic.features:codegen-api') using project(':codegen:api')
     substitute module('app.cash.better.dynamic.features:codegen-ksp') using project(':codegen:ksp')

@@ -7,6 +7,10 @@ android {
   namespace "app.cash.better.dynamic.features.integration.feature"
 
   compileSdk 32
+
+  defaultConfig {
+    minSdk 24
+  }
 }
 
 dependencies {
