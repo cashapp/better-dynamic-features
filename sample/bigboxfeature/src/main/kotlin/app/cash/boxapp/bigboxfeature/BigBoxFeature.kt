@@ -10,9 +10,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import app.cash.better.dynamic.features.DynamicImplementation
 import app.cash.boxapp.api.BoxAppFeature
 import app.cash.boxapp.api.Navigator
 
+@DynamicImplementation
 class BigBoxFeature : BoxAppFeature {
   private val navigator get() = Navigator.INSTANCE
 

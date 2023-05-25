@@ -1,0 +1,15 @@
+<!-- Copyright Square, Inc. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:dist="http://schemas.android.com/apk/distribution">
+
+    <application />
+
+    <dist:module
+        dist:instant="false"
+        dist:title="Feature">
+        <dist:delivery>
+            <dist:install-time />
+        </dist:delivery>
+        <dist:fusing dist:include="true" />
+    </dist:module>
+</manifest>

@@ -27,10 +27,15 @@ sourceSets {
 dependencies {
   ksp(libs.moshi.codegen)
 
+  implementation(projects.codegen)
+  implementation(projects.codegen.api)
+
   implementation gradleApi()
   implementation(libs.agp)
   implementation(libs.javassist)
+  implementation(libs.kotlin.compiler)
   implementation(libs.kotlin.gradle)
+  implementation(libs.kotlinPoet.core)
   implementation(libs.ksp.gradlePlugin)
   implementation(libs.moshi.core)
   implementation(libs.moshi.kotlin)

@@ -11,10 +11,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import app.cash.better.dynamic.features.DynamicImplementation
 import app.cash.boxapp.api.BoxAppFeature
 import app.cash.boxapp.api.ServiceRegistry
 import app.cash.boxapp.bigboxfeature.api.BigBoxMainScreen
 
+@DynamicImplementation
 class SmallBoxFeature : BoxAppFeature {
   @Composable override fun Tile() {
     Box(

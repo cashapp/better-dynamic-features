@@ -16,10 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import app.cash.better.dynamic.features.ExperimentalDynamicFeaturesApi
+import app.cash.better.dynamic.features.dynamicImplementations
 import app.cash.boxapp.api.BoxAppFeature
-import java.util.ServiceLoader
 
-@Composable internal fun HomeScreen() {
+@OptIn(ExperimentalDynamicFeaturesApi::class)
+@Composable
+internal fun HomeScreen() {
   Column(
     modifier = Modifier
       .padding(10.dp)
@@ -31,7 +34,7 @@ import java.util.ServiceLoader
         modifier = Modifier.padding(10.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
       ) {
-        ServiceLoader.load(BoxAppFeature::class.java).forEach {
+        dynamicImplementations<BoxAppFeature>().forEach {
           it.Tile()
         }
       }
