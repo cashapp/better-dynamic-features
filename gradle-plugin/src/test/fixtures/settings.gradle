@@ -14,5 +14,6 @@ includeBuild('../../../../../') {
     substitute module('app.cash.better.dynamic.features:codegen-api') using project(':codegen:api')
     substitute module('app.cash.better.dynamic.features:codegen-ksp') using project(':codegen:ksp')
     substitute module('app.cash.better.dynamic.features:runtime') using project(':runtime')
+    substitute module('app.cash.better.dynamic.features:runtime-jvm') using project(':runtime:jvm')
   }
 }

@@ -1,6 +1,8 @@
 plugins {
   id("app.cash.better-dynamic-features.convention")
   alias(libs.plugins.ksp)
+  alias(libs.plugins.publish)
+  alias(libs.plugins.spotless)
 }
 
 dependencies {
