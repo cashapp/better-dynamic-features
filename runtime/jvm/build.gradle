@@ -1,12 +1,9 @@
 plugins {
   id("app.cash.better-dynamic-features.convention")
-  alias(libs.plugins.ksp)
   alias(libs.plugins.publish)
   alias(libs.plugins.spotless)
 }
 
-dependencies {
-  ksp(libs.moshi.codegen)
-
-  implementation(libs.moshi.core)
+kotlin {
+  explicitApi()
 }

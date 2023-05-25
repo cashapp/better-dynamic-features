@@ -8,9 +8,10 @@ import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier.OVERRIDE
+import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asTypeName
 
@@ -24,21 +25,25 @@ fun generateImplementationsContainer(
   val apiTypeName = ClassName(forApi.packageName, forApi.className)
   val fileSpec = FileSpec.builder(forApi.packageName, "${forApi.className}ImplementationsContainer")
 
-  val implementationsFunction = PropertySpec.builder("implementations", List::class.asTypeName().parameterizedBy(apiTypeName))
+  val implementationsFunction = FunSpec.builder("buildImplementations")
+    .returns(List::class.asTypeName().parameterizedBy(apiTypeName))
     .addModifiers(OVERRIDE)
-    .initializer(
+    .addCode(
       CodeBlock.builder()
-        .addStatement("buildList {")
+        .beginControlFlow("return %M", MemberName("kotlin.collections", "buildList"))
         .apply {
           implementations.forEach { implementation ->
+            beginControlFlow("try")
             addStatement(
               "add(Class.forName(%S).getDeclaredConstructor().newInstance() as %T)",
               implementation.qualifiedName,
               apiTypeName,
             )
+            nextControlFlow("catch(e: %T)", ClassName("java.lang", "ClassNotFoundException"))
+            endControlFlow()
           }
         }
-        .addStatement("}").build(),
+        .endControlFlow().build(),
     )
     .build()
 
@@ -51,7 +56,7 @@ fun generateImplementationsContainer(
           ClassName("app.cash.better.dynamic.features", "ExperimentalDynamicFeaturesApi"),
         ).build(),
     )
-    .addProperty(implementationsFunction)
+    .addFunction(implementationsFunction)
     .build()
 
   return fileSpec.addType(objectSpec).build()

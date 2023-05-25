@@ -19,6 +19,7 @@ import app.cash.better.dynamic.features.tasks.GenerateExternalResourcesTask
 import com.android.Version
 import com.android.build.api.artifact.ScopedArtifact
 import com.android.build.api.artifact.SingleArtifact
+import com.android.build.api.attributes.BuildTypeAttr
 import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.api.variant.ScopedArtifacts
@@ -521,21 +522,35 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     dependencies.add("ksp", "app.cash.better.dynamic.features:codegen-ksp:$VERSION")
   }
 
-  private fun Project.setupBaseCodegen(
-    androidComponents: AndroidComponentsExtension<*, *, *>,
-  ) {
-    val compileConfiguration = configurations.create(CONFIGURATION_BDF_COMPILE_CLASSPATH).apply {
+  private fun Project.setupVariantCodegenDependencies(buildType: String): Configuration {
+    val compileConfiguration = configurations.create(CONFIGURATION_BDF_COMPILE_CLASSPATH(buildType)).apply {
       isCanBeConsumed = false
       isCanBeResolved = true
       isVisible = false
+
+      attributes.apply {
+        attribute(BuildTypeAttr.ATTRIBUTE, project.objects.named(BuildTypeAttr::class.java, buildType))
+        attribute(ARTIFACT_TYPE, "android-classes-jar")
+      }
     }
     dependencies.add(
-      CONFIGURATION_BDF_COMPILE_CLASSPATH,
+      CONFIGURATION_BDF_COMPILE_CLASSPATH(buildType),
       "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION",
     )
     project.dependencies.add(
-      CONFIGURATION_BDF_COMPILE_CLASSPATH,
+      CONFIGURATION_BDF_COMPILE_CLASSPATH(buildType),
       "app.cash.better.dynamic.features:runtime:$VERSION",
+    )
+
+    return compileConfiguration
+  }
+
+  private fun Project.setupBaseCodegen(
+    androidComponents: AndroidComponentsExtension<*, *, *>,
+  ) {
+    val compileConfigurations = mapOf(
+      "debug" to setupVariantCodegenDependencies("debug"),
+      "release" to setupVariantCodegenDependencies("release"),
     )
 
     val configuration = configurations.create(CONFIGURATION_BDF_IMPLEMENTATIONS).apply {
@@ -577,6 +592,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
         TypesafeImplementationsCompilationTask::class.java,
       ) { task ->
         task.generatedSources.set(implementationsTask.flatMap { it.generatedFilesDirectory })
+        val compileConfiguration = compileConfigurations.getValue(androidVariant.buildType!!)
         task.kotlinCompileClasspath.setFrom(project.provider { compileConfiguration.resolvedConfiguration.files })
       }
 
@@ -608,7 +624,9 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     private const val ATTRIBUTE_USAGE_IMPLEMENTATIONS = "better-dynamic-features-implementations"
     private const val CONFIGURATION_BDF = "betterDynamicFeatures"
     private const val CONFIGURATION_BDF_IMPLEMENTATIONS = "betterDynamicFeaturesImplementations"
-    private const val CONFIGURATION_BDF_COMPILE_CLASSPATH = "betterDynamicFeaturesCompileClasspath"
+
+    @Suppress("FunctionName")
+    private fun CONFIGURATION_BDF_COMPILE_CLASSPATH(buildType: String) = "${buildType}BetterDynamicFeaturesCompileClasspath"
 
     private val ARTIFACT_TYPE = Attribute.of("artifactType", String::class.java)
     private const val ARTIFACT_TYPE_FEATURE_DEPENDENCY_GRAPH = "feature-dependency-graph"

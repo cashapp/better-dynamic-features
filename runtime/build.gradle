@@ -1,9 +1,38 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
-  id("app.cash.better-dynamic-features.convention")
+  alias(libs.plugins.android.library)
+  alias(libs.plugins.kotlin.android)
   alias(libs.plugins.publish)
   alias(libs.plugins.spotless)
 }
 
+android {
+  compileSdk 33
+  namespace "app.cash.better.dynamic.features"
+
+  defaultConfig {
+    minSdk 24
+  }
+  compileOptions {
+    sourceCompatibility(JavaVersion.VERSION_11)
+    targetCompatibility(JavaVersion.VERSION_11)
+  }
+}
+
 kotlin {
   explicitApi()
+  jvmToolchain(17)
+}
+
+tasks.withType(KotlinCompile).configureEach { task ->
+  task.compilerOptions {
+    jvmTarget.set(JvmTarget.JVM_11)
+  }
+}
+
+dependencies {
+  api libs.featureDelivery
+  api projects.runtime.jvm
 }

@@ -1,5 +1,7 @@
 plugins {
   id("app.cash.better-dynamic-features.convention")
+  alias(libs.plugins.publish)
+  alias(libs.plugins.spotless)
 }
 
 dependencies {
@@ -13,5 +15,5 @@ dependencies {
   testImplementation(libs.compiler.testing.ksp)
   testImplementation(libs.junit)
   testImplementation(libs.truth)
-  testRuntimeOnly(projects.runtime)
+  testRuntimeOnly(projects.runtime.jvm)
 }

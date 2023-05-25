@@ -16,6 +16,28 @@ class CodegenIntegrationTests {
       |# This is a Gradle generated file for dependency locking.
       |# Manual edits can break the build and are not advised.
       |# This file is expected to be part of source control.
+      |androidx.activity:activity:1.0.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.annotation:annotation:1.1.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.arch.core:core-common:2.1.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.arch.core:core-runtime:2.0.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.collection:collection:1.1.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.core:core:1.2.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.customview:customview:1.0.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.fragment:fragment:1.1.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.lifecycle:lifecycle-common:2.1.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.lifecycle:lifecycle-livedata-core:2.0.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.lifecycle:lifecycle-livedata:2.0.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.lifecycle:lifecycle-runtime:2.1.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.lifecycle:lifecycle-viewmodel:2.1.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.loader:loader:1.0.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.savedstate:savedstate:1.0.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.versionedparcelable:versionedparcelable:1.1.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.viewpager:viewpager:1.0.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |com.google.android.gms:play-services-basement:18.1.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |com.google.android.gms:play-services-tasks:18.0.2=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |com.google.android.play:core-common:2.0.3=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |com.google.android.play:feature-delivery-ktx:2.1.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |com.google.android.play:feature-delivery:2.1.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |com.squareup.okhttp3:okhttp:4.11.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |com.squareup.okio:okio-jvm:3.2.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |com.squareup.okio:okio:3.2.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
@@ -23,6 +45,9 @@ class CodegenIntegrationTests {
       |org.jetbrains.kotlin:kotlin-stdlib-jdk7:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains:annotations:13.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |empty=
       """.trimMargin(),
@@ -40,16 +65,20 @@ class CodegenIntegrationTests {
       """
       |import app.cash.better.`dynamic`.features.ExperimentalDynamicFeaturesApi
       |import app.cash.better.`dynamic`.features.ImplementationsContainer
+      |import java.lang.ClassNotFoundException
       |import kotlin.OptIn
       |import kotlin.collections.List
+      |import kotlin.collections.buildList
       |
       |@OptIn(ExperimentalDynamicFeaturesApi::class)
       |public object ExampleFeatureImplementationsContainer : ImplementationsContainer<ExampleFeature> {
-      |  public override val implementations: List<ExampleFeature> = buildList {
-      |  add(Class.forName("ExampleImplementation").getDeclaredConstructor().newInstance() as
-      |      ExampleFeature)
+      |  public override fun buildImplementations(): List<ExampleFeature> = buildList {
+      |    try {
+      |      add(Class.forName("ExampleImplementation").getDeclaredConstructor().newInstance() as
+      |          ExampleFeature)
+      |    } catch(e: ClassNotFoundException) {
+      |    }
       |  }
-      |
       |}
       |
       """.trimMargin(),
@@ -64,6 +93,28 @@ class CodegenIntegrationTests {
       |# This is a Gradle generated file for dependency locking.
       |# Manual edits can break the build and are not advised.
       |# This file is expected to be part of source control.
+      |androidx.activity:activity:1.0.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.annotation:annotation:1.1.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.arch.core:core-common:2.1.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.arch.core:core-runtime:2.0.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.collection:collection:1.1.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.core:core:1.2.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.customview:customview:1.0.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.fragment:fragment:1.1.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.lifecycle:lifecycle-common:2.1.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.lifecycle:lifecycle-livedata-core:2.0.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.lifecycle:lifecycle-livedata:2.0.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.lifecycle:lifecycle-runtime:2.1.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.lifecycle:lifecycle-viewmodel:2.1.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.loader:loader:1.0.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.savedstate:savedstate:1.0.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.versionedparcelable:versionedparcelable:1.1.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |androidx.viewpager:viewpager:1.0.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |com.google.android.gms:play-services-basement:18.1.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |com.google.android.gms:play-services-tasks:18.0.2=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |com.google.android.play:core-common:2.0.3=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |com.google.android.play:feature-delivery-ktx:2.1.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |com.google.android.play:feature-delivery:2.1.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |com.squareup.okhttp3:okhttp:4.11.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |com.squareup.okio:okio-jvm:3.2.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |com.squareup.okio:okio:3.2.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
@@ -71,6 +122,9 @@ class CodegenIntegrationTests {
       |org.jetbrains.kotlin:kotlin-stdlib-jdk7:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains:annotations:13.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |empty=
       """.trimMargin(),

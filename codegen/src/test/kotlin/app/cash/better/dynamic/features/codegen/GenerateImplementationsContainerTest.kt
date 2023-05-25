@@ -22,16 +22,25 @@ class GenerateImplementationsContainerTest {
 
         import app.cash.better.`dynamic`.features.ExperimentalDynamicFeaturesApi
         import app.cash.better.`dynamic`.features.ImplementationsContainer
+        import java.lang.ClassNotFoundException
         import kotlin.OptIn
         import kotlin.collections.List
+        import kotlin.collections.buildList
 
         @OptIn(ExperimentalDynamicFeaturesApi::class)
         public object TestApiImplementationsContainer : ImplementationsContainer<TestApi> {
-          public override val implementations: List<TestApi> = buildList {
-          add(Class.forName("test.TestImplementation1").getDeclaredConstructor().newInstance() as TestApi)
-          add(Class.forName("test.TestImplementation2").getDeclaredConstructor().newInstance() as TestApi)
+          public override fun buildImplementations(): List<TestApi> = buildList {
+            try {
+              add(Class.forName("test.TestImplementation1").getDeclaredConstructor().newInstance() as
+                  TestApi)
+            } catch(e: ClassNotFoundException) {
+            }
+            try {
+              add(Class.forName("test.TestImplementation2").getDeclaredConstructor().newInstance() as
+                  TestApi)
+            } catch(e: ClassNotFoundException) {
+            }
           }
-
         }
 
         """.trimIndent(),

@@ -10,6 +10,8 @@ compose-activity = { module = "androidx.activity:activity-compose", version = "1
 compose-material = { module = "androidx.compose.material:material", version = "1.4.2" }
 compose-runtime = { module = "androidx.compose.runtime:runtime", version = "1.4.2" }
 
+featureDelivery = { module = "com.google.android.play:feature-delivery-ktx", version = "2.1.0"}
+
 [plugins]
 # This is just a dummy version to make the verison catalog work. The real version is subsituted in the composite build.
 betterDynamicFeatures = { id = "app.cash.better.dynamic.features", version = "0.1.0-alpha19" }
