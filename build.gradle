@@ -19,5 +19,6 @@ spotless {
     ])
     trimTrailingWhitespace()
     endWithNewline()
+    licenseHeaderFile(rootProject.file('gradle/license-header.txt'))
   }
 }
