@@ -30,4 +30,5 @@ enableFeaturePreview('TYPESAFE_PROJECT_ACCESSORS')
 include ':app'
 include ':bigboxfeature'
 include ':bigboxfeature:api'
+include ':extrabigboxfeature'
 include ':smallboxfeature'

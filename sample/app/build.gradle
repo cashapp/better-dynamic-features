@@ -8,7 +8,7 @@ plugins {
 android {
   namespace "app.cash.boxapp"
 
-  dynamicFeatures = [":bigboxfeature", ":smallboxfeature", ":bigboxfeature:api"]
+  dynamicFeatures = [":bigboxfeature", ":smallboxfeature", ":bigboxfeature:api", ":extrabigboxfeature"]
 
   compileSdk libs.versions.compileSdk.get() as int
 
@@ -38,4 +38,5 @@ android {
 dependencies {
   implementation libs.compose.activity
   implementation libs.compose.material
+  implementation libs.featureDelivery
 }

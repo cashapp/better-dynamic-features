@@ -1,0 +1,9 @@
+plugins {
+  id("app.cash.better-dynamic-features.convention")
+  alias(libs.plugins.publish)
+  alias(libs.plugins.spotless)
+}
+
+kotlin {
+  explicitApi()
+}

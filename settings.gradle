@@ -27,5 +27,6 @@ include(":codegen:api")
 include(":codegen:ksp")
 include(":gradle-plugin")
 include(":runtime")
+include(":runtime:jvm")
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")

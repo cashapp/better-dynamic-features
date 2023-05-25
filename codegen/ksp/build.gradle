@@ -13,5 +13,5 @@ dependencies {
   testImplementation(libs.compiler.testing.ksp)
   testImplementation(libs.junit)
   testImplementation(libs.truth)
-  testRuntimeOnly(projects.runtime)
+  testRuntimeOnly(projects.runtime.jvm)
 }
