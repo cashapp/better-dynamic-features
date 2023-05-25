@@ -1,9 +1,9 @@
 [versions]
 agp = "8.0.1"
 compilerTesting = "0.2.1"
-kotlin = "1.8.20"
+kotlin = "1.8.21"
 kotlinPoet = "1.13.1"
-ksp = "1.8.20-1.0.11"
+ksp = "1.8.21-1.0.11"
 ktlint = "0.46.1"
 moshi = "1.14.0"
 
