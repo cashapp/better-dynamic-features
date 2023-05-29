@@ -87,10 +87,6 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
 
   @OptIn(AaptMagic::class)
   private fun applyToFeature(project: Project) {
-    check(project.plugins.hasPlugin("com.google.devtools.ksp")) {
-      "Plugin 'com.google.devtools.ksp' must also be applied before this plugin"
-    }
-
     val pluginExtension = project.extensions.create(
       "betterDynamicFeatures",
       BetterDynamicFeaturesFeatureExtension::class.java,
@@ -99,8 +95,10 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     val sharedConfiguration = project.createSharedFeatureConfiguration()
 
     project.setupFeatureDependencyGraphTasks(androidComponents, sharedConfiguration)
-    project.setupFeatureKsp(androidComponents)
     project.setupFeatureRMagicTask(androidComponents, pluginExtension)
+    project.plugins.withId("com.google.devtools.ksp") {
+      project.setupFeatureKsp(androidComponents)
+    }
   }
 
   @OptIn(AaptMagic::class)
@@ -111,14 +109,18 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     val androidComponents = project.extensions.getByType(AndroidComponentsExtension::class.java)
     val sharedConfiguration = project.createSharedBaseConfiguration()
 
-    project.setupBaseCodegen(androidComponents)
+    project.plugins.withId("com.google.devtools.ksp") {
+      project.setupBaseCodegen(androidComponents)
+    }
 
     androidComponents.finalizeDsl { extension ->
       check(extension is ApplicationExtension)
       val featureProjects = extension.dynamicFeatures.map { project.project(it) }
       featureProjects.forEach {
         project.dependencies.add(CONFIGURATION_BDF, it)
-        project.dependencies.add(CONFIGURATION_BDF_IMPLEMENTATIONS, it)
+        if (project.plugins.hasPlugin("com.google.devtools.ksp")) {
+          project.dependencies.add(CONFIGURATION_BDF_IMPLEMENTATIONS, it)
+        }
       }
 
       project.setupBaseDependencyGraphTasks(androidComponents, featureProjects, sharedConfiguration)
