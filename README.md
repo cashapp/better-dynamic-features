@@ -12,13 +12,12 @@ Version Compatibility:
 
 ## Setup
 
-Apply this plugin and KSP to your `com.android.application` module and each of
+Apply this plugin to your `com.android.application` module and each of
 your `com.android.dynamic-feature` modules.
 
 ```groovy
 plugins {
   id("com.android.application")
-  id("org.jetbrains.kotlin.ksp")
   id("app.cash.better.dynamic.features")
 }
 
@@ -26,7 +25,6 @@ plugins {
 
 plugins {
   id("com.android.dynamic-feature")
-  id("org.jetbrains.kotlin.ksp")
   id("app.cash.better.dynamic.features")
 }
 ```
@@ -112,6 +110,16 @@ Better dynamic features supports generating code to access these kinds of classe
 and type-safe way.
 
 ### Usage
+
+Add the KSP plugin to each of your application and feature modules. The better dynamic features
+plugin will automatically configure KSP to do the code generation described below.
+
+```groovy
+plugins {
+   id("com.google.devtools.ksp")
+   id("app.cash.better.dynamic.features")
+}
+```
 
 In your **base** module, define an interface (or abstract class) that implements
 the [`DynamicApi`](runtime/jvm/src/main/kotlin/app/cash/better/dynamic/features/DynamicApi.kt)
