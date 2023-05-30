@@ -593,9 +593,11 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
 
         task.featureImplementationReports.setFrom(featureReports.artifacts.artifactFiles)
         task.generatedFilesDirectory.set(project.buildDir.resolve("betterDynamicFeatures/generatedImplementations/${androidVariant.name}"))
+        task.generatedProguardFile.set(project.buildDir.resolve("betterDynamicFeatures/generatedProguard/betterDynamicFeatures-${androidVariant.name}.pro"))
 
         task.group = GROUP
       }
+      androidVariant.proguardFiles.add(implementationsTask.flatMap { it.generatedProguardFile })
 
       val processTask = tasks.register(
         taskName("compile", androidVariant, "Implementations"),
