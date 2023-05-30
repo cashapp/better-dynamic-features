@@ -13,6 +13,12 @@ android {
     minSdk 24
   }
 
+  buildTypes {
+    release {
+      minifyEnabled true
+    }
+  }
+
   dynamicFeatures = [':feature']
 }
 
