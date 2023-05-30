@@ -1,5 +1,5 @@
 [versions]
-agp = "8.0.1"
+agp = "8.0.2"
 compilerTesting = "0.2.1"
 kotlin = "1.8.21"
 kotlinPoet = "1.13.1"
@@ -29,8 +29,8 @@ junit = { module = "junit:junit", version = "4.13.2" }
 # AGP things
 google-guava = "com.google.guava:guava:31.1-jre"
 google-gson = "com.google.code.gson:gson:2.9.1"
-android-common = "com.android.tools:common:30.4.2"
-android-sdkCommon = "com.android.tools:sdk-common:30.4.2"
+android-common = "com.android.tools:common:31.0.2"
+android-sdkCommon = "com.android.tools:sdk-common:31.0.2"
 
 [plugins]
 android-library = { id = "com.android.library", version.ref = "agp" }
