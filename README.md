@@ -4,12 +4,6 @@
 
 Making dynamic feature modules better.
 
-Version Compatibility:
-
-| Better Dynamic Features | AGP   |
-|-------------------------|-------|
-| 0.1.0                   | 8.0.1 |
-
 ## Setup
 
 Apply this plugin to your `com.android.application` module and each of
@@ -99,6 +93,54 @@ Execution failed for task ':app:checkDebugExternalResources'.
   MyTheme
 ```
 
+## Android Gradle Plugin Patch
+
+A [known bug](https://issuetracker.google.com/issues/246326007) can cause classes to be missing in
+your app bundle when building with dynamic feature modules, resulting in unexpected runtime crashes.
+This project includes a patch for the Android Gradle Plugin that works around this issue, and it can
+be applied to your project as a Gradle plugin.
+
+```groovy
+// root build.gradle file
+buildscript {
+  dependencies {
+    classpath "app.cash.better.dynamic.features:agp-patch:0.1.0" // Must be loaded before AGP!
+    classpath "com.android.tools.build:gradle:8.0.1"
+  }
+}
+```
+
+Loading the plugin onto the classpath is sufficient to apply the patch, however because this
+directly patches one of AGP's classes it is tied directly to a specific version of AGP. To validate
+that the correct version of the plugin that matches your AGP version is being applied, you can add
+the plugin to your application module.
+
+```groovy
+// app/build.gradle
+plugins {
+  id("app.cash.better.dynamic.features.agp-patch") version "0.1.0"
+  id("com.android.application") version "7.4.2" // Wrong version!
+}
+
+// Reports an error:
+// "This version of the Android Gradle Plugin (7.4.2) is not supported by the better-dynamic-features plugin. Only version 8.0.1 is supported."
+```
+
+Note that this bug has been marked as fixed in AGP 8.1, however this fix was made by disabling
+incremental dexing transforms for feature modules. When the underlying Gradle bug has been fixed,
+[this will be reverted](https://issuetracker.google.com/issues/268603989) but in the meantime this
+project will continue to patch this issue without disabling the incremental transforms. This means
+that this patch is optional if using AGP 8.1 or newer.
+
+### Patch Plugin Version Compatibility
+
+Version Compatibility:
+
+| AGP    | Better Dynamic Features | Notes         |
+|--------|-------------------------|---------------|
+| 8.0.1  | 0.1.0                   | **Required!** |
+| 8.1.0+ | TBD                     | _Optional_    |
+
 # Using Feature Module Code
 
 Using feature module code from your base module isn't directly possible because your feature module
@@ -116,8 +158,8 @@ plugin will automatically configure KSP to do the code generation described belo
 
 ```groovy
 plugins {
-   id("com.google.devtools.ksp")
-   id("app.cash.better.dynamic.features")
+  id("com.google.devtools.ksp")
+  id("app.cash.better.dynamic.features")
 }
 ```
 
@@ -150,10 +192,11 @@ class SuperCoolFeatureImplementation : MyCoolFeature {
 
 Back in your **base** module, you can use
 the [`dynamicImplementations()`](runtime/src/main/kotlin/app/cash/better/dynamic/features/DynamicImplementations.kt)
-method to get a list containing an instance of each class that is implemented and annotated in your feature modules.
+method to get a list containing an instance of each class that is implemented and annotated in your
+feature modules.
 
-This method returns a `Flow` which will automatically emit an updated list of instances when an on-demand
-feature module is installed.
+This method returns a `Flow` which will automatically emit an updated list of instances when an
+on-demand feature module is installed.
 
 ```kotlin
 // app/src/main/...

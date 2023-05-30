@@ -22,6 +22,7 @@ rootProject.name = "better-dynamic-features"
 
 includeBuild("buildLogic")
 
+include(":agp-patch")
 include(":codegen")
 include(":codegen:api")
 include(":codegen:ksp")

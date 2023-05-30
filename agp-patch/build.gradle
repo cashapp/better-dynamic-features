@@ -1,0 +1,49 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+plugins {
+  id("app.cash.better-dynamic-features.convention")
+  id("java-gradle-plugin")
+  alias(libs.plugins.publish)
+}
+
+gradlePlugin {
+  plugins {
+    agpPatch {
+      id = "app.cash.better.dynamic.features.agp-patch"
+      implementationClass = 'app.cash.better.dynamic.features.AgpPatchPlugin'
+    }
+  }
+}
+
+sourceSets {
+  main.kotlin.srcDir "$buildDir/gen"
+}
+
+dependencies {
+  implementation gradleApi()
+
+  compileOnly(libs.agp)
+  compileOnly(libs.google.guava)
+  compileOnly(libs.google.gson)
+  compileOnly(libs.android.common)
+  compileOnly(libs.android.sdkCommon)
+}
+
+def pluginConstants = tasks.register("pluginConstants") {
+  def outputDir = file("$buildDir/gen")
+
+  outputs.dir(outputDir)
+
+  doLast {
+    def versionFile = file("$outputDir/app/cash/better/dynamic/features/Constants.kt")
+    versionFile.parentFile.mkdirs()
+    versionFile.text = """// Generated file. Do not edit!
+package app.cash.better.dynamic.features
+
+val TARGET_AGP_VERSION = "${libs.versions.agp.get()}"
+"""
+  }
+}
+
+tasks.withType(KotlinCompile).configureEach { dependsOn(pluginConstants) }
+tasks.withType(Jar).configureEach { dependsOn(pluginConstants) }

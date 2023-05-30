@@ -30,7 +30,6 @@ import app.cash.better.dynamic.features.tasks.CheckLockfileTask
 import app.cash.better.dynamic.features.tasks.DependencyGraphWriterTask
 import app.cash.better.dynamic.features.tasks.DependencyGraphWriterTask.ResolvedComponentResultPair
 import app.cash.better.dynamic.features.tasks.GenerateExternalResourcesTask
-import com.android.Version
 import com.android.build.api.artifact.ScopedArtifact
 import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.attributes.BuildTypeAttr
@@ -62,11 +61,6 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       "Plugin 'com.android.application' or 'com.android.dynamic-feature' must also be applied before this plugin"
     }
 
-    // Do a strict version check to ensure that our monkey-patching will work correctly.
-    check(Version.ANDROID_GRADLE_PLUGIN_VERSION == TARGET_AGP_VERSION) {
-      "This version of the Android Gradle Plugin (${Version.ANDROID_GRADLE_PLUGIN_VERSION}) is not supported by the better-dynamic-features plugin. Only version $TARGET_AGP_VERSION is supported."
-    }
-
     val hasLockfileStartTask = project.gradle.startParameter.taskNames.any {
       it.contains(
         "writeLockfile",
@@ -75,8 +69,6 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     }
     val startTaskCount = project.gradle.startParameter.taskNames.count()
     require(!hasLockfileStartTask || startTaskCount == 1) { "Updating the lockfile and running other tasks together is an error. Update the lockfile first, and then run your other tasks separately." }
-
-    project.dependencies.add("implementation", "app.cash.better.dynamic.features:runtime:$VERSION")
 
     if (project.plugins.hasPlugin("com.android.application")) {
       applyToApplication(project)
@@ -97,6 +89,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     project.setupFeatureDependencyGraphTasks(androidComponents, sharedConfiguration)
     project.setupFeatureRMagicTask(androidComponents, pluginExtension)
     project.plugins.withId("com.google.devtools.ksp") {
+      project.dependencies.add("implementation", "app.cash.better.dynamic.features:runtime:$VERSION")
       project.setupFeatureKsp(androidComponents)
     }
   }
@@ -110,6 +103,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     val sharedConfiguration = project.createSharedBaseConfiguration()
 
     project.plugins.withId("com.google.devtools.ksp") {
+      project.dependencies.add("implementation", "app.cash.better.dynamic.features:runtime:$VERSION")
       project.setupBaseCodegen(androidComponents)
     }
 
