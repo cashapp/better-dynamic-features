@@ -41,11 +41,6 @@ dependencies {
   implementation(libs.moshi.kotlin)
   implementation(files("libs/ARSCLib-1.1.5.jar"))
 
-  compileOnly(libs.google.guava)
-  compileOnly(libs.google.gson)
-  compileOnly(libs.android.common)
-  compileOnly(libs.android.sdkCommon)
-
   testImplementation(libs.junit)
   testImplementation(libs.truth)
 }
@@ -86,7 +81,6 @@ package app.cash.better.dynamic.features
 
 val VERSION = "${project.version}"
 val KOTLIN_VERSION = "${libs.versions.kotlin.get()}"
-val TARGET_AGP_VERSION = "${libs.versions.agp.get()}"
 """
   }
 }
