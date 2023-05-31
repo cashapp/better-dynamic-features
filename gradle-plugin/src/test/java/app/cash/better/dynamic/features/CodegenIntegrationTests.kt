@@ -98,11 +98,8 @@ class CodegenIntegrationTests {
     assertThat(proguardFile.exists()).isTrue()
     assertThat(proguardFile.readText()).isEqualTo(
       """
-        |-if class ExampleFeature
         |-keepnames class ExampleFeature
-        |-if class ExampleFeatureImplementationsContainer
         |-keep class ExampleFeatureImplementationsContainer { *; }
-        |-if class ExampleImplementation
         |-keep class ExampleImplementation {
         |    public <init>();
         |}

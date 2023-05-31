@@ -25,15 +25,12 @@ fun generateProguardRules(
 ): String = buildString {
   val forApiClass = ClassName(forApi.packageName, forApi.className)
   // Keep feature API interface itself
-  appendLine("-if class ${forApiClass.canonicalName}")
   appendLine("-keepnames class ${forApiClass.canonicalName}")
   // Keep generated implementations container looked up by reflection
-  appendLine("-if class ${forApiClass.canonicalName}ImplementationsContainer")
   appendLine("-keep class ${forApiClass.canonicalName}ImplementationsContainer { *; }")
 
   // Keep each implementation class and its empty constructor
   implementations.forEach { implementation ->
-    appendLine("-if class ${implementation.qualifiedName}")
     appendLine("-keep class ${implementation.qualifiedName} {")
     appendLine("    public <init>();")
     appendLine("}")
