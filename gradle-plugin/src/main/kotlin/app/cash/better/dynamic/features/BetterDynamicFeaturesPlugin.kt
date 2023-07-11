@@ -277,9 +277,6 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
         task.baseDependencyGraphFiles.setFrom(baseDependencyArtifacts)
 
         task.group = GROUP
-        task.runningOnCi.set(
-          project.providers.systemProperty("ci").orElse("false").map { it.toBoolean() },
-        )
         task.projectPath.set(project.path)
       }
     tasks.named("preBuild").dependsOn(checkLockfileTask)

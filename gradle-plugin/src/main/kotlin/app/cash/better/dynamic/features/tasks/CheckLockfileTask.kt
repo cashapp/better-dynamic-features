@@ -40,9 +40,6 @@ abstract class CheckLockfileTask : DependencyGraphConsumingTask() {
   @get:Input
   abstract val projectPath: Property<String>
 
-  @get:Input
-  abstract val runningOnCi: Property<Boolean>
-
   @TaskAction
   fun checkLockfiles() {
     val currentEntries = mergeGraphs(baseGraph(), featureGraphs())
@@ -51,12 +48,7 @@ abstract class CheckLockfileTask : DependencyGraphConsumingTask() {
     outputFile.asFile.get().writeText(areTheyEqual.toString())
     if (!areTheyEqual) {
       currentLockfilePath.asFile.get().writeText(currentEntries.toText())
-      if (runningOnCi.get()) {
-        // TODO: Revert back to a more generic message when this flag is no longer needed
-        throw IllegalStateException("The lockfile was out of date. Run './gradlew -Dcash.os.dynamicFeatures=true ${projectPath.get()}:writeLockfile' and commit the updated lockfile.")
-      } else {
-        throw IllegalStateException("The lockfile was out of date and has been updated. Rerun your build.")
-      }
+      throw IllegalStateException("The lockfile was out of date and has been updated. Rerun your build.")
     }
   }
 }
