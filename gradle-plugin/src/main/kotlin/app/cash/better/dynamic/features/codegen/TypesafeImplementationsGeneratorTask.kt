@@ -22,13 +22,18 @@ import okio.source
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
 abstract class TypesafeImplementationsGeneratorTask : DefaultTask() {
   @get:InputFiles
   abstract val featureImplementationReports: ConfigurableFileCollection
+
+  @get:OutputFile
+  abstract val generatedProguardFile: RegularFileProperty
 
   @get:OutputDirectory
   abstract val generatedFilesDirectory: DirectoryProperty
@@ -51,6 +56,17 @@ abstract class TypesafeImplementationsGeneratorTask : DefaultTask() {
       val fileSpec =
         generateImplementationsContainer(forApi = api, implementations = implementations)
       fileSpec.writeTo(directory = generatedSourcesDirectory)
+    }
+
+    val proguardFile = generatedProguardFile.asFile.get()
+    if (proguardFile.exists()) {
+      proguardFile.delete()
+      proguardFile.createNewFile()
+    }
+    proguardFile.bufferedWriter().use { writer ->
+      collectedFeatures.forEach { (api, implementations) ->
+        writer.append(generateProguardRules(forApi = api, implementations))
+      }
     }
   }
 }
