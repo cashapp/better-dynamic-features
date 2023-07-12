@@ -1,0 +1,32 @@
+name: Publish a release
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ '*' ]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    if: github.repository == 'cashapp/better-dynamic-features'
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: gradle/wrapper-validation-action@v1
+      - uses: actions/setup-java@v3.6.0
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Publish Artifacts
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.SONATYPE_NEXUS_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.SONATYPE_NEXUS_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.ARTIFACT_SIGNING_PRIVATE_KEY }}
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository
+
+env:
+  GRADLE_OPTS: -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
