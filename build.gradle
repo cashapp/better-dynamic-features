@@ -2,7 +2,7 @@ plugins {
   alias(libs.plugins.android.library) apply false
   alias(libs.plugins.kotlin.jvm) apply false
   alias(libs.plugins.kotlin.android) apply false
-  alias(libs.plugins.publish) apply false
+  alias(libs.plugins.publish)
   alias(libs.plugins.spotless)
   alias(libs.plugins.wire) apply false
 }
@@ -20,5 +20,31 @@ spotless {
     trimTrailingWhitespace()
     endWithNewline()
     licenseHeaderFile(rootProject.file('gradle/license-header.txt'))
+  }
+}
+
+subprojects {
+  plugins.withId("com.vanniktech.maven.publish") {
+    publishing {
+      repositories {
+        maven {
+          name = "installLocally"
+          url = "${rootProject.buildDir}/localMaven"
+        }
+        /**
+         * Want to push to an internal repository for testing?
+         * Set the following properties in ~/.gradle/gradle.properties.
+         *
+         * internalUrl=YOUR_INTERNAL_URL
+         * internalUsername=YOUR_USERNAME
+         * internalPassword=YOUR_PASSWORD
+         */
+        maven {
+          name = "internal"
+          url = providers.gradleProperty("internalUrl")
+          credentials(PasswordCredentials)
+        }
+      }
+    }
   }
 }
