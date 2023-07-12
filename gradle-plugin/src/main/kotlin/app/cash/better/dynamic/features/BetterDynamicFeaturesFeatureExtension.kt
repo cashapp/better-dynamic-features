@@ -19,7 +19,5 @@ import org.gradle.api.Project
 import org.gradle.api.provider.Property
 
 abstract class BetterDynamicFeaturesFeatureExtension {
-  abstract val enableResourceRewriting: Property<Boolean>
-
   abstract val baseProject: Property<Project>
 }
