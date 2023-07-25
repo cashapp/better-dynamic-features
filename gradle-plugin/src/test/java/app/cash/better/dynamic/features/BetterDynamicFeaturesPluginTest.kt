@@ -16,11 +16,13 @@
 package app.cash.better.dynamic.features
 
 import app.cash.better.dynamic.features.tasks.Version
+import app.cash.better.dynamic.features.utils.assertThat
 import com.google.common.truth.Truth.assertThat
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Test
 import java.io.File
+import kotlin.io.path.bufferedReader
 
 class BetterDynamicFeaturesPluginTest {
   @Test fun `base and feature apks have different library versions`() {
@@ -827,6 +829,28 @@ class BetterDynamicFeaturesPluginTest {
     val high = Version("2.10.1")
 
     assertThat(high).isGreaterThan(low)
+  }
+
+  @Test fun `missing dex patch works correctly`() {
+    val integrationRoot = File("src/test/fixtures/missing-dex")
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .withArguments(":base:packageDebugUniversalApk", "--stacktrace")
+
+    gradleRunner.build()
+
+    val dexContent = dexdump(integrationRoot.resolve("base/build/outputs/apk_from_bundle/debug/base-debug-universal.apk"))
+    assertThat(dexContent.bufferedReader().lineSequence()).containsInConsecutiveOrder(
+      """  Class descriptor  : 'Lcom/example/JavaClass;'""",
+      """  Access flags      : 0x0001 (PUBLIC)""",
+      """  Superclass        : 'Ljava/lang/Object;'""",
+    )
+    assertThat(dexContent.bufferedReader().lineSequence()).containsInConsecutiveOrder(
+      """  Class descriptor  : 'Lcom/example/KotlinClass;'""",
+      """  Access flags      : 0x0011 (PUBLIC FINAL)""",
+      """  Superclass        : 'Ljava/lang/Object;'""",
+    )
   }
 
   private fun clearLockfile(root: File) {

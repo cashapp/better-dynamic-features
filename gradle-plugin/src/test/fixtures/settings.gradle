@@ -9,7 +9,8 @@ dependencyResolutionManagement {
 
 includeBuild('../../../../../') {
   dependencySubstitution {
-    substitute module("app.cash.better.dynamic.features:app.cash.better.dynamic.features.gradle.plugin") using project(":gradle-plugin")
+    substitute module("app.cash.better.dynamic.features:gradle-plugin") using project(":gradle-plugin")
+    substitute module("app.cash.better.dynamic.features:agp-patch") using project(":agp-patch")
     substitute module('app.cash.better.dynamic.features:codegen') using project(':codegen')
     substitute module('app.cash.better.dynamic.features:codegen-api') using project(':codegen:api')
     substitute module('app.cash.better.dynamic.features:codegen-ksp') using project(':codegen:ksp')

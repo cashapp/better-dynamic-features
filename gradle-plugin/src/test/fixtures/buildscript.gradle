@@ -4,7 +4,8 @@ project.buildscript.repositories {
 }
 
 project.buildscript.dependencies {
-  classpath 'app.cash.better.dynamic.features:app.cash.better.dynamic.features.gradle.plugin:+'
+  classpath 'app.cash.better.dynamic.features:agp-patch:+'
+  classpath 'app.cash.better.dynamic.features:gradle-plugin:+'
   classpath libs.kotlin.gradle
   classpath libs.agp
   classpath "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:${libs.versions.ksp.get()}"
