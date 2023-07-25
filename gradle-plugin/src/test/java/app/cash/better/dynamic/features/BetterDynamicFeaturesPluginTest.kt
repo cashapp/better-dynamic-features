@@ -836,6 +836,7 @@ class BetterDynamicFeaturesPluginTest {
 
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
+      .cleaned()
       .withArguments(":base:packageDebugUniversalApk", "--stacktrace")
 
     gradleRunner.build()
