@@ -29,9 +29,9 @@ import com.android.build.gradle.internal.dexing.writeDesugarGraph
 import com.android.build.gradle.internal.errors.MessageReceiverImpl
 import com.android.build.gradle.internal.publishing.AndroidArtifacts
 import com.android.build.gradle.internal.scope.Java8LangSupport
+import com.android.build.gradle.options.BooleanOption
 import com.android.build.gradle.options.SyncOptions
 import com.android.build.gradle.tasks.toSerializable
-import com.android.builder.dexing.ClassFileEntry
 import com.android.builder.dexing.ClassFileInput
 import com.android.builder.dexing.ClassFileInputs
 import com.android.builder.dexing.DependencyGraphUpdater
@@ -46,18 +46,17 @@ import com.android.sdklib.AndroidVersion
 import com.android.utils.FileUtils
 import com.google.common.hash.Hashing
 import com.google.common.io.Closer
-import com.google.common.io.Files
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.transform.CacheableTransform
 import org.gradle.api.artifacts.transform.InputArtifact
 import org.gradle.api.artifacts.transform.InputArtifactDependencies
 import org.gradle.api.artifacts.transform.TransformAction
 import org.gradle.api.artifacts.transform.TransformOutputs
+import org.gradle.api.artifacts.type.ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileSystemLocation
-import org.gradle.api.internal.artifacts.ArtifactAttributes.ARTIFACT_FORMAT
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Classpath
@@ -65,15 +64,11 @@ import org.gradle.api.tasks.CompileClasspath
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
-import org.gradle.api.tasks.PathSensitive
-import org.gradle.api.tasks.PathSensitivity
-import org.gradle.work.FileChange
 import org.gradle.work.Incremental
 import org.gradle.work.InputChanges
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.charset.StandardCharsets
-import java.nio.file.Path
 import javax.inject.Inject
 
 @CacheableTransform
@@ -95,242 +90,188 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
     val libConfiguration: Property<String>
     @get:Input
     val enableGlobalSynthetics: Property<Boolean>
+    @get:Input
+    val enableApiModeling: Property<Boolean>
   }
 
   @get:Inject
   abstract val inputChanges: InputChanges
 
   @get:Classpath
-  @get:InputArtifact
   @get:Incremental
-  abstract val primaryInput: Provider<FileSystemLocation>
+  @get:InputArtifact
+  abstract val inputArtifact: Provider<FileSystemLocation>
 
-  protected abstract fun computeClasspathFiles(): List<Path>
+  /** Classpath used for dexing/desugaring, or null if it is not required. */
+  protected abstract fun computeClasspathFiles(): List<File>?
 
   override fun transform(outputs: TransformOutputs) {
     //TODO(b/162813654) record transform execution span
-    val input = primaryInput.get().asFile
-    // TODO(derekellis): Remove this entire buildSrc setup
-    // appends a hash of the full artifact path to the output name to work around this issue
-    // https://github.com/gradle/gradle/issues/17213 by providing a unique but stable name for each artifact
-    // This might be fixed in Gradle 8.0? Maybe we can upstream this into AGP? Who knows.
-    val outputDir = outputs.dir("${Files.getNameWithoutExtension(input.name)}-${Hashing.sha256().hashString(input.absolutePath, StandardCharsets.UTF_8)}")
-    doTransform(input, outputDir)
-  }
-
-  private fun doTransform(inputFile: File, outputDir: File) {
-    val outputKeepRulesEnabled =
-      parameters.libConfiguration.isPresent && !parameters.debuggable.get()
-    val provideIncrementalSupport = !isJarFile(inputFile) && !outputKeepRulesEnabled
-
-    val dexOutputDir = if (outputKeepRulesEnabled || parameters.enableGlobalSynthetics.get()) {
-      outputDir.resolve(computeDexDirName(outputDir))
-    } else {
-      outputDir
+    val inputDirOrJar = inputArtifact.get().asFile.also {
+      check(it.isDirectory || isJarFile(it)) {
+        "Expected directory or jar but found: ${it.path}"
+      }
     }
-    val globalSyntheticsDir = if (parameters.enableGlobalSynthetics.get()) {
-      outputDir.resolve(computeGlobalSyntheticsDirName(outputDir))
-    } else null
+    val classpath = computeClasspathFiles()
+    // !!! (dellisd) This hash is a workaround for https://issuetracker.google.com/issues/246326007
+    val outputDir = outputs.dir("${inputDirOrJar.nameWithoutExtension}-${Hashing.sha256().hashString(inputDirOrJar.absolutePath.split(File.separator).takeLast(3).joinToString(separator = File.separator), StandardCharsets.UTF_8)}")
+    // Currently we are able to run incrementally only if
+    //   - The input artifact is a directory (not jar).
+    //   - Dexing/desugaring does not require a classpath.
+    // This is because the desugaring graph that is used for incremental dexing needs to be
+    // relocatable, which requires that all files in the graph share one single root directory
+    // so that they can be converted to relative paths (see `DesugarGraph`'s kdoc).
+    val provideIncrementalSupport = inputDirOrJar.isDirectory && classpath == null
 
-    val keepRulesOutputFile =
-      if (outputKeepRulesEnabled) {
-        outputDir.resolve(computeKeepRulesFileName(outputDir))
-      } else null
-    // desugarGraphFile != null iff provideIncrementalSupport == true
-    val desugarGraphFile =
-      if (provideIncrementalSupport) {
-        // The desugaring graph file is outside outputDir and is not registered as an
-        // output because the graph is not relocatable.
-        outputDir.resolve("../$DESUGAR_GRAPH_FILE_NAME")
-      } else null
-
-    if (provideIncrementalSupport && inputChanges.isIncremental) {
-      // Gradle API currently does not provide classpath changes. When the classpath changes,
-      // Gradle will run the transform non-incrementally in a new directory, so it is still
-      // correct, but not quite efficient yet.
-      // TODO(132615827): Update this code once Gradle provides classpath changes
-      // (https://github.com/gradle/gradle/issues/11794)
-      val classpathChanges = emptyList<FileChange>()
-      check(keepRulesOutputFile == null)
-      processIncrementally(
-        inputFile,
-        inputChanges.getFileChanges(primaryInput).toSerializable(),
-        classpathChanges.toSerializable(),
-        dexOutputDir,
-        globalSyntheticsDir,
-        desugarGraphFile!!
+    val (dexOutputDir, globalSyntheticsOutputDir) = if (parameters.enableGlobalSynthetics.get()) {
+      Pair(
+        outputDir.resolve(computeDexDirName(outputDir)),
+        outputDir.resolve(computeGlobalSyntheticsDirName(outputDir))
       )
     } else {
-      processNonIncrementally(
-        inputFile,
+      Pair(outputDir, null)
+    }
+    val desugarGraphOutputFile = if (provideIncrementalSupport) {
+      outputDir.resolve(DESUGAR_GRAPH_FILE_NAME)
+    } else null
+
+    if (provideIncrementalSupport && inputChanges.isIncremental) {
+      logger.verbose("Running dexing transform incrementally for '${inputDirOrJar.path}'")
+      processIncrementally(
+        // Must be a directory (see the definition of `provideIncrementalSupport`)
+        inputDir = inputDirOrJar,
+        // `inputChanges` contains changes to the input artifact only, changes to the
+        // classpath are not available (https://github.com/gradle/gradle/issues/11794)
+        inputDirChanges = inputChanges.getFileChanges(inputArtifact).toSerializable(),
         dexOutputDir,
-        keepRulesOutputFile,
-        globalSyntheticsDir,
+        globalSyntheticsOutputDir,
+        desugarGraphOutputFile!!
+      )
+    } else {
+      logger.verbose("Running dexing transform non-incrementally for '${inputDirOrJar.path}'")
+      processNonIncrementally(
+        inputDirOrJar,
+        classpath,
+        dexOutputDir,
+        globalSyntheticsOutputDir,
         provideIncrementalSupport,
-        desugarGraphFile
+        desugarGraphOutputFile
       )
     }
   }
 
   private fun processIncrementally(
-    input: File,
-    inputChanges: SerializableFileChanges,
-    classpathChanges: SerializableFileChanges,
+    inputDir: File,
+    inputDirChanges: SerializableFileChanges,
     dexOutputDir: File,
-    globalSyntheticsOutput: File?,
-    desugarGraphFile: File
+    globalSyntheticsOutputDir: File?,
+    desugarGraphOutputFile: File
   ) {
-    val desugarGraph = try {
-      readDesugarGraph(desugarGraphFile)
-    } catch (e: Exception) {
-      LoggerWrapper.getLogger(BaseDexingTransform::class.java).warning(
-        "Failed to read desugaring graph." +
-          " Cause: ${e.javaClass.simpleName}, message: ${e.message}.\n" +
-          "Fall back to non-incremental mode."
-      )
-      processNonIncrementally(
-        input,
-        dexOutputDir,
-        null,
-        globalSyntheticsOutput,
-        true,
-        desugarGraphFile
-      )
-      return
-    }
+    val desugarGraph = DesugarGraph.read(desugarGraphOutputFile, rootDir = inputDir)
 
     // Compute impacted files based on the changed files and the desugaring graph
-    val removedFiles =
-      (inputChanges.removedFiles + classpathChanges.removedFiles).map { it.file }.toSet()
-    val modifiedFiles =
-      (inputChanges.modifiedFiles + classpathChanges.modifiedFiles).map { it.file }.toSet()
-    val addedFiles =
-      (inputChanges.addedFiles + classpathChanges.addedFiles).map { it.file }.toSet()
+    val removedFiles = inputDirChanges.removedFiles.map { it.file }
+    val modifiedFiles = inputDirChanges.modifiedFiles.map { it.file }
+    val addedFiles = inputDirChanges.addedFiles.map { it.file }
     val unchangedButImpactedFiles = desugarGraph.getAllDependents(removedFiles + modifiedFiles)
-    val modifiedImpactedOrAddedFiles = modifiedFiles + unchangedButImpactedFiles + addedFiles
-    val removedModifiedOrImpactedFiles =
-      removedFiles + modifiedFiles + unchangedButImpactedFiles
 
     // Remove outputs of removed, modified, and unchanged-but-impacted class files
-    check(input.isDirectory) { "In incremental mode, input must be a directory: ${input.path}" }
-    (inputChanges.removedFiles.map { it.file } + input.walk().toList())
-      .filter {
-        ClassFileInput.CLASS_MATCHER.test(it.path) && it in removedModifiedOrImpactedFiles
-      }
+    (removedFiles + modifiedFiles + unchangedButImpactedFiles)
+      .filter { ClassFileInput.CLASS_MATCHER.test(it.path) }
       .forEach { classFile ->
-        // We are in DexFilePerClassFile output mode
-        DexFilePerClassFile.getDexOutputRelativePathsOfClassFile(
-          classFileRelativePath = classFile.toRelativeString(input)
-        ).forEach { outputRelativePath ->
-          FileUtils.deleteIfExists(dexOutputDir.resolve(outputRelativePath))
+        val classFileRelativePath = classFile.toRelativeString(inputDir)
+        // Output mode must be DexFilePerClassFile (see the `process` method)
+        DexFilePerClassFile.getDexOutputRelativePath(classFileRelativePath)
+          .let { FileUtils.deleteIfExists(dexOutputDir.resolve(it)) }
+        globalSyntheticsOutputDir?.let {
+          DexFilePerClassFile.getGlobalSyntheticOutputRelativePath(classFileRelativePath)
+            .let { FileUtils.deleteIfExists(globalSyntheticsOutputDir.resolve(it)) }
         }
-        globalSyntheticsOutput?.let {
-          DexFilePerClassFile.getGlobalOutputRelativePathOfClassFile(
-            classFile.toRelativeString(input)
-          ).let { outputRelativePath ->
-            FileUtils.deleteIfExists(it.resolve(outputRelativePath))
-          }
-        }
+        desugarGraph.removeNode(classFile)
       }
 
-    // Remove stale nodes in the desugaring graph
-    removedModifiedOrImpactedFiles.forEach {
-      desugarGraph.removeNode(it)
-    }
-
-    // Process only input files that are modified, added, or unchanged-but-impacted
-    val filter: (File, String) -> Boolean = { inputDir: File, relativePath: String ->
-      check(inputDir.isDirectory)
+    // Process only class files that are modified, unchanged-but-impacted, or added
+    val modifiedImpactedOrAddedFiles =
+      (modifiedFiles + unchangedButImpactedFiles + addedFiles).toSet()
+    val inputFilter: (File, String) -> Boolean = { _, relativePath: String ->
       inputDir.resolve(relativePath) in modifiedImpactedOrAddedFiles
     }
 
     process(
-      input,
-      filter,
+      inputDir,
+      inputFilter,
+      // `classpath` must be null (see the definition of `provideIncrementalSupport`)
+      classpath = null,
       dexOutputDir,
-      null,
-      globalSyntheticsOutput,
-      true,
+      globalSyntheticsOutputDir,
+      provideIncrementalSupport = true,
       desugarGraph
     )
 
-    // Store the desugaring graph for use in the next build. If dexing failed earlier, it is
-    // intended that we will not store the graph as it is only meant to contain info about a
-    // previous successful build.
-    writeDesugarGraph(desugarGraphFile, desugarGraph)
+    desugarGraph.write(desugarGraphOutputFile)
   }
 
   private fun processNonIncrementally(
-    input: File,
+    inputDirOrJar: File,
+    classpath: List<File>?,
     dexOutputDir: File,
-    keepRulesOutputFile: File?,
-    globalSyntheticsOutput: File?,
+    globalSyntheticsOutputDir: File?,
     provideIncrementalSupport: Boolean,
-    desugarGraphFile: File? // desugarGraphFile != null iff provideIncrementalSupport == true
+    desugarGraphOutputFile: File? // Not-null iff provideIncrementalSupport == true
   ) {
-    FileUtils.deleteRecursivelyIfExists(dexOutputDir)
-    FileUtils.mkdirs(dexOutputDir)
-    globalSyntheticsOutput?.let {
-      FileUtils.deleteRecursivelyIfExists(it)
-      FileUtils.mkdirs(it)
-    }
-    keepRulesOutputFile?.let {
-      FileUtils.deleteIfExists(it)
-      FileUtils.mkdirs(it.parentFile)
-    }
-    desugarGraphFile?.let {
-      FileUtils.deleteIfExists(it)
-      FileUtils.mkdirs(it.parentFile)
-    }
+    FileUtils.cleanOutputDir(dexOutputDir)
+    globalSyntheticsOutputDir?.let { FileUtils.cleanOutputDir(it) }
+    desugarGraphOutputFile?.let { FileUtils.deleteIfExists(it) }
 
-    val desugarGraph = desugarGraphFile?.let {
-      MutableDependencyGraph<File>()
-    }
+    val desugarGraph = if (provideIncrementalSupport) {
+      // `inputDirOrJar` must be a directory when `provideIncrementalSupport == true`
+      // (see the definition of `provideIncrementalSupport`)
+      DesugarGraph(rootDir = inputDirOrJar)
+    } else null
 
     process(
-      input,
+      inputDirOrJar,
       { _, _ -> true },
+      classpath,
       dexOutputDir,
-      keepRulesOutputFile,
-      globalSyntheticsOutput,
+      globalSyntheticsOutputDir,
       provideIncrementalSupport,
       desugarGraph
     )
 
-    // Store the desugaring graph for use in the next build. If dexing failed earlier, it is
-    // intended that we will not store the graph as it is only meant to contain info about a
-    // previous successful build.
-    desugarGraphFile?.let {
-      writeDesugarGraph(it, desugarGraph!!)
+    if (provideIncrementalSupport) {
+      desugarGraph!!.write(desugarGraphOutputFile!!)
     }
   }
 
   private fun process(
-    input: File,
+    inputDirOrJar: File,
     inputFilter: (File, String) -> Boolean,
+    classpath: List<File>?,
     dexOutputDir: File,
-    keepRulesOutputFile: File?,
-    globalSyntheticsOutput: File?,
+    globalSyntheticsOutputDir: File?,
     provideIncrementalSupport: Boolean,
-    // desugarGraphUpdater != null iff provideIncrementalSupport == true
-    desugarGraphUpdater: DependencyGraphUpdater<File>?
+    desugarGraph: DesugarGraph? // Not-null iff provideIncrementalSupport == true
   ) {
+    @Suppress("UnstableApiUsage")
     Closer.create().use { closer ->
       val d8DexBuilder = DexArchiveBuilder.createD8DexBuilder(
         DexParameters(
           minSdkVersion = parameters.minSdkVersion.get(),
           debuggable = parameters.debuggable.get(),
+          // dexPerClass iff provideIncrementalSupport == true
           dexPerClass = provideIncrementalSupport,
           withDesugaring = parameters.enableDesugaring.get(),
           desugarBootclasspath = ClassFileProviderFactory(
             parameters.bootClasspath.files.map(File::toPath)
           )
             .also { closer.register(it) },
-          desugarClasspath = ClassFileProviderFactory(computeClasspathFiles()).also {
-            closer.register(it)
-          },
+          desugarClasspath = ClassFileProviderFactory(
+            classpath?.map(File::toPath) ?: emptyList()
+          )
+            .also { closer.register(it) },
           coreLibDesugarConfig = parameters.libConfiguration.orNull,
-          coreLibDesugarOutputKeepRuleFile = keepRulesOutputFile,
+          enableApiModeling = parameters.enableApiModeling.get(),
           messageReceiver = MessageReceiverImpl(
             parameters.errorFormat.get(),
             LoggerFactory.getLogger(BaseDexingTransform::class.java)
@@ -338,15 +279,15 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
         )
       )
 
-      ClassFileInputs.fromPath(input.toPath()).use { classFileInput ->
+      ClassFileInputs.fromPath(inputDirOrJar.toPath()).use { classFileInput ->
         classFileInput.entries { rootPath, relativePath ->
           inputFilter(rootPath.toFile(), relativePath)
         }.use { classesInput ->
           d8DexBuilder.convert(
             classesInput,
             dexOutputDir.toPath(),
-            globalSyntheticsOutput?.toPath(),
-            desugarGraphUpdater
+            globalSyntheticsOutputDir?.toPath(),
+            desugarGraph
           )
         }
       }
@@ -354,23 +295,76 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
   }
 }
 
+/**
+ * Desugaring graph used for incremental dexing. It contains class files and their dependencies.
+ *
+ * This graph handles files with absolute paths. To make it relocatable, it requires that all files
+ * in the graph share one single root directory ([rootDir]) so that they can be converted to
+ * relative paths.
+ *
+ * Internally, this graph maintains a [relocatableDesugarGraph] containing relative paths of the
+ * files. When writing this graph to disk, we will write the [relocatableDesugarGraph].
+ */
+private class DesugarGraph(
+
+  /** The root directory that is shared among all files in the desugaring graph. */
+  private val rootDir: File,
+
+  /** The relocatable desugaring graph, which contains relative paths of the files. */
+  private val relocatableDesugarGraph: MutableDependencyGraph<File> = MutableDependencyGraph()
+
+) : DependencyGraphUpdater<File> {
+
+  override fun addEdge(dependent: File, dependency: File) {
+    relocatableDesugarGraph.addEdge(
+      dependent.relativeTo(rootDir),
+      dependency.relativeTo(rootDir)
+    )
+  }
+
+  fun removeNode(nodeToRemove: File) {
+    relocatableDesugarGraph.removeNode(nodeToRemove.relativeTo(rootDir))
+  }
+
+  fun getAllDependents(nodes: Collection<File>): Set<File> {
+    val relativePaths = nodes.mapTo(mutableSetOf()) { it.relativeTo(rootDir) }
+
+    val dependents = relocatableDesugarGraph.getAllDependents(relativePaths)
+
+    return dependents.mapTo(mutableSetOf()) { rootDir.resolve(it) }
+  }
+
+  fun write(relocatableDesugarGraphFile: File) {
+    writeDesugarGraph(relocatableDesugarGraphFile, relocatableDesugarGraph)
+  }
+
+  companion object {
+
+    fun read(relocatableDesugarGraphFile: File, rootDir: File): DesugarGraph {
+      return DesugarGraph(
+        rootDir = rootDir,
+        relocatableDesugarGraph = readDesugarGraph(relocatableDesugarGraphFile)
+      )
+    }
+  }
+}
+
 @CacheableTransform
 abstract class DexingNoClasspathTransform : BaseDexingTransform<BaseDexingTransform.Parameters>() {
-  override fun computeClasspathFiles() = listOf<Path>()
+
+  override fun computeClasspathFiles() = null
 }
 
 @CacheableTransform
 abstract class DexingWithClasspathTransform : BaseDexingTransform<BaseDexingTransform.Parameters>() {
-  /**
-   * Using compile classpath normalization is safe here due to the design of desugar:
-   * Method bodies are only moved to the companion class within the same artifact,
-   * not between artifacts.
-   */
+
+  // Use @CompileClasspath instead of @Classpath because non-ABI changes on the classpath do not
+  // impact dexing/desugaring of the artifact.
   @get:CompileClasspath
   @get:InputArtifactDependencies
   abstract val classpath: FileCollection
 
-  override fun computeClasspathFiles() = classpath.files.map(File::toPath)
+  override fun computeClasspathFiles() = classpath.files.toList()
 }
 
 fun getDexingArtifactConfigurations(components: Collection<ComponentCreationConfig>): Set<DexingArtifactConfiguration> {
@@ -386,7 +380,6 @@ fun getDexingArtifactConfiguration(creationConfig: ApkCreationConfig): DexingArt
     enableDesugaring =
     creationConfig.dexingCreationConfig.java8LangSupportType == Java8LangSupport.D8,
     enableCoreLibraryDesugaring = creationConfig.dexingCreationConfig.isCoreLibraryDesugaringEnabled,
-    needsShrinkDesugarLibrary = creationConfig.dexingCreationConfig.needsShrinkDesugarLibrary,
     asmTransformedVariant =
     if (creationConfig.instrumentationCreationConfig?.dependenciesClassesAreInstrumented == true) {
       creationConfig.name
@@ -394,7 +387,8 @@ fun getDexingArtifactConfiguration(creationConfig: ApkCreationConfig): DexingArt
       null
     },
     useJacocoTransformInstrumentation = creationConfig.useJacocoTransformInstrumentation,
-    enableGlobalSynthetics = creationConfig.global.enableGlobalSynthetics
+    enableGlobalSynthetics = creationConfig.enableGlobalSynthetics,
+    enableApiModeling = creationConfig.enableApiModeling
   )
 }
 
@@ -403,14 +397,14 @@ data class DexingArtifactConfiguration(
   private val isDebuggable: Boolean,
   private val enableDesugaring: Boolean,
   private val enableCoreLibraryDesugaring: Boolean,
-  private val needsShrinkDesugarLibrary: Boolean,
   private val asmTransformedVariant: String?,
   private val useJacocoTransformInstrumentation: Boolean,
   private val enableGlobalSynthetics: Boolean,
+  private val enableApiModeling: Boolean,
 ) {
 
   // If we want to do desugaring and our minSdk (or the API level of the device we're deploying
-  // to) is lower than N then we need additional classpaths in order to proper do the desugaring.
+  // to) is lower than N then we need a classpath in order to properly do the desugaring.
   private val needsClasspath = enableDesugaring && minSdk < AndroidVersion.VersionCodes.N
 
   fun registerTransform(
@@ -418,7 +412,8 @@ data class DexingArtifactConfiguration(
     dependencyHandler: DependencyHandler,
     bootClasspath: FileCollection,
     libConfiguration: Provider<String>,
-    errorFormat: SyncOptions.ErrorFormatMode
+    errorFormat: SyncOptions.ErrorFormatMode,
+    disableIncrementalDexing: Boolean
   ) {
     dependencyHandler.registerTransform(getTransformClass()) { spec ->
       spec.parameters { parameters ->
@@ -435,6 +430,7 @@ data class DexingArtifactConfiguration(
           parameters.libConfiguration.set(libConfiguration)
         }
         parameters.enableGlobalSynthetics.set(enableGlobalSynthetics)
+        parameters.enableApiModeling.set(enableApiModeling)
       }
       // There are 2 transform flows for DEX:
       //   1. (JACOCO_)CLASSES_DIR -> (JACOCO_)CLASSES -> DEX
@@ -455,8 +451,9 @@ data class DexingArtifactConfiguration(
       // containing both Java and Kotlin classes.
       //
       // Therefore, to ensure correctness in all cases, we transform CLASSES to DEX only
-      // when dexing does not require a classpath. Otherwise, we transform CLASSES_JAR to
-      // DEX directly so that CLASSES_DIR will not be selected.
+      // when dexing does not require a classpath, and it is not for main and androidTest
+      // components in dynamic feature module(b/246326007). Otherwise, we transform
+      // CLASSES_JAR to DEX directly so that CLASSES_DIR will not be selected.
       //
       // In the case that the JacocoTransform is executed, the Jacoco equivalent artifact is
       // used. These artifacts are the same as CLASSES, CLASSES_JAR and ASM_INSTRUMENTED_JARS,
@@ -466,7 +463,7 @@ data class DexingArtifactConfiguration(
           when {
             asmTransformedVariant != null ->
               AndroidArtifacts.ArtifactType.JACOCO_ASM_INSTRUMENTED_JARS
-            !needsClasspath ->
+            !needsClasspath && !disableIncrementalDexing ->
               AndroidArtifacts.ArtifactType.JACOCO_CLASSES
             else ->
               AndroidArtifacts.ArtifactType.JACOCO_CLASSES_JAR
@@ -475,21 +472,24 @@ data class DexingArtifactConfiguration(
           when {
             asmTransformedVariant != null ->
               AndroidArtifacts.ArtifactType.ASM_INSTRUMENTED_JARS
-            !needsClasspath ->
+            !needsClasspath && !disableIncrementalDexing ->
               AndroidArtifacts.ArtifactType.CLASSES
             else ->
               AndroidArtifacts.ArtifactType.CLASSES_JAR
           }
         }
       spec.from.attribute(
-        ARTIFACT_FORMAT,
+        ARTIFACT_TYPE_ATTRIBUTE,
         inputArtifact.type
       )
 
-      if (enableGlobalSynthetics || needsShrinkDesugarLibrary) {
-        spec.to.attribute(ARTIFACT_FORMAT, AndroidArtifacts.ArtifactType.D8_OUTPUTS.type)
+      if (enableGlobalSynthetics) {
+        spec.to.attribute(
+          ARTIFACT_TYPE_ATTRIBUTE,
+          AndroidArtifacts.ArtifactType.D8_OUTPUTS.type
+        )
       } else {
-        spec.to.attribute(ARTIFACT_FORMAT, AndroidArtifacts.ArtifactType.DEX.type)
+        spec.to.attribute(ARTIFACT_TYPE_ATTRIBUTE, AndroidArtifacts.ArtifactType.DEX.type)
       }
 
       getAttributes().apply {
@@ -528,4 +528,6 @@ val ATTR_ENABLE_DESUGARING: Attribute<String> =
 val ATTR_ENABLE_JACOCO_INSTRUMENTATION: Attribute<String> =
   Attribute.of("dexing-enable-jacoco-instrumentation", String::class.java)
 
-const val DESUGAR_GRAPH_FILE_NAME = "desugar_graph.bin"
+private val logger = LoggerWrapper.getLogger(BaseDexingTransform::class.java)
+
+private const val DESUGAR_GRAPH_FILE_NAME = "desugar_graph.bin"

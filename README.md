@@ -105,7 +105,7 @@ be applied to your project as a Gradle plugin.
 buildscript {
   dependencies {
     classpath "app.cash.better.dynamic.features:agp-patch:0.1.0" // Must be loaded before AGP!
-    classpath "com.android.tools.build:gradle:8.0.1"
+    classpath "com.android.tools.build:gradle:8.1.0"
   }
 }
 ```
@@ -123,23 +123,22 @@ plugins {
 }
 
 // Reports an error:
-// "This version of the Android Gradle Plugin (7.4.2) is not supported by the better-dynamic-features plugin. Only version 8.0.1 is supported."
+// "This version of the Android Gradle Plugin (7.4.2) is not supported by the better-dynamic-features plugin. Only version 8.1.0 is supported."
 ```
 
 Note that this bug has been marked as fixed in AGP 8.1, however this fix was made by disabling
 incremental dexing transforms for feature modules. When the underlying Gradle bug has been fixed,
 [this will be reverted](https://issuetracker.google.com/issues/268603989) but in the meantime this
-project will continue to patch this issue without disabling the incremental transforms. This means
-that this patch is optional if using AGP 8.1 or newer.
+project will continue to patch this issue without disabling the incremental transforms.
 
 ### Patch Plugin Version Compatibility
 
 Version Compatibility:
 
-| AGP    | Better Dynamic Features | Notes         |
-|--------|-------------------------|---------------|
-| 8.0.1  | 0.1.0                   | **Required!** |
-| 8.1.0+ | TBD                     | _Optional_    |
+| AGP    | Better Dynamic Features |
+|--------|-------------------------|
+| 8.1.0  | 0.1.0                   |
+| 8.2.0+ | TBD                     |
 
 # Using Feature Module Code
 
