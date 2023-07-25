@@ -27,6 +27,7 @@ dependencies {
   compileOnly(libs.google.gson)
   compileOnly(libs.android.common)
   compileOnly(libs.android.sdkCommon)
+  compileOnly(libs.android.repository)
 }
 
 def pluginConstants = tasks.register("pluginConstants") {
