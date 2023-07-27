@@ -23,6 +23,10 @@ plugins {
 }
 ```
 
+# Sample Project
+
+See the [sample README](sample/README.md) for details.
+
 # Feature Module Patches
 
 The better dynamic features plugin includes a few patches to fix some bugs and improve the
