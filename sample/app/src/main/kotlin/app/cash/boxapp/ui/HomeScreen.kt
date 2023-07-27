@@ -21,11 +21,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.CircularProgressIndicator
@@ -38,9 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -49,42 +45,21 @@ import androidx.compose.ui.unit.dp
 import app.cash.better.dynamic.features.ExperimentalDynamicFeaturesApi
 import app.cash.better.dynamic.features.dynamicImplementations
 import app.cash.boxapp.api.BoxAppFeature
-import com.google.android.play.core.ktx.requestInstall
-import com.google.android.play.core.ktx.status
-import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
-import com.google.android.play.core.splitinstall.SplitInstallStateUpdatedListener
-import com.google.android.play.core.splitinstall.model.SplitInstallSessionStatus
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.callbackFlow
+import app.cash.boxapp.install.Module
+import app.cash.boxapp.install.rememberSplitInstallHelper
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalDynamicFeaturesApi::class)
 @Composable
 internal fun HomeScreen() {
-  val context = LocalContext.current
-  val splitInstallManager = remember { SplitInstallManagerFactory.create(context) }
-  val features by remember { splitInstallManager.dynamicImplementations<BoxAppFeature>() }
-    .collectAsState(initial = emptyList())
+  val scope = rememberCoroutineScope()
+  val installHelper = rememberSplitInstallHelper()
 
-  val isSplitInstalling by remember {
-    callbackFlow {
-      send(false)
-      val listener = SplitInstallStateUpdatedListener {
-        when (it.status) {
-          SplitInstallSessionStatus.PENDING, SplitInstallSessionStatus.DOWNLOADING, SplitInstallSessionStatus.DOWNLOADED, SplitInstallSessionStatus.INSTALLING -> trySend(
-            true,
-          )
+  val features by remember {
+    installHelper.splitInstallManager.dynamicImplementations<BoxAppFeature>()
+  }.collectAsState(initial = emptyList())
 
-          else -> trySend(false)
-        }
-      }
-
-      splitInstallManager.registerListener(listener)
-      awaitClose {
-        splitInstallManager.unregisterListener(listener)
-      }
-    }
-  }.collectAsState(initial = false)
+  val isSplitInstalling by installHelper.isInstalling.collectAsState(initial = false)
 
   Column(
     modifier = Modifier
@@ -103,59 +78,13 @@ internal fun HomeScreen() {
       }
     }
 
-    // The tabs
-    Row(
-      modifier = Modifier
-        .padding(10.dp)
-        .background(color = Color(128, 255, 206))
-        .padding(10.dp),
-    ) {
-      Spacer(modifier = Modifier.weight(1f))
-      Box(
-        modifier = Modifier
-          .size(40.dp)
-          .clip(CircleShape)
-          .background(Color(83, 163, 133)),
-      ) {
-        Text(
-          text = "A",
-          modifier = Modifier.align(Alignment.Center),
-        )
-      }
-      Spacer(modifier = Modifier.weight(1f))
-      Box(
-        modifier = Modifier
-          .size(40.dp)
-          .clip(CircleShape)
-          .background(Color(83, 163, 133)),
-      ) {
-        Text(
-          text = "B",
-          modifier = Modifier.align(Alignment.Center),
-        )
-      }
-      Spacer(modifier = Modifier.weight(1f))
-      Box(
-        modifier = Modifier
-          .size(40.dp)
-          .clip(CircleShape)
-          .background(Color(83, 163, 133)),
-      ) {
-        Text(
-          text = "C",
-          modifier = Modifier.align(Alignment.Center),
-        )
-      }
-      Spacer(modifier = Modifier.weight(1f))
-    }
-
-    val scope = rememberCoroutineScope()
     Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-      Button(onClick = {
-        scope.launch {
-          splitInstallManager.requestInstall(modules = listOf("extrabigboxfeature"))
-        }
-      }, colors = ButtonDefaults.buttonColors(Color(0, 222, 133)),) {
+      Button(
+        onClick = {
+          scope.launch { installHelper.requestInstall(Module.ExtraBigBox) }
+        },
+        colors = ButtonDefaults.buttonColors(Color(0, 222, 133)),
+      ) {
         Row(
           verticalAlignment = Alignment.CenterVertically,
           horizontalArrangement = Arrangement.spacedBy(8.dp),
