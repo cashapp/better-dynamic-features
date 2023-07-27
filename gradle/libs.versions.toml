@@ -2,11 +2,17 @@
 agp = "8.1.0"
 android-tools = "31.1.0" # agp version + 23.0.0
 compilerTesting = "0.2.1"
+compose = "1.4.7"
 kotlin = "1.8.21"
 kotlinPoet = "1.13.1"
 ksp = "1.8.21-1.0.11"
 ktlint = "0.46.1"
 moshi = "1.14.0"
+
+# Used by the sample app
+compileSdk = "33"
+minSdk = "24"
+
 
 [libraries]
 agp = { module = "com.android.tools.build:gradle", version.ref = "agp" }
@@ -14,6 +20,7 @@ javassist = { module = "org.javassist:javassist", version = "3.29.1-GA" }
 compiler-testing-core = { module = "dev.zacsweers.kctfork:core", version.ref = "compilerTesting" }
 compiler-testing-ksp = { module = "dev.zacsweers.kctfork:ksp", version.ref = "compilerTesting" }
 featureDelivery = { module = "com.google.android.play:feature-delivery-ktx", version = "2.1.0"}
+junit = { module = "junit:junit", version = "4.13.2" }
 kotlin-gradle = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlin-compiler = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin" }
 kotlinPoet-core = { module = "com.squareup:kotlinpoet", version.ref = "kotlinPoet" }
@@ -23,9 +30,12 @@ ksp-gradlePlugin = { module = "com.google.devtools.ksp:symbol-processing-gradle-
 moshi-core = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
 moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshi" }
 moshi-codegen = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "moshi" }
-
 truth = { module = "com.google.truth:truth", version = "1.1.2" }
-junit = { module = "junit:junit", version = "4.13.2" }
+
+# Used by the sample app
+compose-activity = { module = "androidx.activity:activity-compose", version = "1.7.1" }
+compose-material = { module = "androidx.compose.material:material", version = "1.4.2" }
+compose-runtime = { module = "androidx.compose.runtime:runtime", version = "1.4.2" }
 
 # AGP things
 google-guava = "com.google.guava:guava:31.1-jre"
@@ -35,6 +45,8 @@ android-repository = { module = "com.android.tools:repository", version.ref = "a
 android-sdkCommon = { module = "com.android.tools:sdk-common", version.ref = "android-tools" }
 
 [plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-dynamic-feature = { id = "com.android.dynamic-feature", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
@@ -42,3 +54,7 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 publish = { id = "com.vanniktech.maven.publish", version = "0.25.2" }
 spotless = { id = "com.diffplug.spotless", version = "6.18.0" }
 wire = { id = "com.squareup.wire", version = "4.6.0" }
+
+# Used by the sample app
+# This is just a dummy version to make the verison catalog work. The real version is subsituted in the composite build.
+betterDynamicFeatures = { id = "app.cash.better.dynamic.features", version = "0.0.0" }
