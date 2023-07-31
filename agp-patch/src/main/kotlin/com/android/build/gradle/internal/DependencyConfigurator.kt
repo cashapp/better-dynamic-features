@@ -813,7 +813,6 @@ class DependencyConfigurator(
       if (projectOptions[BooleanOption.ENABLE_DEXING_ARTIFACT_TRANSFORM]) {
         // !!! (dellisd) This reverts the change made to resolve https://issuetracker.google.com/issues/246326007
         val disableIncrementalDexing = false /* allComponents.any { it.componentType.isDynamicFeature } */
-        println("INCREMENTAL DEXING IS ENABLED BABYYYYYYY")
         for (artifactConfiguration in getDexingArtifactConfigurations(
           allComponents
         )) {
