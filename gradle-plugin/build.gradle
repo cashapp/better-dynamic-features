@@ -47,17 +47,23 @@ dependencies {
 
 def pluginVersion = tasks.register("pluginVersion") {
   def outputDir = file("$buildDir/gen")
+  def rootPropertiesFile = file("$rootProject.projectDir/gradle.properties")
 
-  inputs.property 'version', version
+  inputs.file rootPropertiesFile
   outputs.dir outputDir
 
   doLast {
+    def rootProperties = new Properties()
+    rootPropertiesFile.withInputStream {
+      rootProperties.load(it)
+    }
+
     def versionFile = file("$outputDir/app/cash/better/dynamic/features/Version.kt")
     versionFile.parentFile.mkdirs()
     versionFile.text = """// Generated file. Do not edit!
 package app.cash.better.dynamic.features
 
-val VERSION = "${project.version}"
+val VERSION = "${rootProperties.getProperty("VERSION_NAME")}"
 val KOTLIN_VERSION = "${libs.versions.kotlin.get()}"
 """
   }
