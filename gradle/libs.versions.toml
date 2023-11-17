@@ -1,5 +1,5 @@
 [versions]
-agp = "8.1.1"
+agp = "8.1.4"
 android-tools = "31.1.1" # agp version + 23.0.0
 compilerTesting = "0.2.1"
 compose = "1.4.7"
