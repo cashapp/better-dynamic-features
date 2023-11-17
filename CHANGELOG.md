@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.1.3] - 2023-11-17
+
+* Upgrade AGP to 8.1.4
+
 ## [0.1.2] - 2023-09-22
 
 * Upgrade AGP to 8.1.1 (#104)
