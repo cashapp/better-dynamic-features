@@ -21,6 +21,7 @@ package com.android.build.gradle.internal
 
 import com.android.build.api.artifact.impl.ArtifactsImpl
 import com.android.build.api.attributes.AgpVersionAttr
+import com.android.build.api.attributes.BuildTypeAttr
 import com.android.build.api.attributes.BuildTypeAttr.Companion.ATTRIBUTE
 import com.android.build.api.attributes.ProductFlavorAttr
 import com.android.build.gradle.internal.component.ComponentCreationConfig
@@ -64,11 +65,12 @@ import com.android.build.gradle.internal.dependency.registerDexingOutputSplitTra
 import com.android.build.gradle.internal.dsl.BaseFlavor
 import com.android.build.gradle.internal.dsl.BuildType
 import com.android.build.gradle.internal.dsl.DefaultConfig
-import com.android.build.gradle.internal.dsl.ModuleStringPropertyKeys
+import com.android.build.gradle.internal.dsl.ModulePropertyKey
 import com.android.build.gradle.internal.dsl.ProductFlavor
 import com.android.build.gradle.internal.dsl.SigningConfig
 import com.android.build.gradle.internal.packaging.getDefaultDebugKeystoreSigningConfig
 import com.android.build.gradle.internal.publishing.AndroidArtifacts
+import com.android.build.gradle.internal.publishing.AarOrJarTypeToConsume
 import com.android.build.gradle.internal.res.namespaced.AutoNamespacePreProcessTransform
 import com.android.build.gradle.internal.res.namespaced.AutoNamespaceTransform
 import com.android.build.gradle.internal.scope.InternalArtifactType
@@ -88,6 +90,7 @@ import com.android.build.gradle.internal.variant.VariantInputModel
 import com.android.build.gradle.options.BooleanOption
 import com.android.build.gradle.options.StringOption
 import com.android.build.gradle.options.SyncOptions
+import com.android.builder.core.BuilderConstants
 import com.android.repository.Revision
 import com.android.tools.r8.Version
 import com.google.common.collect.Maps
@@ -98,12 +101,14 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.transform.TransformAction
+import org.gradle.api.artifacts.transform.TransformParameters
 import org.gradle.api.artifacts.transform.TransformSpec
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
-import org.gradle.api.attributes.AttributeContainer
 import org.gradle.api.attributes.AttributesSchema
+import org.gradle.api.attributes.Category
 import org.gradle.api.attributes.Usage
 import org.gradle.api.internal.artifacts.ArtifactAttributes
+import org.gradle.testing.jacoco.plugins.JacocoPluginExtension
 import java.lang.Boolean.FALSE
 import java.lang.Boolean.TRUE
 
@@ -131,27 +136,14 @@ class DependencyConfigurator(
     val useAndroidX = projectServices.projectOptions.get(BooleanOption.USE_ANDROID_X)
     val enableJetifier = projectServices.projectOptions.get(BooleanOption.ENABLE_JETIFIER)
 
-    when {
-      !useAndroidX && !enableJetifier -> {
-        project.configurations.all { configuration ->
-          if (configuration.isCanBeResolved) {
-            configuration.incoming.afterResolve(
-              AndroidXDependencyCheck.AndroidXDisabledJetifierDisabled(
-                project, configuration.name, projectServices.issueReporter
-              )
+    if (!useAndroidX && !enableJetifier) {
+      project.configurations.all { configuration ->
+        if (configuration.isCanBeResolved) {
+          configuration.incoming.afterResolve(
+            AndroidXDependencyCheck.AndroidXDisabledJetifierDisabled(
+              project, configuration.name, projectServices.issueReporter
             )
-          }
-        }
-      }
-      useAndroidX && !enableJetifier -> {
-        project.configurations.all { configuration ->
-          if (configuration.isCanBeResolved) {
-            configuration.incoming.afterResolve(
-              AndroidXDependencyCheck.AndroidXEnabledJetifierDisabled(
-                project, configuration.name, projectServices.issueReporter
-              )
-            )
-          }
+          )
         }
       }
     }
@@ -161,6 +153,7 @@ class DependencyConfigurator(
 
   fun configureGeneralTransforms(
     namespacedAndroidResources: Boolean,
+    aarOrJarTypeToConsume: AarOrJarTypeToConsume
   ): DependencyConfigurator {
     val dependencies: DependencyHandler = project.dependencies
 
@@ -193,21 +186,22 @@ class DependencyConfigurator(
       ) { params ->
         params.ignoreListOption.setDisallowChanges(jetifierIgnoreList)
       }
+    } else if (autoNamespaceDependencies) {
+      // Namespaced resources code path is not optimized. Identity transforms are removed
+      // otherwise.
+      registerIdentityTransformWhenJetifierIsDisabled(jetifiedAarOutputType)
     } else {
-      registerTransform(
-        IdentityTransform::class.java,
-        AndroidArtifacts.ArtifactType.AAR,
-        jetifiedAarOutputType
-      )
-      registerTransform(
-        IdentityTransform::class.java,
-        AndroidArtifacts.ArtifactType.JAR,
-        AndroidArtifacts.ArtifactType.PROCESSED_JAR
-      )
+      // Still register the transform if/when dagger plugin is applied
+      // TODO(b/288221106): Dagger plugin depends on our internal implementation,
+      // we need to eliminate their dependency on this to be able to remove the following.
+      project.plugins.withId("dagger.hilt.android.plugin") {
+          registerIdentityTransformWhenJetifierIsDisabled(jetifiedAarOutputType)
+      }
     }
+
     registerTransform(
       ExtractAarTransform::class.java,
-      AndroidArtifacts.ArtifactType.PROCESSED_AAR,
+      aarOrJarTypeToConsume.aar,
       AndroidArtifacts.ArtifactType.EXPLODED_AAR
     )
     registerTransform(
@@ -272,14 +266,18 @@ class DependencyConfigurator(
 
     val sharedLibSupport = projectOptions[BooleanOption.CONSUME_DEPENDENCIES_AS_SHARED_LIBRARIES]
 
-    for (transformTarget in AarTransform.getTransformTargets()) {
-      registerTransform(
-        AarTransform::class.java,
-        AndroidArtifacts.ArtifactType.EXPLODED_AAR,
-        transformTarget
-      ) { params ->
-        params.targetType.setDisallowChanges(transformTarget)
-        params.sharedLibSupport.setDisallowChanges(sharedLibSupport)
+        val libraryCategory = project.objects.named(Category::class.java, Category.LIBRARY)
+        for (transformTarget in AarTransform.getTransformTargets(aarOrJarTypeToConsume)) {
+            dependencies.registerTransform(
+                AarTransform::class.java
+            ) { spec ->
+                spec.from.attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, AndroidArtifacts.ArtifactType.EXPLODED_AAR.type)
+                spec.from.attribute(Category.CATEGORY_ATTRIBUTE, libraryCategory)
+                spec.to.attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, transformTarget.type)
+                spec.to.attribute(Category.CATEGORY_ATTRIBUTE, libraryCategory)
+                spec.parameters.projectName.setDisallowChanges(project.name)
+                spec.parameters.targetType.setDisallowChanges(transformTarget)
+                spec.parameters.sharedLibSupport.setDisallowChanges(sharedLibSupport)
       }
     }
     if (projectOptions[BooleanOption.PRECOMPILE_DEPENDENCIES_RESOURCES]) {
@@ -299,7 +297,7 @@ class DependencyConfigurator(
     ) { reg: TransformSpec<AarToClassTransform.Params> ->
       reg.from.attribute(
         ArtifactAttributes.ARTIFACT_FORMAT,
-        AndroidArtifacts.ArtifactType.PROCESSED_AAR.type
+        aarOrJarTypeToConsume.aar.type
       )
       reg.from.attribute(
         Usage.USAGE_ATTRIBUTE,
@@ -326,7 +324,7 @@ class DependencyConfigurator(
     ) { reg: TransformSpec<AarToClassTransform.Params> ->
       reg.from.attribute(
         ArtifactAttributes.ARTIFACT_FORMAT,
-        AndroidArtifacts.ArtifactType.PROCESSED_AAR.type
+        aarOrJarTypeToConsume.aar.type
       )
       reg.from.attribute(
         Usage.USAGE_ATTRIBUTE,
@@ -350,7 +348,7 @@ class DependencyConfigurator(
     if (projectOptions[BooleanOption.ENABLE_PROGUARD_RULES_EXTRACTION]) {
       registerTransform(
         ExtractProGuardRulesTransform::class.java,
-        AndroidArtifacts.ArtifactType.PROCESSED_JAR,
+        aarOrJarTypeToConsume.jar,
         AndroidArtifacts.ArtifactType.UNFILTERED_PROGUARD_RULES
       )
     }
@@ -391,13 +389,13 @@ class DependencyConfigurator(
     )) {
       registerTransform(
         IdentityTransform::class.java,
-        AndroidArtifacts.ArtifactType.PROCESSED_JAR,
+        aarOrJarTypeToConsume.jar,
         classesOrResources
       )
     }
     registerTransform(
       ExtractJniTransform::class.java,
-      AndroidArtifacts.ArtifactType.PROCESSED_JAR,
+      aarOrJarTypeToConsume.jar,
       AndroidArtifacts.ArtifactType.JNI
     )
     // The Kotlin Kapt plugin should query for PROCESSED_JAR, but it is currently querying for
@@ -409,7 +407,7 @@ class DependencyConfigurator(
           .attributes
           .attribute(
             ArtifactAttributes.ARTIFACT_FORMAT,
-            AndroidArtifacts.ArtifactType.PROCESSED_JAR.type
+            aarOrJarTypeToConsume.jar.type
           )
       }
     }
@@ -451,6 +449,21 @@ class DependencyConfigurator(
 
     return this
   }
+
+    /** Produce the artifact type jetifier would have produced if it was enabled. */
+    private fun registerIdentityTransformWhenJetifierIsDisabled(
+            jetifiedAarOutputType: AndroidArtifacts.ArtifactType) {
+        registerTransform(
+                IdentityTransform::class.java,
+                AndroidArtifacts.ArtifactType.AAR,
+                jetifiedAarOutputType
+        )
+        registerTransform(
+                IdentityTransform::class.java,
+                AndroidArtifacts.ArtifactType.JAR,
+                AndroidArtifacts.ArtifactType.PROCESSED_JAR
+        )
+    }
 
   fun configurePrivacySandboxSdkConsumerTransforms(): DependencyConfigurator {
     if (projectServices.projectOptions.get(BooleanOption.PRIVACY_SANDBOX_SDK_SUPPORT)) {
@@ -507,25 +520,26 @@ class DependencyConfigurator(
           val experimentalProperties = variant.experimentalProperties
           experimentalProperties.finalizeValue()
 
-          val experimentalPropertiesApiGenerator =
-            experimentalProperties.get()[ModuleStringPropertyKeys.ANDROID_PRIVACY_SANDBOX_SDK_API_GENERATOR.keyValue] as Dependency?
+          val experimentalPropertiesApiGenerator: Dependency? =
+            ModulePropertyKey.Dependencies.ANDROID_PRIVACY_SANDBOX_SDK_API_GENERATOR
+              .getValue(experimentalProperties.get())?.single()
           val apigeneratorArtifact: Dependency =
             experimentalPropertiesApiGenerator
               ?: project.dependencies.create(
                 projectServices.projectOptions.get(StringOption.ANDROID_PRIVACY_SANDBOX_SDK_API_GENERATOR)
-                  ?: "androidx.privacysandbox.tools:tools-apigenerator:1.0.0-alpha02"
+                  ?: "androidx.privacysandbox.tools:tools-apigenerator:1.0.0-alpha03"
               ) as Dependency
 
           val experimentalPropertiesRuntimeApigeneratorDependencies =
-            experimentalProperties.get()[ModuleStringPropertyKeys.ANDROID_PRIVACY_SANDBOX_SDK_API_GENERATOR_GENERATED_RUNTIME_DEPENDENCIES.keyValue] as ArrayList<Dependency>?
+            ModulePropertyKey.Dependencies.ANDROID_PRIVACY_SANDBOX_SDK_API_GENERATOR_GENERATED_RUNTIME_DEPENDENCIES.getValue(experimentalProperties.get())
           val runtimeDependenciesForShimSdk: List<Dependency> =
             experimentalPropertiesRuntimeApigeneratorDependencies
               ?: (projectServices.projectOptions
                 .get(StringOption.ANDROID_PRIVACY_SANDBOX_SDK_API_GENERATOR_GENERATED_RUNTIME_DEPENDENCIES)
                 ?.split(",")
-                ?: listOf("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.0.1")).map {
-                project.dependencies.create(it)
-              }
+                ?: listOf("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")).map {
+                  project.dependencies.create(it)
+                }
 
           val params = reg.parameters
           val apiGeneratorConfiguration =
@@ -553,12 +567,20 @@ class DependencyConfigurator(
             *runtimeDependenciesForShimSdk.toTypedArray())
           configuration.isCanBeConsumed = false
           configuration.isCanBeResolved = true
-          params.runtimeDependencies.from(configuration.incoming.artifactView { config: ArtifactView.ViewConfiguration ->
-            config.attributes { container: AttributeContainer ->
-              container.attribute(AndroidArtifacts.ARTIFACT_TYPE,
+
+                        configuration.attributes {
+                            it.attribute(BuildTypeAttr.ATTRIBUTE,
+                                    project.objects.named(BuildTypeAttr::class.java,
+                                            BuilderConstants.RELEASE))
+                        }
+                        params.runtimeDependencies.from(configuration.incoming.artifactView {
+                            config: ArtifactView.ViewConfiguration ->
+                            config.attributes.apply {
+                                attribute(Usage.USAGE_ATTRIBUTE,
+                                        project.objects.named(Usage::class.java, Usage.JAVA_API))
+                                attribute(AndroidArtifacts.ARTIFACT_TYPE,
                 AndroidArtifacts.ArtifactType.CLASSES_JAR.type)
             }
-            config.componentFilter { true }
           }.artifacts.artifactFiles.files)
         }
 
@@ -608,6 +630,8 @@ class DependencyConfigurator(
   }
 
   fun configureJacocoTransforms() : DependencyConfigurator {
+    project.extensions.findByType(JacocoPluginExtension::class.java)?.toolVersion =
+        JacocoOptions.DEFAULT_VERSION
     val jacocoTransformParametersConfig: (JacocoTransform.Params) -> Unit = {
       val jacocoVersion = JacocoOptions.DEFAULT_VERSION
       val jacocoConfiguration = JacocoConfigurations
