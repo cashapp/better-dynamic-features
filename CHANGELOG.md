@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.2.0] - 2023-12-11
+
+* Upgrade AGP to 8.2.0 and Gradle 8.2 (#106)
+
 ## [0.1.3] - 2023-11-17
 
 * Upgrade AGP to 8.1.4
