@@ -108,8 +108,8 @@ be applied to your project as a Gradle plugin.
 // root build.gradle file
 buildscript {
   dependencies {
-    classpath "app.cash.better.dynamic.features:agp-patch:0.1.0" // Must be loaded before AGP!
-    classpath "com.android.tools.build:gradle:8.1.0"
+    classpath "app.cash.better.dynamic.features:agp-patch:0.2.0" // Must be loaded before AGP!
+    classpath "com.android.tools.build:gradle:8.2.0"
   }
 }
 ```
@@ -122,12 +122,12 @@ the plugin to your application module.
 ```groovy
 // app/build.gradle
 plugins {
-  id("app.cash.better.dynamic.features.agp-patch") version "0.1.0"
+  id("app.cash.better.dynamic.features.agp-patch") version "0.2.0"
   id("com.android.application") version "7.4.2" // Wrong version!
 }
 
 // Reports an error:
-// "This version of the Android Gradle Plugin (7.4.2) is not supported by the better-dynamic-features plugin. Only version 8.1.0 is supported."
+// "This version of the Android Gradle Plugin (7.4.2) is not supported by the better-dynamic-features plugin. Only version 8.2.0 is supported."
 ```
 
 Note that this bug has been marked as fixed in AGP 8.1, however this fix was made by disabling
@@ -142,7 +142,8 @@ Version Compatibility:
 | AGP    | Better Dynamic Features |
 |--------|-------------------------|
 | 8.1.0  | 0.1.0                   |
-| 8.2.0+ | TBD                     |
+| 8.2.0+ | 0.2.0                   |
+| 8.3.0+ | TBD                     |
 
 # Using Feature Module Code
 
