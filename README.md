@@ -108,8 +108,8 @@ be applied to your project as a Gradle plugin.
 // root build.gradle file
 buildscript {
   dependencies {
-    classpath "app.cash.better.dynamic.features:agp-patch:0.2.0" // Must be loaded before AGP!
-    classpath "com.android.tools.build:gradle:8.2.0"
+    classpath "app.cash.better.dynamic.features:agp-patch:0.2.1" // Must be loaded before AGP!
+    classpath "com.android.tools.build:gradle:8.2.1"
   }
 }
 ```
@@ -122,7 +122,7 @@ the plugin to your application module.
 ```groovy
 // app/build.gradle
 plugins {
-  id("app.cash.better.dynamic.features.agp-patch") version "0.2.0"
+  id("app.cash.better.dynamic.features.agp-patch") version "0.2.1"
   id("com.android.application") version "7.4.2" // Wrong version!
 }
 
@@ -139,10 +139,11 @@ project will continue to patch this issue without disabling the incremental tran
 
 Version Compatibility:
 
-| AGP    | Better Dynamic Features |
-|--------|-------------------------|
-| 8.1.0  | 0.1.0                   |
-| 8.2.0+ | 0.2.0                   |
+| AGP   | Better Dynamic Features |
+|-------|-------------------------|
+| 8.1.0 | 0.1.0                   |
+| 8.2.0 | 0.2.0                   |
+| 8.2.1 | 0.2.1                   |
 | 8.3.0+ | TBD                     |
 
 # Using Feature Module Code
