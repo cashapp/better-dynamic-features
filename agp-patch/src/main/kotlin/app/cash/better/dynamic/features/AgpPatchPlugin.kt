@@ -26,7 +26,6 @@ class AgpPatchPlugin : Plugin<Project> {
 
     target.plugins.withId("com.android.application") {
       target.afterEvaluate {
-
         val agpVersion = Version.ANDROID_GRADLE_PLUGIN_VERSION
         // Skip the version check if we ignored the current AGP version!
         if (agpVersion in extension.ignoredVersions) {
