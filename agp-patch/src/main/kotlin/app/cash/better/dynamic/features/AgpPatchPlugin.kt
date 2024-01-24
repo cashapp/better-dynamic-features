@@ -16,15 +16,27 @@
 package app.cash.better.dynamic.features
 
 import com.android.Version
+import com.android.build.gradle.internal.crash.afterEvaluate
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
 class AgpPatchPlugin : Plugin<Project> {
   override fun apply(target: Project) {
+    val extension = target.extensions.create("betterDynamicFeaturesPatch", BetterDynamicFeaturesPatchExtension::class.java)
+
     target.plugins.withId("com.android.application") {
-      // Do a strict version check to ensure that our monkey-patching will work correctly.
-      check(Version.ANDROID_GRADLE_PLUGIN_VERSION == TARGET_AGP_VERSION) {
-        "This version of the Android Gradle Plugin (${Version.ANDROID_GRADLE_PLUGIN_VERSION}) is not supported by the better-dynamic-features plugin. Only version $TARGET_AGP_VERSION is supported."
+      target.afterEvaluate {
+        val agpVersion = Version.ANDROID_GRADLE_PLUGIN_VERSION
+        // Skip the version check if we ignored the current AGP version!
+        if (agpVersion in extension.ignoredVersions) {
+          target.logger.info("Version compatibility check for Android Gradle Plugin $agpVersion skipped.")
+          return@afterEvaluate
+        }
+
+        // Do a strict version check to ensure that our monkey-patching will work correctly.
+        check(agpVersion == TARGET_AGP_VERSION) {
+          "This version of the Android Gradle Plugin ($agpVersion) is not supported by the better-dynamic-features plugin. Only version $TARGET_AGP_VERSION is supported."
+        }
       }
     }
   }
