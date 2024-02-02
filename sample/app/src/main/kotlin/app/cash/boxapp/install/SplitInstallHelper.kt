@@ -19,6 +19,7 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import com.google.android.play.core.ktx.requestDeferredUninstall
 import com.google.android.play.core.ktx.requestInstall
 import com.google.android.play.core.ktx.status
 import com.google.android.play.core.splitinstall.SplitInstallManager
@@ -61,5 +62,9 @@ internal class SplitInstallHelper(
 
   suspend fun requestInstall(module: Module) {
     splitInstallManager.requestInstall(modules = listOf(module.id))
+  }
+
+  suspend fun requestUninstall(module: Module) {
+    splitInstallManager.requestDeferredUninstall(moduleNames = listOf(module.id))
   }
 }

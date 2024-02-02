@@ -8,5 +8,6 @@
       <dist:install-time />
     </dist:delivery>
     <dist:fusing dist:include="true" />
+    <dist:removable dist:value="true" />
   </dist:module>
 </manifest>
