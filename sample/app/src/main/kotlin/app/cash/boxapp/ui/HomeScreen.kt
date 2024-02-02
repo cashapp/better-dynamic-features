@@ -18,10 +18,11 @@ package app.cash.boxapp.ui
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Button
@@ -37,6 +38,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -63,8 +65,8 @@ internal fun HomeScreen() {
 
   Column(
     modifier = Modifier
-      .padding(10.dp)
-      .background(color = Color(196, 255, 233)),
+      .background(color = Color(196, 255, 233))
+      .padding(10.dp),
   ) {
     // The "My Boxes" tab.
     Row(modifier = Modifier.weight(1f)) {
@@ -78,35 +80,82 @@ internal fun HomeScreen() {
       }
     }
 
-    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-      Button(
-        onClick = {
-          scope.launch { installHelper.requestInstall(Module.ExtraBigBox) }
-        },
-        colors = ButtonDefaults.buttonColors(Color(0, 222, 133)),
-      ) {
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-          Text(
-            text = buildAnnotatedString {
-              append("Install ")
-              withStyle(SpanStyle(fontWeight = FontWeight.Black)) {
-                append("EXTRA")
-              }
-              append(" Big Box")
-            },
-          )
-          AnimatedVisibility(visible = isSplitInstalling) {
-            CircularProgressIndicator(
-              modifier = Modifier.size(16.dp),
-              color = MaterialTheme.colors.onBackground,
-              strokeWidth = 2.dp,
-            )
+    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+      InstallButton(
+        text = buildAnnotatedString {
+          append("Install ")
+          withStyle(SpanStyle(fontWeight = FontWeight.Black)) {
+            append("EXTRA")
           }
-        }
+          append(" Big Box")
+        },
+        isLoading = isSplitInstalling,
+      ) {
+        scope.launch { installHelper.requestInstall(Module.ExtraBigBox) }
+      }
+      UninstallButton(
+        onClick = {
+          scope.launch { installHelper.requestUninstall(Module.ExtraBigBox) }
+        },
+        text = buildAnnotatedString {
+          append("Uninstall ")
+          withStyle(SpanStyle(fontWeight = FontWeight.Black)) {
+            append("EXTRA")
+          }
+          append(" Big Box")
+        },
+      )
+
+      Spacer(modifier = Modifier.height(16.dp))
+
+      InstallButton(
+        text = buildAnnotatedString {
+          append("Install Big Box")
+        },
+        isLoading = isSplitInstalling,
+      ) {
+        scope.launch { installHelper.requestInstall(Module.BigBox) }
+      }
+      UninstallButton(
+        onClick = {
+          scope.launch { installHelper.requestUninstall(Module.BigBox) }
+        },
+        text = buildAnnotatedString {
+          append("Uninstall Big Box")
+        },
+      )
+    }
+  }
+}
+
+@Composable
+private fun InstallButton(text: AnnotatedString, isLoading: Boolean, onClick: () -> Unit) {
+  Button(
+    onClick = onClick,
+    colors = ButtonDefaults.buttonColors(Color(0, 222, 133)),
+  ) {
+    Row(
+      verticalAlignment = Alignment.CenterVertically,
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+      Text(text = text)
+      AnimatedVisibility(visible = isLoading) {
+        CircularProgressIndicator(
+          modifier = Modifier.size(16.dp),
+          color = MaterialTheme.colors.onBackground,
+          strokeWidth = 2.dp,
+        )
       }
     }
+  }
+}
+
+@Composable
+private fun UninstallButton(text: AnnotatedString, onClick: () -> Unit) {
+  Button(
+    onClick = onClick,
+    colors = ButtonDefaults.buttonColors(Color(234, 67, 67)),
+  ) {
+    Text(text = text)
   }
 }

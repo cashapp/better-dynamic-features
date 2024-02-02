@@ -16,5 +16,6 @@
 package app.cash.boxapp.install
 
 internal enum class Module(val id: String) {
+  BigBox("bigboxfeature"),
   ExtraBigBox("extrabigboxfeature"),
 }
