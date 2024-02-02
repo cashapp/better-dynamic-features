@@ -110,6 +110,32 @@ class FeatureModuleSymbolProcessorTests {
     assertThat(result.messages).contains("Class does not inherit from a 'DynamicApi' super type.")
   }
 
+  @Test
+  fun `processor recursively searches supertype hierarchy for dynamic api`() {
+    val result = compile(
+      kotlin(
+        "source.kt",
+        """
+        package test
+
+        import app.cash.better.dynamic.features.DynamicApi
+        import app.cash.better.dynamic.features.DynamicImplementation
+
+        interface MyApi : DynamicApi
+
+        abstract class CustomApi : MyApi
+
+        @DynamicImplementation
+        class MyImplementation : CustomApi()
+        """.trimIndent(),
+      ),
+    )
+
+    assertThat(result.exitCode).isEqualTo(ExitCode.OK)
+    assertThatFileContent(resultsDirectory.root.resolve("test.MyImplementation.json"))
+      .contains("""{"qualifiedName":"test.MyImplementation","parentClass":{"packageName":"test","className":"MyApi"}}""")
+  }
+
   private fun prepareCompilation(vararg sourceFiles: SourceFile): KotlinCompilation =
     KotlinCompilation().apply {
       workingDir = workingDirectory.root
