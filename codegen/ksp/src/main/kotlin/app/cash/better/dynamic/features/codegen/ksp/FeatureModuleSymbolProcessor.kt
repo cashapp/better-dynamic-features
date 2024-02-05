@@ -26,7 +26,6 @@ import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSTypeReference
 import com.squareup.moshi.Moshi
 import okio.buffer
 import okio.sink
@@ -53,7 +52,7 @@ class FeatureModuleSymbolProcessor(private val environment: SymbolProcessorEnvir
             symbol = implementation,
           )
         }
-        .map { implementation -> implementation to findApiSuperType(implementation) }
+        .map { implementation -> implementation to findApiSuperType(listOf(implementation)) }
         .filter { (implementation, superType) ->
           if (superType == null) logger.error(
             "Class does not inherit from a 'DynamicApi' super type.",
@@ -65,7 +64,7 @@ class FeatureModuleSymbolProcessor(private val environment: SymbolProcessorEnvir
         .toList()
 
     val details = implementers.map { (implementation, superType) ->
-      val superTypeDeclaration = superType!!.resolve().declaration
+      val superTypeDeclaration = superType!!
       FeatureImplementation(
         qualifiedName = implementation.qualifiedName!!.asString(),
         parentClass = FeatureApi(superTypeDeclaration.packageName.asString(), superTypeDeclaration.simpleName.asString()),
@@ -91,14 +90,24 @@ class FeatureModuleSymbolProcessor(private val environment: SymbolProcessorEnvir
    * Finds the parent interface/class which implements the "DynamicApi" interface.
    *
    * TODO: Handle multiple DynamicApi supertypes
-   * TODO: Recursively search superType hierarchy, we're only checking direct super types right now
    */
-  private fun findApiSuperType(implementation: KSClassDeclaration): KSTypeReference? {
-    return implementation.superTypes
-      .filter { superType ->
-        (superType.resolve().declaration as KSClassDeclaration).superTypes
-          .any { it.resolve().declaration.qualifiedName?.asString() == RUNTIME_API_INTERFACE }
+  private tailrec fun findApiSuperType(declarations: List<KSClassDeclaration>): KSClassDeclaration? {
+    val declarationSuperTypes = declarations.map { it to it.superTypes.map { type -> type.resolve() }.toList() }
+    val nextTypes = mutableListOf<KSClassDeclaration>()
+
+    for ((declaration, superTypes) in declarationSuperTypes) {
+      for (type in superTypes) {
+        if (type.declaration.qualifiedName?.asString() == RUNTIME_API_INTERFACE) {
+          return declaration
+        }
+
+        when (val superType = type.declaration) {
+          is KSClassDeclaration -> nextTypes.add(superType)
+        }
       }
-      .firstOrNull()
+    }
+
+    if (nextTypes.isEmpty()) return null
+    return findApiSuperType(nextTypes)
   }
 }
