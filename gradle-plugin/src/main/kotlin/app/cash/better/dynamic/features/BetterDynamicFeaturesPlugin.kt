@@ -468,14 +468,8 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     }
   }
 
-  private fun kspTaskMatchesVariant(task: KspTask, variant: Variant): Boolean = task.name.contains(
-    variant.buildType!!,
-    ignoreCase = true,
-  ) || variant.productFlavors.any { (_, flavor) ->
-    task.name.contains(
-      flavor,
-      ignoreCase = true,
-    )
+  private fun kspTaskMatchesVariant(task: KspTask, variant: Variant): Boolean {
+    return task.name.contains(variant.name, ignoreCase = true) && !task.name.contains("UnitTest", ignoreCase = true)
   }
 
   companion object {
