@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.3.0] - 2024-03-14
+
+* Upgrade AGP to 8.3.0 (#117)
+* Recursively search for `DynamicApi` supertype (#114)
+* Fixed KSP configuration for flavored builds (#115)
+
 ## [0.2.2] - 2024-01-24
 
 * Upgrade AGP to 8.2.2
