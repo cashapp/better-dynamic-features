@@ -65,7 +65,7 @@ class ResourceScanningTests {
       """
         |  betterDynamicFeatures {
         |    externalResources {
-        |      style(MyTheme)
+        |      style("MyTheme")
         |    }
         |  }
       """.trimMargin(),

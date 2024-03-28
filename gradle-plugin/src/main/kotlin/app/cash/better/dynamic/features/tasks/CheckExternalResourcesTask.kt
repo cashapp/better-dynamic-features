@@ -119,7 +119,7 @@ abstract class CheckExternalResourcesTask : DefaultTask() {
         |
         |betterDynamicFeatures {
         |  externalResources {
-        |${missing.joinToString(separator = "\n") { "    style($it)" }}
+        |${missing.joinToString(separator = "\n") { "    style(\"$it\")" }}
         |  }
         |}
       """.trimMargin()
