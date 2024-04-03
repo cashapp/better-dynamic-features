@@ -1,0 +1,28 @@
+<!-- Copyright Square, Inc. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+  <application android:label="@string/app_name">
+
+    <activity
+        android:name="com.example.HelloWorldActivity"
+        android:exported="true"
+        android:label="@string/app_name" >
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+
+        <category android:name="android.intent.category.LAUNCHER"/>
+        <category android:name="android.intent.category.DEFAULT"/>
+      </intent-filter>
+    </activity>
+
+<!--    <provider-->
+<!--        android:name="com.example.ExampleFileProvider"-->
+<!--        android:authorities="com.mydomain.fileprovider"-->
+<!--        android:exported="false"-->
+<!--        android:grantUriPermissions="true">-->
+<!--      <meta-data-->
+<!--          android:name="android.support.FILE_PROVIDER_PATHS"-->
+<!--          android:resource="@xml/file_paths" />-->
+<!--    </provider>-->
+  </application>
+</manifest>

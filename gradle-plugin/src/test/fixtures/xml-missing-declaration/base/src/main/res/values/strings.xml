@@ -1,0 +1,6 @@
+<!-- Copyright Square, Inc. -->
+<resources>
+  <string name="app_name">Test</string>
+  <string name="feature_name">Test Feature</string>
+  <string name="demand_name">Test On Demand</string>
+</resources>

@@ -1,0 +1,28 @@
+apply plugin: 'com.android.application'
+apply plugin: 'org.jetbrains.kotlin.android'
+apply plugin: 'com.google.devtools.ksp'
+apply plugin: 'app.cash.better.dynamic.features'
+
+android {
+  namespace "app.cash.better.dynamic.features.integration"
+
+  compileSdk 34
+
+  defaultConfig {
+    minSdk = 24
+
+    versionCode 1
+    versionName "1.0"
+  }
+
+  dynamicFeatures = [':feature', ':demand']
+
+  lint {
+    checkReleaseBuilds false
+  }
+}
+
+dependencies {
+  implementation "com.squareup.okhttp3:okhttp:4.9.3"
+  implementation "androidx.appcompat:appcompat:1.5.1"
+}

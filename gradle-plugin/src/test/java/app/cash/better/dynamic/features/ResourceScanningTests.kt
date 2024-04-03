@@ -112,4 +112,26 @@ class ResourceScanningTests {
     val result = gradleRunner.build()
     println(result.output)
   }
+
+  @Test fun `xml paths defined in library fails`() {
+    val integrationRoot = File("src/test/fixtures/xml-missing-declaration")
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .withFreshLockfile()
+      .withArguments("clean", ":base:assembleDebug")
+
+    val result = gradleRunner.buildAndFail()
+    assertThat(result.output).contains("Some resources are defined externally but not declared as external.")
+    assertThat(result.output).contains("Add these to your gradle configuration:")
+    assertThat(result.output).contains(
+      """
+        |  betterDynamicFeatures {
+        |    externalResources {
+        |      style("MyTheme")
+        |    }
+        |  }
+      """.trimMargin(),
+    )
+  }
 }
