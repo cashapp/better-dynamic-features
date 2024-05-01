@@ -84,7 +84,7 @@ import com.android.build.gradle.internal.tasks.factory.BootClasspathConfig
 import com.android.build.gradle.internal.utils.ATTR_ENABLE_CORE_LIBRARY_DESUGARING
 import com.android.build.gradle.internal.utils.D8BackportedMethodsGenerator
 import com.android.build.gradle.internal.utils.D8_DESUGAR_METHODS
-import com.android.build.gradle.internal.utils.getDesugarLibConfig
+import com.android.build.gradle.internal.utils.getDesugarLibConfigFiles
 import com.android.build.gradle.internal.utils.setDisallowChanges
 import com.android.build.gradle.internal.variant.VariantInputModel
 import com.android.build.gradle.options.BooleanOption
@@ -868,7 +868,7 @@ class DependencyConfigurator(
               projectName = project.name,
               dependencyHandler = dependencies,
               bootClasspath = bootClasspath,
-              libConfiguration = getDesugarLibConfig(services),
+              desugarLibConfigFiles = getDesugarLibConfigFiles(services),
               errorFormat = SyncOptions.getErrorFormatMode(projectOptions),
               // Disable incremental dexing for main and androidTest components in dynamic
               // feature module (b/246326007)
@@ -886,7 +886,7 @@ class DependencyConfigurator(
       ) { spec ->
         spec.parameters { parameters ->
           parameters.d8Version.set(d8Version)
-          parameters.coreLibDesugarConfig.set(getDesugarLibConfig(services))
+          parameters.desugarLibConfigFiles.setFrom(getDesugarLibConfigFiles(services))
           parameters.bootclasspath.from(bootClasspath)
         }
         spec.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE)
