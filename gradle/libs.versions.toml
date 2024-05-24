@@ -3,9 +3,9 @@ agp = "8.4.1"               # keep in sync with android-tools
 android-tools = "31.4.1"    # = 23.0.0 + agp
 compilerTesting = "0.2.1"
 compose = "1.4.7"
-kotlin = "1.8.21"
+kotlin = "1.9.24"
 kotlinPoet = "1.13.1"
-ksp = "1.8.21-1.0.11"
+ksp = "1.9.24-1.0.20"
 ktlint = "0.46.1"
 moshi = "1.14.0"
 
