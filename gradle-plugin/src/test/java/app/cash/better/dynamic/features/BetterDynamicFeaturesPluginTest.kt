@@ -48,8 +48,6 @@ class BetterDynamicFeaturesPluginTest {
       |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |com.squareup.okio:okio:2.9.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib-common:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains:annotations:13.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |empty=
@@ -102,8 +100,8 @@ class BetterDynamicFeaturesPluginTest {
       |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |com.squareup.okio:okio:2.9.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib-common:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
@@ -137,8 +135,6 @@ class BetterDynamicFeaturesPluginTest {
       |com.squareup.okhttp3:okhttp:4.9.3=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |com.squareup.okio:okio:2.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib-common:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains:annotations:13.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |empty=
@@ -191,8 +187,8 @@ class BetterDynamicFeaturesPluginTest {
       |com.squareup.okhttp3:okhttp:4.9.3=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |com.squareup.okio:okio:2.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib-common:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
@@ -241,8 +237,8 @@ class BetterDynamicFeaturesPluginTest {
       |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |com.squareup.okio:okio:2.9.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib-common:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
@@ -315,8 +311,8 @@ class BetterDynamicFeaturesPluginTest {
       |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |com.squareup.okio:okio:2.9.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib-common:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
@@ -373,8 +369,8 @@ class BetterDynamicFeaturesPluginTest {
       |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |com.squareup.okio:okio:2.9.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib-common:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
@@ -429,8 +425,8 @@ class BetterDynamicFeaturesPluginTest {
       |com.squareup.okio:okio:2.9.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |com.squareup.retrofit2:retrofit:2.9.0=debugRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib-common:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
@@ -521,8 +517,8 @@ class BetterDynamicFeaturesPluginTest {
       |com.squareup.okhttp3:okhttp:4.9.3=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |com.squareup.okio:okio:2.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib-common:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
@@ -571,8 +567,8 @@ class BetterDynamicFeaturesPluginTest {
       |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |com.squareup.okio:okio:2.9.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib-common:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
@@ -616,8 +612,8 @@ class BetterDynamicFeaturesPluginTest {
       |com.squareup.okhttp3:okhttp:5.0.0-alpha.2=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |com.squareup.okio:okio:2.9.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib-common:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
@@ -719,8 +715,8 @@ class BetterDynamicFeaturesPluginTest {
       |com.squareup.okhttp3:okhttp:4.9.3=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |com.squareup.okio:okio:2.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib-common:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+      |org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlin:kotlin-stdlib:$KOTLIN_VERSION=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
       |org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.5.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
