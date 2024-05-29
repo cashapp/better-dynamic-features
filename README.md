@@ -139,13 +139,15 @@ project will continue to patch this issue without disabling the incremental tran
 
 Version Compatibility:
 
-| AGP    | Better Dynamic Features |
-|--------|-------------------------|
-| 8.1.0  | 0.1.0                   |
-| 8.2.0  | 0.2.0                   |
-| 8.2.1  | 0.2.1                   |
-| 8.3.0  | 0.3.0                   |
-| 8.4.0+ | TBD                     |
+| AGP       | Better Dynamic Features |
+|-----------|-------------------------|
+| 8.1.0     | 0.1.0                   |
+| 8.2.0     | 0.2.0                   |
+| 8.2.1     | 0.2.1                   |
+| 8.3.0     | 0.3.0                   |
+| 8.3.2     | 0.3.1                   |
+| **8.4.1** | **0.4.0**               |
+| 8.5.0+    | TBD                     |
 
 # Using Feature Module Code
 

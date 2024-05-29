@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.4.0] - 2024-05-29
+
+* Bump to AGP 8.4.1 (#121)
+
 ## [0.3.1] - 2024-05-01
 
 * Put the gradle styles in quotes in the error message (#118)
