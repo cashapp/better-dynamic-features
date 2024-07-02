@@ -137,7 +137,7 @@ class DependencyConfigurator(
     val enableJetifier = projectServices.projectOptions.get(BooleanOption.ENABLE_JETIFIER)
 
     if (!useAndroidX && !enableJetifier) {
-      project.configurations.all { configuration ->
+      project.configurations.configureEach { configuration ->
         if (configuration.isCanBeResolved) {
           configuration.incoming.afterResolve(
             AndroidXDependencyCheck.AndroidXDisabledJetifierDisabled(
@@ -401,7 +401,7 @@ class DependencyConfigurator(
     // The Kotlin Kapt plugin should query for PROCESSED_JAR, but it is currently querying for
     // JAR, so we need to have the workaround below to make it get PROCESSED_JAR. See
     // http://issuetracker.google.com/111009645.
-    project.configurations.all { configuration: Configuration ->
+    project.configurations.configureEach { configuration: Configuration ->
       if (configuration.name.startsWith("kapt")) {
         configuration
           .attributes
@@ -495,7 +495,7 @@ class DependencyConfigurator(
             experimentalPropertiesApiGenerator
               ?: project.dependencies.create(
                 projectServices.projectOptions.get(StringOption.ANDROID_PRIVACY_SANDBOX_SDK_API_GENERATOR)
-                    ?: MavenCoordinates.ANDROIDX_PRIVACY_SANDBOX_SDK_API_GENERATOR.toString()
+                    ?: MavenCoordinates.ANDROIDX_PRIVACYSANDBOX_TOOLS_TOOLS_APIGENERATOR.toString()
               ) as Dependency
 
           val experimentalPropertiesRuntimeApigeneratorDependencies =
@@ -505,8 +505,14 @@ class DependencyConfigurator(
               ?: (projectServices.projectOptions
                 .get(StringOption.ANDROID_PRIVACY_SANDBOX_SDK_API_GENERATOR_GENERATED_RUNTIME_DEPENDENCIES)
                 ?.split(",")
-                ?: listOf(MavenCoordinates.ORG_JETBRAINS_KOTLINX_KOTLINX_COROUTINES_ANDROID.toString())).map {
-                  project.dependencies.create(it)
+                ?: listOf(
+                    MavenCoordinates.ORG_JETBRAINS_KOTLIN_KOTLIN_STDLIB.toString(),
+                    MavenCoordinates.ORG_JETBRAINS_KOTLINX_KOTLINX_COROUTINES_ANDROID.toString(),
+                    MavenCoordinates.ANDROIDX_PRIVACYSANDBOX_UI_UI_CORE.toString(),
+                    MavenCoordinates.ANDROIDX_PRIVACYSANDBOX_UI_UI_CLIENT.toString(),
+                ))
+                .map {
+                    project.dependencies.create(it)
                 }
 
           val params = reg.parameters
@@ -524,7 +530,7 @@ class DependencyConfigurator(
           params.bootstrapClasspath.from(bootstrapCreationConfig.fullBootClasspath)
 
           val kotlinCompiler = project.configurations.detachedConfiguration(
-                    project.dependencies.create(MavenCoordinates.KOTLIN_COMPILER.toString())
+                project.dependencies.create(MavenCoordinates.ORG_JETBRAINS_KOTLIN_KOTLIN_COMPILER_EMBEDDABLE.toString())
           )
           kotlinCompiler.isCanBeConsumed = false
           kotlinCompiler.isCanBeResolved = true
