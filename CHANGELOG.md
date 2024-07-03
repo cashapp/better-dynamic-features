@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.5.0-agp8.5.0] - 2024-07-03
+
+* Bump to AGP 8.5.0 (#123)
+* Change to new versioning format
+
 ## [0.4.1] - 2024-06-20
 
 * Bump to AGP 8.4.2 (#124)
