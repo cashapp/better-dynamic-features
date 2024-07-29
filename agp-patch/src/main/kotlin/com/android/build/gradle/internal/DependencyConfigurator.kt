@@ -60,7 +60,7 @@ import com.android.build.gradle.internal.dependency.MultiVariantProductFlavorRul
 import com.android.build.gradle.internal.dependency.PlatformAttrTransform
 import com.android.build.gradle.internal.dependency.RecalculateStackFramesTransform.Companion.registerGlobalRecalculateStackFramesTransform
 import com.android.build.gradle.internal.dependency.RecalculateStackFramesTransform.Companion.registerRecalculateStackFramesTransformForComponent
-import com.android.build.gradle.internal.dependency.VersionedCodeShrinker
+import com.android.build.gradle.internal.dependency.ShrinkerVersion
 import com.android.build.gradle.internal.dependency.registerDexingOutputSplitTransform
 import com.android.build.gradle.internal.dsl.BaseFlavor
 import com.android.build.gradle.internal.dsl.BuildType
@@ -82,6 +82,7 @@ import com.android.build.gradle.internal.tasks.AsarToApksTransform
 import com.android.build.gradle.internal.tasks.AsarTransform
 import com.android.build.gradle.internal.tasks.factory.BootClasspathConfig
 import com.android.build.gradle.internal.utils.ATTR_ENABLE_CORE_LIBRARY_DESUGARING
+import com.android.build.gradle.internal.utils.ATTR_LINT_MIN_SDK
 import com.android.build.gradle.internal.utils.D8BackportedMethodsGenerator
 import com.android.build.gradle.internal.utils.D8_DESUGAR_METHODS
 import com.android.build.gradle.internal.utils.getDesugarLibConfigFiles
@@ -532,8 +533,18 @@ class DependencyConfigurator(
           // For kotlin compilation
           params.bootstrapClasspath.from(bootstrapCreationConfig.fullBootClasspath)
 
-          val kotlinCompiler = project.configurations.detachedConfiguration(
-                project.dependencies.create(MavenCoordinates.ORG_JETBRAINS_KOTLIN_KOTLIN_COMPILER_EMBEDDABLE.toString())
+          val kotlinEmbeddableCompiler =
+            experimentalProperties?.let {
+                ModulePropertyKey.Dependencies.ANDROID_PRIVACY_SANDBOX_SDK_KOTLIN_COMPILER_EMBEDDABLE.getValue(
+                    it
+                )?.single()
+            } as Dependency?
+          val kotlinCompiler: Configuration =
+            project.configurations.detachedConfiguration(
+                kotlinEmbeddableCompiler ?: project.dependencies.create(
+                    projectServices.projectOptions.get(StringOption.ANDROID_PRIVACY_SANDBOX_SDK_KOTLIN_COMPILER_EMBEDDABLE)
+                        ?: MavenCoordinates.ORG_JETBRAINS_KOTLIN_KOTLIN_COMPILER_EMBEDDABLE.toString()
+                )
           )
           kotlinCompiler.isCanBeConsumed = false
           kotlinCompiler.isCanBeResolved = true
@@ -896,33 +907,43 @@ class DependencyConfigurator(
 
       val d8Version = Version.getVersionString()
 
-      // register d8 backported methods generatore when desugaring enabled
-      project.dependencies.registerTransform(
-        D8BackportedMethodsGenerator::class.java
-      ) { spec ->
-        spec.parameters { parameters ->
-          parameters.d8Version.set(d8Version)
-          parameters.desugarLibConfigFiles.setFrom(getDesugarLibConfigFiles(services))
-          parameters.bootclasspath.from(bootClasspath)
-        }
-        spec.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE)
-        spec.from.attribute(ATTR_ENABLE_CORE_LIBRARY_DESUGARING, TRUE.toString())
-        spec.to.attribute(ARTIFACT_TYPE_ATTRIBUTE, D8_DESUGAR_METHODS)
-        spec.to.attribute(ATTR_ENABLE_CORE_LIBRARY_DESUGARING, TRUE.toString())
-      }
+      allComponents
+          .mapTo(linkedSetOf()) { it.minSdk.apiLevel }
+          .forEach { minSdkVersion ->
+              // register d8 backported methods generatore when desugaring enabled
+              project.dependencies.registerTransform(
+                D8BackportedMethodsGenerator::class.java
+              ) { spec ->
+                spec.parameters { parameters ->
+                    parameters.minSdkVersion.set(minSdkVersion)
+                    parameters.d8Version.set(d8Version)
+                    parameters.desugarLibConfigFiles.setFrom(getDesugarLibConfigFiles(services))
+                    parameters.bootclasspath.from(bootClasspath)
+                }
+                spec.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE)
+                spec.from.attribute(ATTR_ENABLE_CORE_LIBRARY_DESUGARING, TRUE.toString())
+                spec.from.attribute(ATTR_LINT_MIN_SDK, minSdkVersion.toString())
+                spec.to.attribute(ARTIFACT_TYPE_ATTRIBUTE, D8_DESUGAR_METHODS)
+                spec.to.attribute(ATTR_ENABLE_CORE_LIBRARY_DESUGARING, TRUE.toString())
+                spec.to.attribute(ATTR_LINT_MIN_SDK, minSdkVersion.toString())
+              }
 
-      // register d8 backported methods generator when desugaring disabled
-      project.dependencies.registerTransform(
-        D8BackportedMethodsGenerator::class.java
-      ) { spec ->
-        spec.parameters { parameters ->
-          parameters.d8Version.set(d8Version)
-        }
-        spec.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE)
-        spec.from.attribute(ATTR_ENABLE_CORE_LIBRARY_DESUGARING, FALSE.toString())
-        spec.to.attribute(ARTIFACT_TYPE_ATTRIBUTE, D8_DESUGAR_METHODS)
-        spec.to.attribute(ATTR_ENABLE_CORE_LIBRARY_DESUGARING, FALSE.toString())
-      }
+              // register d8 backported methods generator when desugaring disabled
+              project.dependencies.registerTransform(
+                D8BackportedMethodsGenerator::class.java
+              ) { spec ->
+                spec.parameters { parameters ->
+                    parameters.minSdkVersion.set(minSdkVersion)
+                    parameters.d8Version.set(d8Version)
+                }
+                spec.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, ArtifactTypeDefinition.JAR_TYPE)
+                spec.from.attribute(ATTR_ENABLE_CORE_LIBRARY_DESUGARING, FALSE.toString())
+                spec.from.attribute(ATTR_LINT_MIN_SDK, minSdkVersion.toString())
+                spec.to.attribute(ARTIFACT_TYPE_ATTRIBUTE, D8_DESUGAR_METHODS)
+                spec.to.attribute(ATTR_ENABLE_CORE_LIBRARY_DESUGARING, FALSE.toString())
+                spec.to.attribute(ATTR_LINT_MIN_SDK, minSdkVersion.toString())
+            }
+          }
     }
 
     if (projectOptions[BooleanOption.ENABLE_PROGUARD_RULES_EXTRACTION]
@@ -943,8 +964,8 @@ class DependencyConfigurator(
             AndroidArtifacts.ArtifactType.FILTERED_PROGUARD_RULES.type
           )
         reg.parameters { params: FilterShrinkerRulesTransform.Parameters ->
-          params.shrinker.set(VersionedCodeShrinker.create())
-          params.projectName.set(project.name)
+            params.shrinker.set(ShrinkerVersion.R8)
+            params.projectName.set(project.name)
         }
       }
     }
