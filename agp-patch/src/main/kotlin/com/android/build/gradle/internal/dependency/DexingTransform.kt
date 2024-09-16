@@ -470,7 +470,7 @@ object DexingRegistration {
             enableApiModeling = creationConfig.enableApiModeling,
             dependenciesClassesAreInstrumented = creationConfig.instrumentationCreationConfig?.dependenciesClassesAreInstrumented == true,
             asmTransformComponent = creationConfig.name.takeIf { creationConfig.instrumentationCreationConfig?.dependenciesClassesAreInstrumented == true },
-            useJacocoTransformInstrumentation = creationConfig.useJacocoTransformInstrumentation,
+            useJacocoTransformInstrumentation = creationConfig.requiresJacocoTransformation,
             enableDesugaring = needsDesugaring(creationConfig),
             needsClasspath = needsClasspath(creationConfig),
             useFullClasspath = useFullClasspath(creationConfig),
