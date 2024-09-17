@@ -92,8 +92,8 @@ import com.android.build.gradle.options.BooleanOption
 import com.android.build.gradle.options.StringOption
 import com.android.build.gradle.options.SyncOptions
 import com.android.builder.core.BuilderConstants
+import com.android.builder.dexing.R8Version
 import com.android.repository.Revision
-import com.android.tools.r8.Version
 import com.google.common.collect.Maps
 import org.gradle.api.ActionConfiguration
 import org.gradle.api.Project
@@ -287,7 +287,7 @@ class DependencyConfigurator(
         AndroidArtifacts.ArtifactType.EXPLODED_AAR,
         AndroidArtifacts.ArtifactType.COMPILED_DEPENDENCIES_RESOURCES
       ) { params ->
-        projectServices.initializeAapt2Input(params.aapt2)
+            projectServices.initializeAapt2Input(params.aapt2, task = null)
       }
     }
     // API Jar: Produce a single API jar that can also contain the library R class from the AAR
@@ -364,14 +364,14 @@ class DependencyConfigurator(
         AndroidArtifacts.ArtifactType.MAYBE_NON_NAMESPACED_PROCESSED_AAR,
         AndroidArtifacts.ArtifactType.PREPROCESSED_AAR_FOR_AUTO_NAMESPACE
       ) { params ->
-        projectServices.initializeAapt2Input(params.aapt2)
+            projectServices.initializeAapt2Input(params.aapt2, task = null)
       }
       registerTransform(
         AutoNamespacePreProcessTransform::class.java,
         AndroidArtifacts.ArtifactType.JAR,
         AndroidArtifacts.ArtifactType.PREPROCESSED_AAR_FOR_AUTO_NAMESPACE
       ) { params ->
-        projectServices.initializeAapt2Input(params.aapt2)
+            projectServices.initializeAapt2Input(params.aapt2, task = null)
       }
 
       registerTransform(
@@ -379,7 +379,7 @@ class DependencyConfigurator(
         AndroidArtifacts.ArtifactType.PREPROCESSED_AAR_FOR_AUTO_NAMESPACE,
         AndroidArtifacts.ArtifactType.PROCESSED_AAR
       ) { params ->
-        projectServices.initializeAapt2Input(params.aapt2)
+            projectServices.initializeAapt2Input(params.aapt2, task = null)
       }
     }
     // Transform to go from external jars to CLASSES and JAVA_RES artifacts. This returns the
@@ -513,6 +513,10 @@ class DependencyConfigurator(
                     MavenCoordinates.ORG_JETBRAINS_KOTLIN_KOTLIN_STDLIB.toString(),
                     MavenCoordinates.ORG_JETBRAINS_KOTLINX_KOTLINX_COROUTINES_ANDROID.toString(),
                     MavenCoordinates.ANDROIDX_PRIVACYSANDBOX_UI_UI_CORE.toString(),
+                    MavenCoordinates.ANDROIDX_CORE_CORE_KTX.toString(),
+                    MavenCoordinates.ANDROIDX_PRIVACYSANDBOX_ACTIVITY_ACTIVITY_CORE.toString(),
+                    MavenCoordinates.ANDROIDX_PRIVACYSANDBOX_ACTIVITY_ACTIVITY_PROVIDER.toString(),
+                    MavenCoordinates.ANDROIDX_PRIVACYSANDBOX_ACTIVITY_ACTIVITY_CLIENT.toString(),
                     MavenCoordinates.ANDROIDX_PRIVACYSANDBOX_UI_UI_CLIENT.toString(),
                 ))
                 .map {
@@ -526,6 +530,7 @@ class DependencyConfigurator(
           apiGeneratorConfiguration.isCanBeResolved = true
           params.apiGenerator.setFrom(apiGeneratorConfiguration)
           params.buildTools.initialize(
+            task = null,
             projectServices.buildServiceRegistry,
             compileSdkHashString,
             buildToolsRevision)
@@ -569,7 +574,7 @@ class DependencyConfigurator(
                                 attribute(AndroidArtifacts.ARTIFACT_TYPE,
                 AndroidArtifacts.ArtifactType.CLASSES_JAR.type)
             }
-          }.artifacts.artifactFiles.files)
+          }.artifacts.artifactFiles)
         }
 
       fun registerExtractSdkShimTransform(usage: String) {
@@ -658,7 +663,7 @@ class DependencyConfigurator(
                     AndroidArtifacts.ArtifactType.ANDROID_PRIVACY_SANDBOX_SDK_ARCHIVE,
                     AndroidArtifacts.ArtifactType.ANDROID_PRIVACY_SANDBOX_SDK_APKS
             ) { params ->
-                projectServices.initializeAapt2Input(params.aapt2)
+                projectServices.initializeAapt2Input(params.aapt2, task = null)
 
                 params.signingConfigData.set(signingConfigProvider)
                 params.signingConfigValidationResultDir.set(
@@ -905,7 +910,7 @@ class DependencyConfigurator(
           )
       )
 
-      val d8Version = Version.getVersionString()
+      val d8Version = R8Version.getVersionString()
 
       allComponents
           .mapTo(linkedSetOf()) { it.minSdk.apiLevel }
