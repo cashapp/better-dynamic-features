@@ -265,20 +265,21 @@ class DependencyConfigurator(
       AndroidArtifacts.TYPE_PLATFORM_ATTR
     )
 
-    val sharedLibSupport = projectOptions[BooleanOption.CONSUME_DEPENDENCIES_AS_SHARED_LIBRARIES]
+    val namespacedSharedLibSupport = projectOptions[BooleanOption.CONSUME_DEPENDENCIES_AS_SHARED_LIBRARIES]
+    val sharedLibSupport = projectOptions[BooleanOption.SUPPORT_OEM_TOKEN_LIBRARIES]
 
-        val libraryCategory = project.objects.named(Category::class.java, Category.LIBRARY)
-        for (transformTarget in AarTransform.getTransformTargets(aarOrJarTypeToConsume)) {
-            dependencies.registerTransform(
-                AarTransform::class.java
-            ) { spec ->
-                spec.from.attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, AndroidArtifacts.ArtifactType.EXPLODED_AAR.type)
-                spec.from.attribute(Category.CATEGORY_ATTRIBUTE, libraryCategory)
-                spec.to.attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, transformTarget.type)
-                spec.to.attribute(Category.CATEGORY_ATTRIBUTE, libraryCategory)
-                spec.parameters.projectName.setDisallowChanges(project.name)
-                spec.parameters.targetType.setDisallowChanges(transformTarget)
-                spec.parameters.sharedLibSupport.setDisallowChanges(sharedLibSupport)
+    val libraryCategory = project.objects.named(Category::class.java, Category.LIBRARY)
+    for (transformTarget in AarTransform.getTransformTargets(aarOrJarTypeToConsume, sharedLibSupport)) {
+        dependencies.registerTransform(
+            AarTransform::class.java
+        ) { spec ->
+            spec.from.attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, AndroidArtifacts.ArtifactType.EXPLODED_AAR.type)
+            spec.from.attribute(Category.CATEGORY_ATTRIBUTE, libraryCategory)
+            spec.to.attribute(ArtifactTypeDefinition.ARTIFACT_TYPE_ATTRIBUTE, transformTarget.type)
+            spec.to.attribute(Category.CATEGORY_ATTRIBUTE, libraryCategory)
+            spec.parameters.projectName.setDisallowChanges(project.name)
+            spec.parameters.targetType.setDisallowChanges(transformTarget)
+            spec.parameters.namespacedSharedLibSupport.setDisallowChanges(namespacedSharedLibSupport)
       }
     }
     if (projectOptions[BooleanOption.PRECOMPILE_DEPENDENCIES_RESOURCES]) {
