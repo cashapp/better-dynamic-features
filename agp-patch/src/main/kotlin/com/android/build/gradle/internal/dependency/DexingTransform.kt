@@ -170,7 +170,11 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
     globalSyntheticsOutputDir: File?,
     desugarGraphOutputFile: File
   ) {
-    val desugarGraph = DesugarGraph.read(desugarGraphOutputFile, rootDir = inputDir)
+    val desugarGraph = DesugarGraph.read(
+        desugarGraphFile = desugarGraphOutputFile,
+        rootDir = inputDir,
+        filesToIgnore = parameters.bootClasspath.files
+    )
 
     // Compute impacted files based on the changed files and the desugaring graph
     val removedFiles = inputDirChanges.removedFiles.map { it.file }
@@ -227,9 +231,13 @@ abstract class BaseDexingTransform<T : BaseDexingTransform.Parameters> : Transfo
     desugarGraphOutputFile?.let { FileUtils.deleteIfExists(it) }
 
     val desugarGraph = if (provideIncrementalSupport) {
-      // `inputDirOrJar` must be a directory when `provideIncrementalSupport == true`
-      // (see the definition of `provideIncrementalSupport`)
-      DesugarGraph(rootDir = inputDirOrJar)
+        // `inputDirOrJar` must be a directory when `provideIncrementalSupport == true`
+        // (see the definition of `provideIncrementalSupport`)
+        DesugarGraph(
+            rootDir = inputDirOrJar,
+            relocatableDesugarGraph = MutableDependencyGraph(),
+            filesToIgnore = parameters.bootClasspath.files
+        )
     } else null
 
     process(
@@ -316,11 +324,27 @@ internal class DesugarGraph(
   private val rootDir: File,
 
   /** The relocatable desugaring graph, which contains Unix-style relative paths of the files. */
-  private val relocatableDesugarGraph: MutableDependencyGraph<String> = MutableDependencyGraph()
+  private val relocatableDesugarGraph: MutableDependencyGraph<String>,
+
+    /**
+     * Files located outside [rootDir] which don't need to be recorded in the desugaring graph.
+     *
+     * Context (b/362339872): In some cases, D8 may report dependencies between the project's
+     * classes and android.jar, which is likely located outside [rootDir]. Instead of failing the
+     * build, we can ignore those dependencies. It is safe to ignore because:
+     *   - [BaseDexingTransform.Parameters.bootClasspath] is a non-incremental transform input, so
+     * any changes to it will cause the transform to run non-incrementally (i.e., we don't need to
+     * track changes to `bootClasspath` and files that are impacted by those changes).
+     *   - `bootClasspath` is self-contained, it doesn't depend on anything else, so we don't need
+     * to track its dependencies.
+     */
+    private val filesToIgnore: Set<File>
 
 ) : DependencyGraphUpdater<File> {
 
   override fun addEdge(dependent: File, dependency: File) {
+    if (dependent in filesToIgnore || dependency in filesToIgnore) return
+
     relocatableDesugarGraph.addEdge(
         dependent.toUnixStyleRelativePath(),
         dependency.toUnixStyleRelativePath()
@@ -357,14 +381,15 @@ internal class DesugarGraph(
 
   companion object {
 
-    fun read(desugarGraphFile: File, rootDir: File): DesugarGraph {
+    fun read(desugarGraphFile: File, rootDir: File, filesToIgnore: Set<File>): DesugarGraph {
       return DesugarGraph(
             rootDir = rootDir,
             relocatableDesugarGraph =
                 ObjectInputStream(desugarGraphFile.inputStream().buffered()).use {
                     @Suppress("UNCHECKED_CAST")
                     it.readObject() as MutableDependencyGraph<String>
-                }
+                },
+            filesToIgnore = filesToIgnore
       )
     }
   }
