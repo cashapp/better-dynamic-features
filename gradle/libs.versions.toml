@@ -1,6 +1,6 @@
 [versions]
-agp = "8.7.3"               # keep in sync with android-tools
-android-tools = "31.7.3"    # = 23.0.0 + agp
+agp = "8.8.0"               # keep in sync with android-tools
+android-tools = "31.8.0"    # = 23.0.0 + agp
 compilerTesting = "0.2.1"
 compose = "1.5.14"
 kotlin = "1.9.24"
