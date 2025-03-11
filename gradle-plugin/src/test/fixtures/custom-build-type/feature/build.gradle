@@ -1,0 +1,28 @@
+apply plugin: 'com.android.dynamic-feature'
+apply plugin: 'org.jetbrains.kotlin.android'
+apply plugin: 'com.google.devtools.ksp'
+apply plugin: 'app.cash.better.dynamic.features'
+
+android {
+  namespace "app.cash.better.dynamic.features.integration.feature"
+
+  compileSdk 32
+  defaultConfig {
+    minSdk = 24
+  }
+
+  buildTypes {
+    staging {
+      initWith debug
+      matchingFallbacks = ['debug']
+    }
+  }
+}
+
+dependencies {
+  implementation project(":base")
+}
+
+betterDynamicFeatures {
+  baseProject.set(project(":base"))
+}
