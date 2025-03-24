@@ -856,9 +856,13 @@ class BetterDynamicFeaturesPluginTest {
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
       .cleaned()
-      .withArguments(":base:assembleStaging", "--stacktrace")
+      .withArguments(":base:writeLockfile")
 
+    // Generate lockfile first, and then run assemble task
     gradleRunner.build()
+    val result = gradleRunner.withArguments(":base:assembleStaging", "--stacktrace").build()
+
+    assertThat(result.output).contains("BUILD SUCCESSFUL")
   }
 
   private fun clearLockfile(root: File) {
