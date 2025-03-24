@@ -850,6 +850,21 @@ class BetterDynamicFeaturesPluginTest {
     )
   }
 
+  @Test fun `custom build type is acknowledged`() {
+    val integrationRoot = File("src/test/fixtures/custom-build-type")
+
+    val gradleRunner = GradleRunner.create()
+      .withCommonConfiguration(integrationRoot)
+      .cleaned()
+      .withArguments(":base:writeLockfile")
+
+    // Generate lockfile first, and then run assemble task
+    gradleRunner.build()
+    val result = gradleRunner.withArguments(":base:assembleStaging", "--stacktrace").build()
+
+    assertThat(result.output).contains("BUILD SUCCESSFUL")
+  }
+
   private fun clearLockfile(root: File) {
     root.lockfile().takeIf { it.exists() }?.delete()
   }
