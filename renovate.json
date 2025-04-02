@@ -10,9 +10,7 @@
         "com.android.application**",
         "com.android.dynamic-feature**",
         "com.android.library**",
-        "com.android.tools.build:**",
-        "com.android.tools.lint:**",
-        "com.android.tools:testutils**"
+        "com.android.tools**"
       ]
     }
   ]
