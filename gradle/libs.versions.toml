@@ -4,7 +4,7 @@ android-tools = "31.9.0"    # = 23.0.0 + agp
 compilerTesting = "0.2.1"
 compose = "1.5.14"
 kotlin = "1.9.24"
-kotlinPoet = "1.13.1"
+kotlinPoet = "1.18.1"
 ksp = "1.9.24-1.0.20"
 ktlint = "0.46.1"
 moshi = "1.14.0"
