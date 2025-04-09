@@ -42,7 +42,7 @@ abstract class CompileTypesafeImplementations :
   private fun compile(classOutputDirectory: File) {
     val combinedClasspath = (
       parameters.projectClasses.get().map { it.asFile } +
-        parameters.kotlinCompileClasspath.files.flatMap { it.walk().filter(File::isFile) }
+        parameters.compileClasspath.files.flatMap { it.walk().filter(File::isFile) }
       )
 
     val generatedSourceFiles = parameters.generatedSources.asFile.get()

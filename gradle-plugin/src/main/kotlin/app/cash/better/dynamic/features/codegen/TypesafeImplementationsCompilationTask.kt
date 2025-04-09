@@ -45,7 +45,10 @@ abstract class TypesafeImplementationsCompilationTask : DefaultTask() {
   abstract val generatedSources: DirectoryProperty
 
   @get:Classpath
-  abstract val kotlinCompileClasspath: ConfigurableFileCollection
+  abstract val compileClasspath: ConfigurableFileCollection
+
+  @get:Classpath
+  abstract val kotlinCompiler: ConfigurableFileCollection
 
   @get:Inject
   abstract val workerExecutor: WorkerExecutor
@@ -55,7 +58,7 @@ abstract class TypesafeImplementationsCompilationTask : DefaultTask() {
     val projectClasses: ListProperty<Directory>
     val output: RegularFileProperty
     val generatedSources: DirectoryProperty
-    val kotlinCompileClasspath: ConfigurableFileCollection
+    val compileClasspath: ConfigurableFileCollection
     val temporaryDir: DirectoryProperty
   }
 
@@ -63,14 +66,16 @@ abstract class TypesafeImplementationsCompilationTask : DefaultTask() {
   fun processImplementations() {
     val tempClassDirectory = temporaryDir.resolve("classes").also { it.mkdirs() }
 
-    val workQueue = workerExecutor.classLoaderIsolation()
+    val workQueue = workerExecutor.classLoaderIsolation {
+      it.classpath.from(kotlinCompiler)
+    }
 
     workQueue.submit(CompileTypesafeImplementations::class.java) { parameters ->
       parameters.projectJars.set(projectJars)
       parameters.projectClasses.set(projectClasses)
       parameters.output.set(output)
       parameters.generatedSources.set(generatedSources)
-      parameters.kotlinCompileClasspath.setFrom(kotlinCompileClasspath)
+      parameters.compileClasspath.setFrom(compileClasspath)
       parameters.temporaryDir.set(tempClassDirectory)
     }
   }
