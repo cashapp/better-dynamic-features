@@ -27,13 +27,14 @@ sourceSets {
 dependencies {
   ksp(libs.moshi.codegen)
 
+  compileOnly(libs.kotlin.compiler)
+
   implementation(projects.codegen)
   implementation(projects.codegen.api)
 
   implementation gradleApi()
   implementation(libs.agp)
   implementation(libs.javassist)
-  implementation(libs.kotlin.compiler)
   implementation(libs.kotlin.gradle)
   implementation(libs.kotlinPoet.core)
   implementation(libs.ksp.gradlePlugin)
@@ -41,6 +42,7 @@ dependencies {
   implementation(libs.moshi.kotlin)
   implementation(files("libs/ARSCLib-1.1.5.jar"))
 
+  testImplementation(libs.kotlin.compiler)
   testImplementation(libs.junit)
   testImplementation(libs.truth)
 }
