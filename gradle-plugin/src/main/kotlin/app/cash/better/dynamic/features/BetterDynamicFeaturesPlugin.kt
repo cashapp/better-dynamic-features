@@ -419,6 +419,17 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       }
     }
 
+    // Load the kotlin compiler into a configuration that can be loaded into the compilation work action
+    val kotlinCompilerScope = configurations.create("kotlinCompilerScope")
+    dependencies.add(
+      kotlinCompilerScope.name,
+      "org.jetbrains.kotlin:kotlin-compiler-embeddable:$KOTLIN_VERSION",
+    )
+    val resolvableKotlinCompilerConfiguration =
+      configurations.create("resolvableKotlinCompilerScope") {
+        it.extendsFrom(kotlinCompilerScope)
+      }
+
     androidComponents.onVariants { androidVariant ->
       val implementationsTask = tasks.register(
         taskName("typesafe", androidVariant, "Implementations"),
@@ -448,7 +459,8 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       ) { task ->
         task.generatedSources.set(implementationsTask.flatMap { it.generatedFilesDirectory })
         val compileConfiguration = setupVariantCodegenDependencies(androidVariant.buildType!!)
-        task.kotlinCompileClasspath.setFrom(project.provider { compileConfiguration.resolvedConfiguration.files })
+        task.compileClasspath.setFrom(project.provider { compileConfiguration.resolvedConfiguration.files })
+        task.kotlinCompiler.from(resolvableKotlinCompilerConfiguration)
       }
 
       androidVariant.artifacts.forScope(ScopedArtifacts.Scope.PROJECT)

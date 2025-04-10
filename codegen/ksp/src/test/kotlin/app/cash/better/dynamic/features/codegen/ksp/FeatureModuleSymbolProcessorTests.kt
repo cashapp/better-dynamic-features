@@ -17,13 +17,15 @@ package app.cash.better.dynamic.features.codegen.ksp
 
 import app.cash.better.dynamic.features.codegen.api.KSP_REPORT_DIRECTORY_PREFIX
 import com.google.common.truth.Truth.assertThat
+import com.tschuchort.compiletesting.JvmCompilationResult
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.KotlinCompilation.ExitCode
 import com.tschuchort.compiletesting.SourceFile
 import com.tschuchort.compiletesting.SourceFile.Companion.kotlin
-import com.tschuchort.compiletesting.kspArgs
 import com.tschuchort.compiletesting.kspIncremental
+import com.tschuchort.compiletesting.kspProcessorOptions
 import com.tschuchort.compiletesting.symbolProcessorProviders
+import com.tschuchort.compiletesting.useKsp2
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Rule
 import org.junit.Test
@@ -143,12 +145,13 @@ class FeatureModuleSymbolProcessorTests {
       sources = sourceFiles.asList()
       verbose = true
       kspIncremental = true
+      useKsp2()
 
-      symbolProcessorProviders = listOf(DynamicFeaturesSymbolProcessorProvider())
-      kspArgs[KSP_REPORT_DIRECTORY_PREFIX] = resultsDirectory.root.absolutePath
+      symbolProcessorProviders = mutableListOf(DynamicFeaturesSymbolProcessorProvider())
+      kspProcessorOptions[KSP_REPORT_DIRECTORY_PREFIX] = resultsDirectory.root.absolutePath
     }
 
-  private fun compile(vararg sourceFile: SourceFile): KotlinCompilation.Result =
+  private fun compile(vararg sourceFile: SourceFile): JvmCompilationResult =
     prepareCompilation(*sourceFile).compile()
 
   private fun assertThatFileContent(file: File) = assertThat(file.readText())
