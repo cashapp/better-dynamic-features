@@ -1,5 +1,10 @@
 # Change Log
 
+## [0.5.1-agp8.9.2] - 2025-04-25
+
+* Bump to AGP 8.9.2 (#168)
+* Support KSP integration for custom build types (#146)
+
 ## [0.5.0-agp8.9.0] - 2025-03-04
 
 * Bump to AGP 8.9.0 and Gradle 8.12.1 (#138)
