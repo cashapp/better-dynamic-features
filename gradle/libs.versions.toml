@@ -7,7 +7,7 @@ kotlin = "2.1.20"
 kotlinPoet = "1.13.1"
 ksp = "2.1.20-1.0.32"
 ktlint = "0.46.1"
-moshi = "1.14.0"
+moshi = "1.15.2"
 
 # Used by the sample app
 compileSdk = "33"
