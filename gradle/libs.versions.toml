@@ -1,11 +1,11 @@
 [versions]
 agp = "8.9.2"               # keep in sync with android-tools
 android-tools = "31.9.2"    # = 23.0.0 + agp
-compilerTesting = "0.2.1"
+compilerTesting = "0.7.0"
 compose = "1.5.14"
-kotlin = "1.9.24"
+kotlin = "2.1.20"
 kotlinPoet = "1.13.1"
-ksp = "1.9.24-1.0.20"
+ksp = "2.1.20-1.0.32"
 ktlint = "0.46.1"
 moshi = "1.14.0"
 
@@ -48,6 +48,7 @@ android-sdkCommon = { module = "com.android.tools:sdk-common", version.ref = "an
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-dynamic-feature = { id = "com.android.dynamic-feature", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
