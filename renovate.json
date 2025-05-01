@@ -12,6 +12,12 @@
         "com.android.library**",
         "com.android.tools**"
       ]
+    },
+    {
+      "enabled": false,
+      "matchPackageNames": [
+        "app.cash.better.dynamic.features**"
+      ]
     }
   ]
 }
