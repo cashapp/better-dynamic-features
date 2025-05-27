@@ -48,9 +48,9 @@ android-sdkCommon = { module = "com.android.tools:sdk-common", version.ref = "an
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-dynamic-feature = { id = "com.android.dynamic-feature", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 publish = { id = "com.vanniktech.maven.publish", version = "0.31.0" }
 spotless = { id = "com.diffplug.spotless", version = "6.18.0" }
