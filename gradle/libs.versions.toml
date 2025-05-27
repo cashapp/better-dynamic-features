@@ -54,7 +54,7 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 publish = { id = "com.vanniktech.maven.publish", version = "0.31.0" }
 spotless = { id = "com.diffplug.spotless", version = "6.18.0" }
-wire = { id = "com.squareup.wire", version = "4.6.0" }
+wire = { id = "com.squareup.wire", version = "5.3.1" }
 
 # Used by the sample app
 # This is just a dummy version to make the verison catalog work. The real version is subsituted in the composite build.
