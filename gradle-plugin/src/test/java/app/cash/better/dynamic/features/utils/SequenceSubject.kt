@@ -18,7 +18,6 @@ package app.cash.better.dynamic.features.utils
 import com.google.common.truth.Fact.simpleFact
 import com.google.common.truth.FailureMetadata
 import com.google.common.truth.Subject
-import com.google.common.truth.Subject.Factory
 import com.google.common.truth.Truth.assertAbout
 
 class SequenceSubject<T>(metadata: FailureMetadata, private val actual: Sequence<T>) :
@@ -50,7 +49,11 @@ class SequenceSubject<T>(metadata: FailureMetadata, private val actual: Sequence
 
   companion object {
     @JvmStatic
-    fun <T> sequences(): Factory<SequenceSubject<T>, Sequence<T>> = Factory(::SequenceSubject)
+    fun <T> sequences(): Factory<SequenceSubject<T>, Sequence<T>> {
+      return Factory { metadata, actual ->
+        SequenceSubject(metadata, actual as Sequence<T>)
+      }
+    }
   }
 }
 
