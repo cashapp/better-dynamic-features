@@ -2,7 +2,6 @@
 agp = "8.10.0"               # keep in sync with android-tools
 android-tools = "31.10.0"    # = 23.0.0 + agp
 compilerTesting = "0.7.1"
-compose = "1.5.14"
 kotlin = "2.1.20"
 kotlinPoet = "1.13.1"
 ksp = "2.1.20-1.0.32"
@@ -33,9 +32,11 @@ moshi-codegen = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.re
 truth = { module = "com.google.truth:truth", version = "1.4.4" }
 
 # Used by the sample app
+compose-bom = { module = "androidx.compose:compose-bom", version = "2025.05.01" }
+compose-material = { module = "androidx.compose.material:material" }
+compose-runtime = { module = "androidx.compose.runtime:runtime" }
+
 compose-activity = { module = "androidx.activity:activity-compose", version = "1.7.1" }
-compose-material = { module = "androidx.compose.material:material", version = "1.4.2" }
-compose-runtime = { module = "androidx.compose.runtime:runtime", version = "1.4.2" }
 
 # AGP things
 google-guava = "com.google.guava:guava:31.1-jre"

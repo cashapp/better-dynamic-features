@@ -18,13 +18,10 @@ android {
   buildFeatures {
     compose true
   }
-
-  composeOptions {
-    kotlinCompilerExtensionVersion libs.versions.compose.get()
-  }
 }
 
 dependencies {
+  implementation platform(libs.compose.bom)
   implementation projects.app
   implementation libs.compose.material
 }
