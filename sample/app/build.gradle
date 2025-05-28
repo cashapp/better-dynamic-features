@@ -43,4 +43,5 @@ dependencies {
   implementation libs.compose.material
   implementation libs.compose.activity
   implementation libs.featureDelivery
+  implementation libs.kotlin.stdlib.common
 }

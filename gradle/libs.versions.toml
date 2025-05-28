@@ -20,6 +20,7 @@ compiler-testing-core = { module = "dev.zacsweers.kctfork:core", version.ref = "
 compiler-testing-ksp = { module = "dev.zacsweers.kctfork:ksp", version.ref = "compilerTesting" }
 featureDelivery = { module = "com.google.android.play:feature-delivery-ktx", version = "2.1.0"}
 junit = { module = "junit:junit", version = "4.13.2" }
+kotlin-stdlib-common = { module = "org.jetbrains.kotlin:kotlin-stdlib-common", version.ref = "kotlin" }
 kotlin-gradle = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlin-compiler = { module = "org.jetbrains.kotlin:kotlin-compiler-embeddable", version.ref = "kotlin" }
 kotlinPoet-core = { module = "com.squareup:kotlinpoet", version.ref = "kotlinPoet" }
