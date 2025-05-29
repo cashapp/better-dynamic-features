@@ -1,9 +1,9 @@
 # This is a Gradle generated file for dependency locking.
 # Manual edits can break the build and are not advised.
 # This file is expected to be part of source control.
-androidx.activity:activity-compose:1.7.1=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-androidx.activity:activity-ktx:1.7.1=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
-androidx.activity:activity:1.7.1=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+androidx.activity:activity-compose:1.10.1=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+androidx.activity:activity-ktx:1.10.1=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+androidx.activity:activity:1.10.1=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
 androidx.annotation:annotation-experimental:1.4.1=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
 androidx.annotation:annotation-jvm:1.9.1=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
 androidx.annotation:annotation:1.9.1=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
@@ -44,6 +44,7 @@ androidx.compose.ui:ui:1.8.2=debugCompileClasspath,debugRuntimeClasspath,release
 androidx.compose:compose-bom:2025.05.01=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
 androidx.concurrent:concurrent-futures:1.1.0=debugRuntimeClasspath,releaseRuntimeClasspath
 androidx.core:core-ktx:1.13.1=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
+androidx.core:core-viewtree:1.0.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
 androidx.core:core:1.13.1=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath
 androidx.customview:customview-poolingcontainer:1.0.0=debugRuntimeClasspath,releaseRuntimeClasspath
 androidx.customview:customview:1.0.0=debugCompileClasspath,debugRuntimeClasspath,releaseCompileClasspath,releaseRuntimeClasspath

@@ -37,7 +37,7 @@ compose-bom = { module = "androidx.compose:compose-bom", version = "2025.05.01" 
 compose-material = { module = "androidx.compose.material:material" }
 compose-runtime = { module = "androidx.compose.runtime:runtime" }
 
-compose-activity = { module = "androidx.activity:activity-compose", version = "1.7.1" }
+compose-activity = { module = "androidx.activity:activity-compose", version = "1.10.1" }
 
 # AGP things
 google-guava = "com.google.guava:guava:31.1-jre"
