@@ -36,14 +36,12 @@ android {
   kotlinOptions {
     freeCompilerArgs += '-Xexplicit-api=strict'
   }
-
-  composeOptions {
-    kotlinCompilerExtensionVersion libs.versions.compose.get()
-  }
 }
 
 dependencies {
-  implementation libs.compose.activity
+  implementation platform(libs.compose.bom)
   implementation libs.compose.material
+  implementation libs.compose.activity
   implementation libs.featureDelivery
+  implementation libs.kotlin.stdlib.common
 }
