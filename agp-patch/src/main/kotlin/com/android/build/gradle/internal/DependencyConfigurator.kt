@@ -39,6 +39,7 @@ import com.android.build.gradle.internal.dependency.AndroidXDependencySubstituti
 import com.android.build.gradle.internal.dependency.AsmClassesTransform.Companion.registerAsmTransformForComponent
 import com.android.build.gradle.internal.dependency.ClassesDirToClassesTransform
 import com.android.build.gradle.internal.dependency.CollectClassesTransform
+import com.android.build.gradle.internal.dependency.CollectPackagesForR8Transform
 import com.android.build.gradle.internal.dependency.CollectResourceSymbolsTransform
 import com.android.build.gradle.internal.dependency.DexingRegistration
 import com.android.build.gradle.internal.dependency.EnumerateClassesTransform
@@ -133,7 +134,6 @@ class DependencyConfigurator(
     }
     return this
   }
-
   fun configureDependencyChecks(): DependencyConfigurator {
     val useAndroidX = projectServices.projectOptions.get(BooleanOption.USE_ANDROID_X)
     val enableJetifier = projectServices.projectOptions.get(BooleanOption.ENABLE_JETIFIER)
@@ -165,7 +165,6 @@ class DependencyConfigurator(
     // used
     val autoNamespaceDependencies =
       namespacedAndroidResources && projectOptions[BooleanOption.CONVERT_NON_NAMESPACED_DEPENDENCIES]
-
     val jetifiedAarOutputType = if (autoNamespaceDependencies) {
       AndroidArtifacts.ArtifactType.MAYBE_NON_NAMESPACED_PROCESSED_AAR
     } else {
@@ -450,6 +449,19 @@ class DependencyConfigurator(
       AndroidArtifacts.ArtifactType.JAR_CLASS_LIST
     )
 
+    if (projectOptions[BooleanOption.GRADUAL_R8_SHRINKING]) {
+        registerTransform(
+            CollectPackagesForR8Transform::class.java,
+            AndroidArtifacts.ArtifactType.EXPLODED_AAR,
+            AndroidArtifacts.ArtifactType.PACKAGES_FOR_R8
+        )
+        registerTransform(
+            CollectPackagesForR8Transform::class.java,
+            aarOrJarTypeToConsume.jar,
+            AndroidArtifacts.ArtifactType.PACKAGES_FOR_R8
+        )
+    }
+
     return this
   }
 
@@ -472,7 +484,7 @@ class DependencyConfigurator(
         compileSdkHashString: String,
         buildToolsRevision: Revision,
         bootstrapCreationConfig: BootClasspathConfig,
-        variants: List<VariantCreationConfig> = emptyList()
+        privacySandboxExperimentalProperties: Map<String, Any>?
     )
     : DependencyConfigurator {
       for (from in AsarTransform.supportedAsarTransformTypes) {
@@ -485,11 +497,11 @@ class DependencyConfigurator(
         }
       }
 
-    fun configureExtractSdkShimTransforms(experimentalProperties: Map<String, Any>?) {
+    fun configureExtractSdkShimTransforms(privacySandboxSdkProperties: Map<String, Any>?) {
       val extractSdkShimTransformParamConfig =
         { reg: TransformSpec<ExtractSdkShimTransform.Parameters> ->
           val experimentalPropertiesApiGenerator: Dependency? =
-                experimentalProperties?.let {
+                privacySandboxSdkProperties?.let {
             ModulePropertyKey.Dependencies.ANDROID_PRIVACY_SANDBOX_SDK_API_GENERATOR
                         .getValue(it)?.single()
                 }
@@ -501,7 +513,7 @@ class DependencyConfigurator(
               ) as Dependency
 
           val experimentalPropertiesRuntimeApigeneratorDependencies =
-                experimentalProperties?.let {
+                privacySandboxSdkProperties?.let {
                     ModulePropertyKey.Dependencies.ANDROID_PRIVACY_SANDBOX_SDK_API_GENERATOR_GENERATED_RUNTIME_DEPENDENCIES.getValue(
                         it
                     )
@@ -535,17 +547,18 @@ class DependencyConfigurator(
             task = null,
             projectServices.buildServiceRegistry,
             compileSdkHashString,
-            buildToolsRevision)
+            buildToolsRevision
+          )
 
           // For kotlin compilation
           params.bootstrapClasspath.from(bootstrapCreationConfig.fullBootClasspath)
 
           val kotlinEmbeddableCompiler =
-            experimentalProperties?.let {
+            privacySandboxSdkProperties?.let {
                 ModulePropertyKey.Dependencies.ANDROID_PRIVACY_SANDBOX_SDK_KOTLIN_COMPILER_EMBEDDABLE.getValue(
                     it
                 )?.single()
-            } as Dependency?
+            }
           val kotlinCompiler: Configuration =
             project.configurations.detachedConfiguration(
                 kotlinEmbeddableCompiler ?: project.dependencies.create(
@@ -557,25 +570,34 @@ class DependencyConfigurator(
           kotlinCompiler.isCanBeResolved = true
           params.kotlinCompiler.from(kotlinCompiler)
           params.requireServices.set(
-            projectServices.projectOptions[BooleanOption.PRIVACY_SANDBOX_SDK_REQUIRE_SERVICES])
+              projectServices.projectOptions[BooleanOption.PRIVACY_SANDBOX_SDK_REQUIRE_SERVICES]
+          )
           val configuration = project.configurations.detachedConfiguration(
-            *runtimeDependenciesForShimSdk.toTypedArray())
+            *runtimeDependenciesForShimSdk.toTypedArray()
+          )
           configuration.isCanBeConsumed = false
           configuration.isCanBeResolved = true
 
-                        configuration.attributes {
-                            it.attribute(BuildTypeAttr.ATTRIBUTE,
-                                    project.objects.named(BuildTypeAttr::class.java,
-                                            BuilderConstants.RELEASE))
-                        }
-                        params.runtimeDependencies.from(configuration.incoming.artifactView {
-                            config: ArtifactView.ViewConfiguration ->
-                            config.attributes.apply {
-                                attribute(Usage.USAGE_ATTRIBUTE,
-                                        project.objects.named(Usage::class.java, Usage.JAVA_API))
-                                attribute(AndroidArtifacts.ARTIFACT_TYPE,
-                AndroidArtifacts.ArtifactType.CLASSES_JAR.type)
-            }
+          configuration.attributes {
+              it.attribute(
+                  BuildTypeAttr.ATTRIBUTE,
+                  project.objects.named(
+                      BuildTypeAttr::class.java,
+                      BuilderConstants.RELEASE
+                  )
+              )
+          }
+          params.runtimeDependencies.from(configuration.incoming.artifactView { config: ArtifactView.ViewConfiguration ->
+              config.attributes.apply {
+                  attribute(
+                      Usage.USAGE_ATTRIBUTE,
+                      project.objects.named(Usage::class.java, Usage.JAVA_API)
+                  )
+                  attribute(
+                      AndroidArtifacts.ARTIFACT_TYPE,
+                      AndroidArtifacts.ArtifactType.CLASSES_JAR.type
+                  )
+              }
           }.artifacts.artifactFiles)
         }
 
@@ -607,20 +629,7 @@ class DependencyConfigurator(
       registerExtractSdkShimTransform(Usage.JAVA_RUNTIME)
     }
 
-        val properties = variants.map { variant ->
-            variant.experimentalProperties.also { it.disallowChanges() }.get().filterKeys {
-                it == ModulePropertyKey.Dependencies.ANDROID_PRIVACY_SANDBOX_SDK_API_GENERATOR_GENERATED_RUNTIME_DEPENDENCIES.key ||
-                        it == ModulePropertyKey.Dependencies.ANDROID_PRIVACY_SANDBOX_SDK_API_GENERATOR.key
-            }
-        }.distinct()
-
-        if (properties.count() > 1) {
-            error(
-                "It is not possible to override Privacy Sandbox experimental properties per variant.\n" +
-                        "Properties with different values defined across multiple variants: ${properties.joinToString()} "
-            )
-        }
-        configureExtractSdkShimTransforms(properties.singleOrNull())
+    configureExtractSdkShimTransforms(privacySandboxExperimentalProperties)
 
         return this
     }
