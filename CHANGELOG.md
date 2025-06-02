@@ -1,5 +1,14 @@
 # Change Log
 
+## [0.5.2-agp8.10.1] - 2025-05-07
+
+* Bump to AGP 8.10.1 (#196)
+* Bump compileSdk and targetSdk to 36 (#192)
+* Gradle cleanup (#191, #190)
+* Fix compile error in tests (#186)
+* Bump Wire to 5.3.1 (#185)
+* Switch to Compose BOM (#184)
+
 ## [0.5.1-agp8.10.0] - 2025-05-07
 
 * Bump to AGP 8.10.0 (#148)
