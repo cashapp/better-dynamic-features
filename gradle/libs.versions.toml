@@ -1,6 +1,6 @@
 [versions]
 agp = "8.11.1"               # keep in sync with android-tools
-android-tools = "31.11.0"    # = 23.0.0 + agp
+android-tools = "31.11.1"    # = 23.0.0 + agp
 compilerTesting = "0.7.1"
 kotlin = "2.1.20"
 kotlinPoet = "1.13.1"
