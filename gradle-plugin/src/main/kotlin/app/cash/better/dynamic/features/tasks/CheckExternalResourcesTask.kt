@@ -148,7 +148,7 @@ abstract class CheckExternalResourcesTask : DefaultTask() {
     val localStyles = localResources.files
       .filter {
         // Exclude the resources we generate
-        "ExternalResources" !in it.path && it.exists()
+        "betterDynamicFeatures" !in it.path && it.exists()
       }
       .flatMap { directory -> directory.walk() } // Grab every .xml file from each res/ directory
       .filter { it.extension == "xml" }
