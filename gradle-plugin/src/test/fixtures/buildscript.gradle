@@ -12,8 +12,6 @@ project.buildscript.dependencies {
 }
 
 subprojects {
-  extensions.findByName("kotlin")?.jvmToolchain(17)
-
   pluginManager.withPlugin("com.android.application") {
     android.compileOptions {
       sourceCompatibility(JavaVersion.VERSION_17)

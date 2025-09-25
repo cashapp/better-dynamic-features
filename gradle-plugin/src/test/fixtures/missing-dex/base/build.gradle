@@ -1,5 +1,4 @@
 apply plugin: 'com.android.application'
-apply plugin: 'org.jetbrains.kotlin.android'
 apply plugin: 'com.google.devtools.ksp'
 apply plugin: 'app.cash.better.dynamic.features'
 apply plugin: 'app.cash.better.dynamic.features.agp-patch'
