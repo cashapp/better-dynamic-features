@@ -45,6 +45,7 @@ import com.android.build.gradle.internal.dependency.DexingRegistration
 import com.android.build.gradle.internal.dependency.EnumerateClassesTransform
 import com.android.build.gradle.internal.dependency.ExtractAarTransform
 import com.android.build.gradle.internal.dependency.ExtractCompileSdkShimTransform
+import com.android.build.gradle.internal.dependency.ExtractNavigationXmlTransform
 import com.android.build.gradle.internal.dependency.ExtractJniTransform
 import com.android.build.gradle.internal.dependency.ExtractProGuardRulesTransform
 import com.android.build.gradle.internal.dependency.ExtractSdkShimTransform
@@ -447,6 +448,12 @@ class DependencyConfigurator(
       CollectClassesTransform::class.java,
       AndroidArtifacts.ArtifactType.CLASSES_JAR,
       AndroidArtifacts.ArtifactType.JAR_CLASS_LIST
+    )
+
+    registerTransform(
+        ExtractNavigationXmlTransform::class.java,
+        AndroidArtifacts.ArtifactType.EXPLODED_AAR,
+        AndroidArtifacts.ArtifactType.NAVIGATION_XML
     )
 
     if (projectOptions[BooleanOption.GRADUAL_R8_SHRINKING]) {
