@@ -40,7 +40,7 @@ compose-runtime = { module = "androidx.compose.runtime:runtime" }
 compose-activity = { module = "androidx.activity:activity-compose", version = "1.10.1" }
 
 # AGP things
-google-guava = "com.google.guava:guava:31.1-jre"
+google-guava = "com.google.guava:guava:33.5.0-jre"
 google-gson = "com.google.code.gson:gson:2.13.1"
 android-common = { module = "com.android.tools:common", version.ref = "android-tools" }
 android-repository = { module = "com.android.tools:repository", version.ref = "android-tools" }
