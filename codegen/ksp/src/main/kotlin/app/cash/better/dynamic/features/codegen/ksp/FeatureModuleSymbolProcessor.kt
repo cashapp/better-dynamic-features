@@ -34,8 +34,7 @@ import kotlin.io.path.Path
 import kotlin.io.path.div
 import kotlin.io.path.outputStream
 
-class FeatureModuleSymbolProcessor(private val environment: SymbolProcessorEnvironment) :
-  SymbolProcessor {
+class FeatureModuleSymbolProcessor(private val environment: SymbolProcessorEnvironment) : SymbolProcessor {
   private val logger = environment.logger
   private val reportDirectoryPaths = environment.options.filterKeys { it.startsWith(KSP_REPORT_DIRECTORY_PREFIX) }.map { (_, path) -> Path(path) }
 
@@ -47,17 +46,21 @@ class FeatureModuleSymbolProcessor(private val environment: SymbolProcessorEnvir
       resolver.getSymbolsWithAnnotation(RUNTIME_IMPLEMENTATION_ANNOTATION, inDepth = true)
         .filterIsInstance<KSClassDeclaration>()
         .onEach { implementation ->
-          if (implementation.isAbstract()) logger.error(
-            "'@DynamicImplementation' cannot be applied to abstract classes.",
-            symbol = implementation,
-          )
+          if (implementation.isAbstract()) {
+            logger.error(
+              "'@DynamicImplementation' cannot be applied to abstract classes.",
+              symbol = implementation,
+            )
+          }
         }
         .map { implementation -> implementation to findApiSuperType(listOf(implementation)) }
         .filter { (implementation, superType) ->
-          if (superType == null) logger.error(
-            "Class does not inherit from a 'DynamicApi' super type.",
-            symbol = implementation,
-          )
+          if (superType == null) {
+            logger.error(
+              "Class does not inherit from a 'DynamicApi' super type.",
+              symbol = implementation,
+            )
+          }
 
           superType != null
         }

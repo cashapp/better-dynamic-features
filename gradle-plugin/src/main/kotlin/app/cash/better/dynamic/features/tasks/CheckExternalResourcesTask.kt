@@ -169,8 +169,7 @@ abstract class CheckExternalResourcesTask : DefaultTask() {
   /**
    * Transforms a style reference, e.g. `@style/My.Theme.Identifier`, into a compiled resource name e.g. `My_Theme_Identifier`.
    */
-  private fun transformStyleReference(ref: String): String =
-    ref.replace(Regex("""@(android:)?style\/"""), "").replace(".", "_")
+  private fun transformStyleReference(ref: String): String = ref.replace(Regex("""@(android:)?style\/"""), "").replace(".", "_")
 
   private data class ResourceModule(val namespace: String, val resources: Map<String, Set<String>>)
 

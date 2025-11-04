@@ -20,8 +20,7 @@ import com.google.common.truth.FailureMetadata
 import com.google.common.truth.Subject
 import com.google.common.truth.Truth.assertAbout
 
-class SequenceSubject<T>(metadata: FailureMetadata, private val actual: Sequence<T>) :
-  Subject(metadata, actual) {
+class SequenceSubject<T>(metadata: FailureMetadata, private val actual: Sequence<T>) : Subject(metadata, actual) {
   fun containsInConsecutiveOrder(vararg values: T) {
     var matchCounter = 0
     actual.forEach {
@@ -37,10 +36,10 @@ class SequenceSubject<T>(metadata: FailureMetadata, private val actual: Sequence
       failWithoutActual(
         simpleFact(
           "Expected to find ${
-          values.joinToString(
-            prefix = "[",
-            postfix = "]",
-          )
+            values.joinToString(
+              prefix = "[",
+              postfix = "]",
+            )
           } in consecutive order, but they were not found.",
         ),
       )
@@ -57,5 +56,4 @@ class SequenceSubject<T>(metadata: FailureMetadata, private val actual: Sequence
   }
 }
 
-fun <T> assertThat(actual: Sequence<T>): SequenceSubject<T> =
-  assertAbout(SequenceSubject.sequences<T>()).that(actual)
+fun <T> assertThat(actual: Sequence<T>): SequenceSubject<T> = assertAbout(SequenceSubject.sequences<T>()).that(actual)

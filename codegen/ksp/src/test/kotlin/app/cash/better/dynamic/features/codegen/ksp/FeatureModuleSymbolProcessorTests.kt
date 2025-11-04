@@ -138,21 +138,19 @@ class FeatureModuleSymbolProcessorTests {
       .contains("""{"qualifiedName":"test.MyImplementation","parentClass":{"packageName":"test","className":"MyApi"}}""")
   }
 
-  private fun prepareCompilation(vararg sourceFiles: SourceFile): KotlinCompilation =
-    KotlinCompilation().apply {
-      workingDir = workingDirectory.root
-      inheritClassPath = true
-      sources = sourceFiles.asList()
-      verbose = true
-      kspIncremental = true
-      useKsp2()
+  private fun prepareCompilation(vararg sourceFiles: SourceFile): KotlinCompilation = KotlinCompilation().apply {
+    workingDir = workingDirectory.root
+    inheritClassPath = true
+    sources = sourceFiles.asList()
+    verbose = true
+    kspIncremental = true
+    useKsp2()
 
-      symbolProcessorProviders = mutableListOf(DynamicFeaturesSymbolProcessorProvider())
-      kspProcessorOptions[KSP_REPORT_DIRECTORY_PREFIX] = resultsDirectory.root.absolutePath
-    }
+    symbolProcessorProviders = mutableListOf(DynamicFeaturesSymbolProcessorProvider())
+    kspProcessorOptions[KSP_REPORT_DIRECTORY_PREFIX] = resultsDirectory.root.absolutePath
+  }
 
-  private fun compile(vararg sourceFile: SourceFile): JvmCompilationResult =
-    prepareCompilation(*sourceFile).compile()
+  private fun compile(vararg sourceFile: SourceFile): JvmCompilationResult = prepareCompilation(*sourceFile).compile()
 
   private fun assertThatFileContent(file: File) = assertThat(file.readText())
 }

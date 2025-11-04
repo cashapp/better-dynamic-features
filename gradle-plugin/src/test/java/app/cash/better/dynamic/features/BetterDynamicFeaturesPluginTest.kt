@@ -869,6 +869,5 @@ class BetterDynamicFeaturesPluginTest {
     root.lockfile().takeIf { it.exists() }?.delete()
   }
 
-  private fun File.lockfile(module: String? = null) =
-    resolve(if (module != null) "$module/gradle.lockfile" else "gradle.lockfile")
+  private fun File.lockfile(module: String? = null) = resolve(if (module != null) "$module/gradle.lockfile" else "gradle.lockfile")
 }
