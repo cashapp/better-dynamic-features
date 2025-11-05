@@ -40,18 +40,26 @@ abstract class DependencyGraphWriterTask : DefaultTask() {
 
   fun setResolvedLockfileEntriesProvider(provider: Provider<ResolvedComponentResultPair>, variant: String) {
     graph = provider.map { (runtime, compile) ->
-      val runtimeNodes = if (runtime.variants.isEmpty()) emptyList() else buildDependencyGraph(
-        runtime.getDependenciesForVariant(runtime.variants.first()),
-        variant,
-        mutableSetOf(),
-        type = DependencyType.Runtime,
-      )
-      val compileNodes = if (compile.variants.isEmpty()) emptyList() else buildDependencyGraph(
-        compile.getDependenciesForVariant(compile.variants.first()),
-        variant,
-        mutableSetOf(),
-        type = DependencyType.Compile,
-      )
+      val runtimeNodes = if (runtime.variants.isEmpty()) {
+        emptyList()
+      } else {
+        buildDependencyGraph(
+          runtime.getDependenciesForVariant(runtime.variants.first()),
+          variant,
+          mutableSetOf(),
+          type = DependencyType.Runtime,
+        )
+      }
+      val compileNodes = if (compile.variants.isEmpty()) {
+        emptyList()
+      } else {
+        buildDependencyGraph(
+          compile.getDependenciesForVariant(compile.variants.first()),
+          variant,
+          mutableSetOf(),
+          type = DependencyType.Compile,
+        )
+      }
 
       runtimeNodes + compileNodes
     }
@@ -69,24 +77,23 @@ abstract class DependencyGraphWriterTask : DefaultTask() {
   private val ResolvedDependencyResult.key: String
     get() = selected.moduleVersion?.let { info -> "${info.group}:${info.name}" } ?: ""
 
-  private fun buildDependencyGraph(topLevel: List<DependencyResult>, variant: String, visited: MutableSet<String>, type: DependencyType): List<Node> =
-    topLevel
-      .asSequence()
-      .filterIsInstance<ResolvedDependencyResult>()
-      .filter { !it.isConstraint && it.key !in visited }
-      .onEach { visited += it.key }
-      .map {
-        val info = it.selected.moduleVersion!!
-        Node(
-          "${info.group}:${info.name}",
-          Version(info.version),
-          mutableSetOf(variant),
-          children = buildDependencyGraph(it.selected.getDependenciesForVariant(it.resolvedVariant), variant, visited, type),
-          isProjectModule = it.resolvedVariant.owner is ProjectComponentIdentifier,
-          type = type,
-        )
-      }
-      .toList()
+  private fun buildDependencyGraph(topLevel: List<DependencyResult>, variant: String, visited: MutableSet<String>, type: DependencyType): List<Node> = topLevel
+    .asSequence()
+    .filterIsInstance<ResolvedDependencyResult>()
+    .filter { !it.isConstraint && it.key !in visited }
+    .onEach { visited += it.key }
+    .map {
+      val info = it.selected.moduleVersion!!
+      Node(
+        "${info.group}:${info.name}",
+        Version(info.version),
+        mutableSetOf(variant),
+        children = buildDependencyGraph(it.selected.getDependenciesForVariant(it.resolvedVariant), variant, visited, type),
+        isProjectModule = it.resolvedVariant.owner is ProjectComponentIdentifier,
+        type = type,
+      )
+    }
+    .toList()
 
   data class ResolvedComponentResultPair(val runtime: ResolvedComponentResult, val compile: ResolvedComponentResult)
 }

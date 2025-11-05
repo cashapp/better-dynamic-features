@@ -20,6 +20,5 @@ import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
 
 class DynamicFeaturesSymbolProcessorProvider : SymbolProcessorProvider {
-  override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor =
-    FeatureModuleSymbolProcessor(environment)
+  override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor = FeatureModuleSymbolProcessor(environment)
 }

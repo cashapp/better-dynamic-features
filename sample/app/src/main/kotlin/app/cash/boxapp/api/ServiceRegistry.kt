@@ -43,7 +43,10 @@ public interface ServiceRegistry<T> {
 
           private fun exhaustRunWhenInstalledQueue() {
             val instance = value ?: return
-            runWhenInstalledQueue.removeAll { it(instance); true }
+            runWhenInstalledQueue.removeAll {
+              it(instance)
+              true
+            }
           }
         }
       } as ServiceRegistry<T>

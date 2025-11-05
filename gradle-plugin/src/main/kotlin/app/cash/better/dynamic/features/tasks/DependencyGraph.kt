@@ -30,7 +30,7 @@ data class Node(
 
 enum class DependencyType {
   Runtime,
-  Compile;
+  Compile,
 }
 
 @JsonClass(generateAdapter = true)
@@ -39,8 +39,7 @@ data class NodeList(val nodes: List<Node>)
 @JsonClass(generateAdapter = true)
 @JvmInline
 value class Version(val string: String) : Comparable<Version> {
-  override fun compareTo(other: Version): Int =
-    VersionNumber.parse(string).compareTo(VersionNumber.parse(other.string))
+  override fun compareTo(other: Version): Int = VersionNumber.parse(string).compareTo(VersionNumber.parse(other.string))
 
   override fun toString(): String = string
 }

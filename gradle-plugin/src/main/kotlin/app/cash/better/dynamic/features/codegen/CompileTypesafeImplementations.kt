@@ -28,8 +28,7 @@ import java.util.jar.JarEntry
 import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
 
-abstract class CompileTypesafeImplementations :
-  WorkAction<TypesafeImplementationsCompilationTask.TypesafeImplementationsCompilationWorkParameters> {
+abstract class CompileTypesafeImplementations : WorkAction<TypesafeImplementationsCompilationTask.TypesafeImplementationsCompilationWorkParameters> {
   private val logger = LoggerFactory.getLogger("CompileTypesafeImplementations")
 
   override fun execute() {

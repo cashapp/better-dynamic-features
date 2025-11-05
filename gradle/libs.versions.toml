@@ -5,7 +5,7 @@ compilerTesting = "0.7.1"
 kotlin = "2.1.20"
 kotlinPoet = "1.13.1"
 ksp = "2.1.20-1.0.32"
-ktlint = "0.46.1"
+ktlint = "1.7.1"
 moshi = "1.15.2"
 
 # Used by the sample app
@@ -55,7 +55,7 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 publish = { id = "com.vanniktech.maven.publish", version = "0.34.0" }
-spotless = { id = "com.diffplug.spotless", version = "6.18.0" }
+spotless = { id = "com.diffplug.spotless", version = "8.0.0" }
 wire = { id = "com.squareup.wire", version = "5.4.0" }
 
 # Used by the sample app

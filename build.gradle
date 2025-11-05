@@ -16,6 +16,24 @@ spotless {
       "disabled_rules"                             : "package-name",
       "ij_kotlin_allow_trailing_comma"             : "true",
       "ij_kotlin_allow_trailing_comma_on_call_site": "true",
+      "ktlint_standard_annotation"                  : "disabled",
+      "ktlint_standard_annotation-spacing"          : "disabled",
+      "ktlint_standard_backing-property-naming"     : "disabled",
+      "ktlint_standard_comment-wrapping"            : "disabled",
+      "ktlint_standard_enum-entry-name-case"        : "disabled",
+      "ktlint_standard_filename"                    : "disabled",
+      "ktlint_standard_package-name"                : "disabled",
+      // Making something an expression body should be a choice around readability.
+      "ktlint_standard_function-expression-body"    : "disabled",
+      // Temporarily disabled because these got more strict in a ktlint update.
+      "ktlint_standard_class-naming"                : "disabled",
+      "ktlint_standard_function-naming"             : "disabled",
+      "ktlint_standard_kdoc-wrapping"               : "disabled",
+      "ktlint_standard_no-empty-file"               : "disabled",
+      "ktlint_standard_property-naming"             : "disabled",
+      "ktlint_standard_value-parameter-comment"     : "disabled",
+      // Is disabled by default since ktlint 1.7.0.
+      "ktlint_standard_no-unused-imports" : "enabled",
     ])
     trimTrailingWhitespace()
     endWithNewline()

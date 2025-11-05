@@ -115,10 +115,10 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     androidComponents.onVariants { variant ->
       // We only want to enforce the lockfile if we aren't explicitly trying to update it
       if (project.gradle.startParameter.taskNames.none {
-        it.contains("writeLockfile", ignoreCase = true) ||
-          it.contains(WRITE_DEPENDENCY_GRAPH_REGEX) ||
-          it.contains("checkLockfile", ignoreCase = true)
-      }
+          it.contains("writeLockfile", ignoreCase = true) ||
+            it.contains(WRITE_DEPENDENCY_GRAPH_REGEX) ||
+            it.contains("checkLockfile", ignoreCase = true)
+        }
       ) {
         project.configurations.named("${variant.name}RuntimeClasspath").configure {
           it.resolutionStrategy.activateDependencyLocking()
@@ -132,79 +132,75 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     project.setupBaseResourcesCheckingTasks(androidComponents, pluginExtension)
   }
 
-  private fun Configuration.getConfigurationArtifactCollection(): ArtifactCollection =
-    incoming.artifactView { config ->
-      config.attributes { container ->
-        container.attribute(
-          AndroidArtifacts.ARTIFACT_TYPE,
-          AndroidArtifacts.ArtifactType.AAR_OR_JAR.type,
-        )
-      }
-
-      // Look only for external dependencies
-      config.componentFilter { it !is ProjectComponentIdentifier }
-    }.artifacts
-
-  private fun Project.configureDependencyGraphTask(variant: Variant): TaskProvider<DependencyGraphWriterTask> =
-    tasks.register(
-      "write${variant.name.capitalized()}DependencyGraph",
-      DependencyGraphWriterTask::class.java,
-    ) { task ->
-      val artifactCollections = project.configurations.getByName("${variant.name}RuntimeClasspath")
-        .getConfigurationArtifactCollection()
-
-      task.dependencyFileCollection.setFrom(artifactCollections.artifactFiles)
-
-      task.setResolvedLockfileEntriesProvider(
-        project.provider {
-          val runtime = project.configurations.getByName("${variant.name}RuntimeClasspath")
-            .incoming
-            .resolutionResult
-            .root
-
-          val compile = project.configurations.getByName("${variant.name}CompileClasspath")
-            .incoming
-            .resolutionResult
-            .root
-
-          ResolvedComponentResultPair(runtime, compile)
-        },
-        variant.name,
+  private fun Configuration.getConfigurationArtifactCollection(): ArtifactCollection = incoming.artifactView { config ->
+    config.attributes { container ->
+      container.attribute(
+        AndroidArtifacts.ARTIFACT_TYPE,
+        AndroidArtifacts.ArtifactType.AAR_OR_JAR.type,
       )
-
-      task.partialLockFile.set { buildDir.resolve("betterDynamicFeatures/deps/${variant.name}DependencyGraph.json") }
-      task.group = GROUP
     }
 
-  private fun Project.createSharedFeatureConfiguration(): Configuration =
-    configurations.create(CONFIGURATION_BDF).apply {
-      isCanBeConsumed = true
-      isCanBeResolved = false
-      isVisible = false
+    // Look only for external dependencies
+    config.componentFilter { it !is ProjectComponentIdentifier }
+  }.artifacts
 
-      attributes.apply {
-        attribute(
-          Usage.USAGE_ATTRIBUTE,
-          project.objects.named(Usage::class.java, ATTRIBUTE_USAGE_METADATA),
-        )
-      }
-      outgoing.variants.create(VARIANT_DEPENDENCY_GRAPHS)
+  private fun Project.configureDependencyGraphTask(variant: Variant): TaskProvider<DependencyGraphWriterTask> = tasks.register(
+    "write${variant.name.capitalized()}DependencyGraph",
+    DependencyGraphWriterTask::class.java,
+  ) { task ->
+    val artifactCollections = project.configurations.getByName("${variant.name}RuntimeClasspath")
+      .getConfigurationArtifactCollection()
+
+    task.dependencyFileCollection.setFrom(artifactCollections.artifactFiles)
+
+    task.setResolvedLockfileEntriesProvider(
+      project.provider {
+        val runtime = project.configurations.getByName("${variant.name}RuntimeClasspath")
+          .incoming
+          .resolutionResult
+          .root
+
+        val compile = project.configurations.getByName("${variant.name}CompileClasspath")
+          .incoming
+          .resolutionResult
+          .root
+
+        ResolvedComponentResultPair(runtime, compile)
+      },
+      variant.name,
+    )
+
+    task.partialLockFile.set { buildDir.resolve("betterDynamicFeatures/deps/${variant.name}DependencyGraph.json") }
+    task.group = GROUP
+  }
+
+  private fun Project.createSharedFeatureConfiguration(): Configuration = configurations.create(CONFIGURATION_BDF).apply {
+    isCanBeConsumed = true
+    isCanBeResolved = false
+    isVisible = false
+
+    attributes.apply {
+      attribute(
+        Usage.USAGE_ATTRIBUTE,
+        project.objects.named(Usage::class.java, ATTRIBUTE_USAGE_METADATA),
+      )
     }
+    outgoing.variants.create(VARIANT_DEPENDENCY_GRAPHS)
+  }
 
-  private fun Project.createSharedBaseConfiguration(): Configuration =
-    configurations.create(CONFIGURATION_BDF).apply {
-      isCanBeConsumed = true
-      isCanBeResolved = true
-      isVisible = false
+  private fun Project.createSharedBaseConfiguration(): Configuration = configurations.create(CONFIGURATION_BDF).apply {
+    isCanBeConsumed = true
+    isCanBeResolved = true
+    isVisible = false
 
-      attributes.apply {
-        attribute(
-          Usage.USAGE_ATTRIBUTE,
-          project.objects.named(Usage::class.java, ATTRIBUTE_USAGE_METADATA),
-        )
-      }
-      outgoing.variants.create(VARIANT_DEPENDENCY_GRAPHS)
+    attributes.apply {
+      attribute(
+        Usage.USAGE_ATTRIBUTE,
+        project.objects.named(Usage::class.java, ATTRIBUTE_USAGE_METADATA),
+      )
     }
+    outgoing.variants.create(VARIANT_DEPENDENCY_GRAPHS)
+  }
 
   private fun Project.setupFeatureDependencyGraphTasks(
     androidComponents: AndroidComponentsExtension<*, *, *>,
@@ -501,7 +497,6 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       Regex("write(.+)DependencyGraph", RegexOption.IGNORE_CASE)
 
     @Suppress("FunctionName")
-    private fun VARIANT_FEATURE_IMPLEMENTATION(variant: String): String =
-      "$variant-implementations"
+    private fun VARIANT_FEATURE_IMPLEMENTATION(variant: String): String = "$variant-implementations"
   }
 }

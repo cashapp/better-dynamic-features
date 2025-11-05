@@ -26,7 +26,9 @@ import androidx.compose.runtime.setValue
 import app.cash.boxapp.api.Navigator
 import java.util.Stack
 
-internal class MainActivity : ComponentActivity(), Navigator {
+internal class MainActivity :
+  ComponentActivity(),
+  Navigator {
   init {
     Navigator.INSTANCE = this
   }
