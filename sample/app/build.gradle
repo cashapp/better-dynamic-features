@@ -32,8 +32,8 @@ android {
     compose true
   }
 
-  kotlinOptions {
-    freeCompilerArgs += '-Xexplicit-api=strict'
+  kotlin {
+      explicitApi()
   }
 }
 
