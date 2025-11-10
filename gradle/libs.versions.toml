@@ -30,7 +30,7 @@ ksp-gradlePlugin = { module = "com.google.devtools.ksp:symbol-processing-gradle-
 moshi-core = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
 moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshi" }
 moshi-codegen = { module = "com.squareup.moshi:moshi-kotlin-codegen", version.ref = "moshi" }
-truth = { module = "com.google.truth:truth", version = "1.4.4" }
+truth = { module = "com.google.truth:truth", version = "1.4.5" }
 
 # Used by the sample app
 compose-bom = { module = "androidx.compose:compose-bom", version = "2025.05.01" }
