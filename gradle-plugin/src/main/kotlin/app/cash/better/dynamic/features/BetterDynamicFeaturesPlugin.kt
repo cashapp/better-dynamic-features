@@ -46,7 +46,7 @@ import org.gradle.api.attributes.Attribute
 import org.gradle.api.attributes.Usage
 import org.gradle.api.file.Directory
 import org.gradle.api.tasks.TaskProvider
-import org.gradle.configurationcache.extensions.capitalized
+import org.gradle.internal.extensions.stdlib.capitalized
 import org.gradle.process.CommandLineArgumentProvider
 
 @Suppress("UnstableApiUsage")
@@ -190,7 +190,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
 
   private fun Project.createSharedBaseConfiguration(): Configuration = configurations.create(CONFIGURATION_BDF).apply {
     isCanBeConsumed = true
-    isCanBeResolved = true
+    isCanBeResolved = false
     isVisible = false
 
     attributes.apply {
@@ -226,6 +226,21 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     // This allows us to access artifacts created in this project's tasks via the artifactView APIs
     dependencies.add(CONFIGURATION_BDF, this)
 
+    // Create a separate resolvable configuration for consuming the dependency graphs
+    val resolvableConfiguration = configurations.create("${CONFIGURATION_BDF}Resolvable").apply {
+      isCanBeConsumed = false
+      isCanBeResolved = true
+      isVisible = false
+      extendsFrom(configuration)
+
+      attributes.apply {
+        attribute(
+          Usage.USAGE_ATTRIBUTE,
+          project.objects.named(Usage::class.java, ATTRIBUTE_USAGE_METADATA),
+        )
+      }
+    }
+
     androidComponents.onVariants { variant ->
       val task = configureDependencyGraphTask(variant)
       configuration.outgoing.variants.getByName(VARIANT_DEPENDENCY_GRAPHS) { configurationVariant ->
@@ -236,13 +251,13 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       }
     }
 
-    val featureDependencyArtifacts = configuration.incoming.artifactView { config ->
+    val featureDependencyArtifacts = resolvableConfiguration.incoming.artifactView { config ->
       config.attributes { container ->
         container.attribute(ARTIFACT_TYPE, ARTIFACT_TYPE_FEATURE_DEPENDENCY_GRAPH)
       }
     }.artifacts.artifactFiles
 
-    val baseDependencyArtifacts = configuration.incoming.artifactView { config ->
+    val baseDependencyArtifacts = resolvableConfiguration.incoming.artifactView { config ->
       config.attributes { container ->
         container.attribute(ARTIFACT_TYPE, ARTIFACT_TYPE_BASE_DEPENDENCY_GRAPH)
       }
@@ -455,7 +470,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
       ) { task ->
         task.generatedSources.set(implementationsTask.flatMap { it.generatedFilesDirectory })
         val compileConfiguration = setupVariantCodegenDependencies(androidVariant.buildType!!)
-        task.compileClasspath.setFrom(project.provider { compileConfiguration.resolvedConfiguration.files })
+        task.compileClasspath.setFrom(project.provider { compileConfiguration.files })
         task.kotlinCompiler.from(resolvableKotlinCompilerConfiguration)
       }
 
