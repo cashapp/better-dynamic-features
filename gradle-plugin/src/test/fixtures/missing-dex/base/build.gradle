@@ -6,7 +6,7 @@ apply plugin: 'app.cash.better.dynamic.features.agp-patch'
 android {
   namespace "app.cash.better.dynamic.features.integration"
 
-  compileSdk 32
+  compileSdk libs.versions.compileSdk.get() as int
   defaultConfig {
     minSdk = 24
 
