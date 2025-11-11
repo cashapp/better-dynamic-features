@@ -5,7 +5,7 @@ apply plugin: 'app.cash.better.dynamic.features'
 android {
   namespace "app.cash.better.dynamic.features.integration"
 
-  compileSdk 32
+  compileSdk libs.versions.compileSdk.get() as int
 
   dynamicFeatures = [':feature']
 }
