@@ -467,6 +467,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
         taskName("compile", androidVariant, "Implementations"),
         TypesafeImplementationsCompilationTask::class.java,
       ) { task ->
+        task.dependsOn(implementationsTask)
         task.generatedSources.set(implementationsTask.flatMap { it.generatedFilesDirectory })
         val compileConfiguration = setupVariantCodegenDependencies(androidVariant.buildType!!)
         task.compileClasspath.setFrom(project.provider { compileConfiguration.files })
