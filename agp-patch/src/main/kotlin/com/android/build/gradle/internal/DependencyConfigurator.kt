@@ -74,8 +74,6 @@ import com.android.build.gradle.internal.packaging.getDefaultDebugKeystoreSignin
 import com.android.build.gradle.internal.profile.AnalyticsService
 import com.android.build.gradle.internal.publishing.AarOrJarTypeToConsume
 import com.android.build.gradle.internal.publishing.AndroidArtifacts
-import com.android.build.gradle.internal.res.namespaced.AutoNamespacePreProcessTransform
-import com.android.build.gradle.internal.res.namespaced.AutoNamespaceTransform
 import com.android.build.gradle.internal.scope.InternalArtifactType
 import com.android.build.gradle.internal.services.AndroidLocationsBuildService
 import com.android.build.gradle.internal.services.ProjectServices
@@ -155,22 +153,14 @@ class DependencyConfigurator(
   }
 
   fun configureGeneralTransforms(
-    namespacedAndroidResources: Boolean,
     aarOrJarTypeToConsume: AarOrJarTypeToConsume
   ): DependencyConfigurator {
     val dependencies: DependencyHandler = project.dependencies
 
     val projectOptions = projectServices.projectOptions
 
-    // The aars/jars may need to be processed (e.g., jetified to AndroidX) before they can be
-    // used
-    val autoNamespaceDependencies =
-      namespacedAndroidResources && projectOptions[BooleanOption.CONVERT_NON_NAMESPACED_DEPENDENCIES]
-    val jetifiedAarOutputType = if (autoNamespaceDependencies) {
-      AndroidArtifacts.ArtifactType.MAYBE_NON_NAMESPACED_PROCESSED_AAR
-    } else {
-      AndroidArtifacts.ArtifactType.PROCESSED_AAR
-    }
+    val jetifiedAarOutputType = AndroidArtifacts.ArtifactType.PROCESSED_AAR
+
     // Arguments passed to an ArtifactTransform must not be null
     val jetifierIgnoreList = projectOptions[StringOption.JETIFIER_IGNORE_LIST] ?: ""
     if (projectOptions.get(BooleanOption.ENABLE_JETIFIER)) {
@@ -188,17 +178,10 @@ class DependencyConfigurator(
       ) { params ->
         params.ignoreListOption.setDisallowChanges(jetifierIgnoreList)
       }
-    } else if (autoNamespaceDependencies) {
-      // Namespaced resources code path is not optimized. Identity transforms are removed
-      // otherwise.
+    } else if (projectOptions[BooleanOption.ENABLE_IDENTITY_TRANSFORMS_FOR_PROCESSED_ARTIFACTS]) {
+            // These should not be needed in most scenarios now, but keeping the option for
+            // backwards compatibility.
       registerIdentityTransformWhenJetifierIsDisabled(jetifiedAarOutputType)
-    } else {
-      // Still register the transform if/when dagger plugin is applied
-      // TODO(b/288221106): Dagger plugin depends on our internal implementation,
-      // we need to eliminate their dependency on this to be able to remove the following.
-      project.plugins.withId("dagger.hilt.android.plugin") {
-          registerIdentityTransformWhenJetifierIsDisabled(jetifiedAarOutputType)
-      }
     }
 
     registerTransform(
@@ -281,6 +264,9 @@ class DependencyConfigurator(
             spec.parameters.projectName.setDisallowChanges(project.name)
             spec.parameters.targetType.setDisallowChanges(transformTarget)
             spec.parameters.namespacedSharedLibSupport.setDisallowChanges(namespacedSharedLibSupport)
+            spec.parameters.filterOutGlobalRules.setDisallowChanges(
+                projectOptions[BooleanOption.R8_GLOBAL_OPTIONS_IN_CONSUMER_RULES_DISALLOWED]
+            )
       }
     }
     if (projectOptions[BooleanOption.PRECOMPILE_DEPENDENCIES_RESOURCES]) {
@@ -353,37 +339,19 @@ class DependencyConfigurator(
         ExtractProGuardRulesTransform::class.java,
         aarOrJarTypeToConsume.jar,
         AndroidArtifacts.ArtifactType.UNFILTERED_PROGUARD_RULES
-      )
+      ) { params ->
+          params.filterOutGlobalRules.set(
+              projectServices.projectOptions.get(
+                  BooleanOption.R8_GLOBAL_OPTIONS_IN_CONSUMER_RULES_DISALLOWED
+              )
+          )
+      }
     }
     registerTransform(
       LibrarySymbolTableTransform::class.java,
       AndroidArtifacts.ArtifactType.EXPLODED_AAR,
       AndroidArtifacts.ArtifactType.SYMBOL_LIST_WITH_PACKAGE_NAME
     )
-    if (autoNamespaceDependencies) {
-      registerTransform(
-        AutoNamespacePreProcessTransform::class.java,
-        AndroidArtifacts.ArtifactType.MAYBE_NON_NAMESPACED_PROCESSED_AAR,
-        AndroidArtifacts.ArtifactType.PREPROCESSED_AAR_FOR_AUTO_NAMESPACE
-      ) { params ->
-            projectServices.initializeAapt2Input(params.aapt2, task = null)
-      }
-      registerTransform(
-        AutoNamespacePreProcessTransform::class.java,
-        AndroidArtifacts.ArtifactType.JAR,
-        AndroidArtifacts.ArtifactType.PREPROCESSED_AAR_FOR_AUTO_NAMESPACE
-      ) { params ->
-            projectServices.initializeAapt2Input(params.aapt2, task = null)
-      }
-
-      registerTransform(
-        AutoNamespaceTransform::class.java,
-        AndroidArtifacts.ArtifactType.PREPROCESSED_AAR_FOR_AUTO_NAMESPACE,
-        AndroidArtifacts.ArtifactType.PROCESSED_AAR
-      ) { params ->
-            projectServices.initializeAapt2Input(params.aapt2, task = null)
-      }
-    }
     // Transform to go from external jars to CLASSES and JAVA_RES artifacts. This returns the
     // same exact file but with different types, since a jar file can contain both.
     for (classesOrResources in arrayOf(
