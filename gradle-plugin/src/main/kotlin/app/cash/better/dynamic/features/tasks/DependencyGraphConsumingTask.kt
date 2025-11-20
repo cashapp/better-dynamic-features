@@ -37,10 +37,10 @@ abstract class DependencyGraphConsumingTask : DefaultTask() {
   abstract val baseDependencyGraphFiles: ConfigurableFileCollection
 
   protected fun baseGraph() = baseDependencyGraphFiles.map {
-    adapter().fromJson(it.readText())?.nodes ?: error("Could not read graph from $it")
+    adapter.fromJson(it.readText())?.nodes ?: error("Could not read graph from $it")
   }.flatten()
 
   protected fun featureGraphs() = featureDependencyGraphFiles.map {
-    adapter().fromJson(it.readText())?.nodes ?: error("Could not read graph from $it")
+    adapter.fromJson(it.readText())?.nodes ?: error("Could not read graph from $it")
   }
 }
