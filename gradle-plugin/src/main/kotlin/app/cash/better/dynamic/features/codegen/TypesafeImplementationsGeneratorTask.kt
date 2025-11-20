@@ -28,6 +28,9 @@ import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
 
+private val moshi = Moshi.Builder().build()
+private val featureAdapter = moshi.adapter(FeatureImplementation::class.java)
+
 abstract class TypesafeImplementationsGeneratorTask : DefaultTask() {
   @get:InputFiles
   abstract val featureImplementationReports: ConfigurableFileCollection
@@ -37,9 +40,6 @@ abstract class TypesafeImplementationsGeneratorTask : DefaultTask() {
 
   @get:OutputDirectory
   abstract val generatedFilesDirectory: DirectoryProperty
-
-  private val moshi = Moshi.Builder().build()
-  private val featureAdapter = moshi.adapter(FeatureImplementation::class.java)
 
   private val generatedSourcesDirectory get() = generatedFilesDirectory.asFile.get()
 
