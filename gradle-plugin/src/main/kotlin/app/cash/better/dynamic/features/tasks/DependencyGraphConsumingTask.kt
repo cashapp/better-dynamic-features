@@ -20,10 +20,10 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.tasks.InputFiles
 
-abstract class DependencyGraphConsumingTask : DefaultTask() {
-  private val moshi = Moshi.Builder().build()
-  private fun adapter() = moshi.adapter(NodeList::class.java)
+private val moshi = Moshi.Builder().build()
+private val adapter = moshi.adapter(NodeList::class.java)
 
+abstract class DependencyGraphConsumingTask : DefaultTask() {
   /**
    * Dependency graph files for each AGP variant of every feature module.
    */
