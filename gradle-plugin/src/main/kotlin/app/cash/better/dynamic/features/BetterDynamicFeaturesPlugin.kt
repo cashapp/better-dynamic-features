@@ -35,8 +35,7 @@ import com.android.build.api.variant.Variant
 import com.android.build.gradle.internal.publishing.AndroidArtifacts
 import com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask
 import com.android.build.gradle.internal.tasks.factory.dependsOn
-import com.google.devtools.ksp.gradle.KspTask
-import com.google.devtools.ksp.gradle.KspTaskJvm
+import com.google.devtools.ksp.gradle.KspAATask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ArtifactCollection
@@ -374,7 +373,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
           artifact.type = ARTIFACT_TYPE_FEATURE_IMPLEMENTATION_REPORT
 
           // TODO: Try and do this lazily
-          tasks.withType(KspTaskJvm::class.java) { task ->
+          tasks.withType(KspAATask::class.java) { task ->
             if (!kspTaskMatchesVariant(task, androidVariant)) return@withType
 
             logger.debug("Configuring KSP task ${task.path} for variant ${androidVariant.name}")
@@ -468,6 +467,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
         taskName("compile", androidVariant, "Implementations"),
         TypesafeImplementationsCompilationTask::class.java,
       ) { task ->
+        task.dependsOn(implementationsTask)
         task.generatedSources.set(implementationsTask.flatMap { it.generatedFilesDirectory })
         val compileConfiguration = setupVariantCodegenDependencies(androidVariant.buildType!!)
         task.compileClasspath.setFrom(project.provider { compileConfiguration.files })
@@ -485,7 +485,7 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
     }
   }
 
-  private fun kspTaskMatchesVariant(task: KspTask, variant: Variant): Boolean {
+  private fun kspTaskMatchesVariant(task: KspAATask, variant: Variant): Boolean {
     return task.name.contains(variant.name, ignoreCase = true) && !task.name.contains("UnitTest", ignoreCase = true)
   }
 

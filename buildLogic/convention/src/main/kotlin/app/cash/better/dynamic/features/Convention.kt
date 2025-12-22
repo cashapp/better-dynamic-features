@@ -46,7 +46,7 @@ class Convention : Plugin<Project> {
   }
 
   private companion object {
-    const val TOOLCHAIN_JDK = 17
-    const val TARGET_JDK = 11
+    const val TOOLCHAIN_JDK = 21
+    const val TARGET_JDK = 21
   }
 }
