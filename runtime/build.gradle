@@ -16,19 +16,19 @@ android {
     minSdk libs.versions.minSdk.get() as int
   }
   compileOptions {
-    sourceCompatibility(JavaVersion.VERSION_11)
-    targetCompatibility(JavaVersion.VERSION_11)
+    sourceCompatibility(JavaVersion.VERSION_21)
+    targetCompatibility(JavaVersion.VERSION_21)
   }
 }
 
 kotlin {
   explicitApi()
-  jvmToolchain(17)
+  jvmToolchain(21)
 }
 
 tasks.withType(KotlinCompile).configureEach { task ->
   task.compilerOptions {
-    jvmTarget.set(JvmTarget.JVM_11)
+    jvmTarget.set(JvmTarget.JVM_21)
   }
 }
 
