@@ -3,7 +3,7 @@ agp = "8.13.1"               # keep in sync with android-tools
 android-tools = "31.13.1"    # = 23.0.0 + agp
 compilerTesting = "0.7.1"
 kotlin = "2.1.20"
-kotlinPoet = "1.13.1"
+kotlinPoet = "1.18.1"
 ksp = "2.1.20-1.0.32"
 ktlint = "1.7.1"
 moshi = "1.15.2"
