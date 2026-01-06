@@ -1,13 +1,11 @@
 apply plugin: 'com.android.application'
-apply plugin: 'org.jetbrains.kotlin.android'
 apply plugin: 'com.google.devtools.ksp'
 apply plugin: 'app.cash.better.dynamic.features'
-apply plugin: 'org.jetbrains.kotlin.android'
 
 android {
   namespace "app.cash.better.dynamic.features.integration"
 
-  compileSdk 32
+  compileSdk libs.versions.compileSdk.get() as int
   defaultConfig {
     minSdk = 24
   }

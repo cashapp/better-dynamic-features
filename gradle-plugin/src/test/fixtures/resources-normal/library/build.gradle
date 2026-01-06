@@ -3,5 +3,5 @@ apply plugin: "com.android.library"
 android {
   namespace "app.cash.better.dynamic.features.integration.library"
 
-  compileSdk 32
+  compileSdk libs.versions.compileSdk.get() as int
 }

@@ -1,6 +1,5 @@
 plugins {
   alias(libs.plugins.android.dynamic.feature)
-  alias(libs.plugins.kotlin.android)
   alias(libs.plugins.ksp)
   alias(libs.plugins.betterDynamicFeatures)
   alias(libs.plugins.compose.compiler)
@@ -23,5 +22,6 @@ android {
 dependencies {
   implementation projects.app
 
+  implementation platform(libs.compose.bom)
   implementation libs.compose.runtime
 }

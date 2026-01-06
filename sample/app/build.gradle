@@ -1,6 +1,5 @@
 plugins {
   alias(libs.plugins.android.application)
-  alias(libs.plugins.kotlin.android)
   alias(libs.plugins.ksp)
   alias(libs.plugins.betterDynamicFeatures)
   alias(libs.plugins.compose.compiler)
@@ -33,8 +32,8 @@ android {
     compose true
   }
 
-  kotlinOptions {
-    freeCompilerArgs += '-Xexplicit-api=strict'
+  kotlin {
+      explicitApi()
   }
 }
 
