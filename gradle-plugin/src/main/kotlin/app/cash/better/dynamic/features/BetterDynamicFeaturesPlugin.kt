@@ -40,6 +40,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.ArtifactCollection
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.attributes.Usage
@@ -48,7 +49,6 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.internal.extensions.stdlib.capitalized
 import org.gradle.process.CommandLineArgumentProvider
 
-@Suppress("UnstableApiUsage")
 class BetterDynamicFeaturesPlugin : Plugin<Project> {
   override fun apply(project: Project) {
     check(project.plugins.hasPlugin("com.android.application") || project.plugins.hasPlugin("com.android.dynamic-feature")) {
@@ -371,10 +371,9 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
         )
         variant.artifact(project.layout.dir(project.provider { reportDir })) { artifact ->
           artifact.type = ARTIFACT_TYPE_FEATURE_IMPLEMENTATION_REPORT
-
-          // TODO: Try and do this lazily
-          tasks.withType(KspAATask::class.java) { task ->
-            if (!kspTaskMatchesVariant(task, androidVariant)) return@withType
+          tasks.withType(KspAATask::class.java).configureEach { task ->
+            // Only the main KSP task produces the report files we need.
+            if (task.name != "ksp${androidVariant.name.capitalized()}Kotlin") return@configureEach
 
             logger.debug("Configuring KSP task ${task.path} for variant ${androidVariant.name}")
 
@@ -383,6 +382,9 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
                 listOf("$KSP_REPORT_DIRECTORY_PREFIX.${androidVariant.name}=${reportDir.absolutePath}")
               },
             )
+            // Make the report directory an output of the KSP task so `clean` causes the task to rerun and regenerate it.
+            task.outputs.dir(reportDir)
+
             artifact.builtBy(task)
           }
         }
@@ -459,6 +461,18 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
         task.generatedFilesDirectory.set(project.buildDir.resolve("betterDynamicFeatures/generatedImplementations/${androidVariant.name}"))
         task.generatedProguardFile.set(project.buildDir.resolve("betterDynamicFeatures/generatedProguard/betterDynamicFeatures-${androidVariant.name}.pro"))
 
+        // Ensure feature KSP runs even when the requested task graph only targets the base module (e.g. `:base:bundleDebug`).
+        // Without this, the feature module may never realize its Android variants, which means it never registers its
+        // outgoing implementation-report variants, and this generator sees an empty artifact view.
+        val featureProjectPaths = mutableListOf<String>()
+        configuration.dependencies.forEach { dependency ->
+          if (dependency is ProjectDependency) {
+            featureProjectPaths += dependency.path
+          }
+        }
+        val kspTaskName = "ksp${androidVariant.name.capitalized()}Kotlin"
+        task.dependsOn(featureProjectPaths.map { "$it:$kspTaskName" })
+
         task.group = GROUP
       }
       androidVariant.proguardFiles.add(implementationsTask.flatMap { it.generatedProguardFile })
@@ -482,10 +496,6 @@ class BetterDynamicFeaturesPlugin : Plugin<Project> {
           TypesafeImplementationsCompilationTask::output,
         )
     }
-  }
-
-  private fun kspTaskMatchesVariant(task: KspAATask, variant: Variant): Boolean {
-    return task.name.contains(variant.name, ignoreCase = true) && !task.name.contains("UnitTest", ignoreCase = true)
   }
 
   companion object {

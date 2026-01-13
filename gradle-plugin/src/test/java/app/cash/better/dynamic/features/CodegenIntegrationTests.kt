@@ -89,7 +89,8 @@ class CodegenIntegrationTests {
     val gradleRunner = GradleRunner.create()
       .withCommonConfiguration(integrationRoot)
       .withDebug(true)
-      .withArguments("clean", ":base:bundleRelease")
+      // We only care about the generated ProGuard rules; building the full bundle is unnecessary (and flaky across AGP versions).
+      .withArguments("clean", ":base:typesafeReleaseImplementations")
 
     gradleRunner.build()
 
