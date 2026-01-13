@@ -44,15 +44,13 @@ class GenerateImplementationsContainerTest {
 
         @OptIn(ExperimentalDynamicFeaturesApi::class)
         public object TestApiImplementationsContainer : ImplementationsContainer<TestApi> {
-          public override fun buildImplementations(): List<TestApi> = buildList {
+          override fun buildImplementations(): List<TestApi> = buildList {
             try {
-              add(Class.forName("test.TestImplementation1").getDeclaredConstructor().newInstance() as
-                  TestApi)
+              add(Class.forName("test.TestImplementation1").getDeclaredConstructor().newInstance() as TestApi)
             } catch(e: ClassNotFoundException) {
             }
             try {
-              add(Class.forName("test.TestImplementation2").getDeclaredConstructor().newInstance() as
-                  TestApi)
+              add(Class.forName("test.TestImplementation2").getDeclaredConstructor().newInstance() as TestApi)
             } catch(e: ClassNotFoundException) {
             }
           }

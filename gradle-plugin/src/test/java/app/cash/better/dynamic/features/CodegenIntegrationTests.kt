@@ -47,10 +47,9 @@ class CodegenIntegrationTests {
       |
       |@OptIn(ExperimentalDynamicFeaturesApi::class)
       |public object ExampleFeatureImplementationsContainer : ImplementationsContainer<ExampleFeature> {
-      |  public override fun buildImplementations(): List<ExampleFeature> = buildList {
+      |  override fun buildImplementations(): List<ExampleFeature> = buildList {
       |    try {
-      |      add(Class.forName("ExampleImplementation").getDeclaredConstructor().newInstance() as
-      |          ExampleFeature)
+      |      add(Class.forName("ExampleImplementation").getDeclaredConstructor().newInstance() as ExampleFeature)
       |    } catch(e: ClassNotFoundException) {
       |    }
       |  }
