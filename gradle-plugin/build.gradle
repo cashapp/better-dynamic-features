@@ -1,4 +1,4 @@
-import com.google.devtools.ksp.gradle.KspTaskJvm
+import com.google.devtools.ksp.gradle.KspAATask
 import com.squareup.wire.gradle.WireTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -72,7 +72,7 @@ val KOTLIN_VERSION = "${libs.versions.kotlin.get()}"
 }
 
 tasks.withType(KotlinCompile).configureEach { dependsOn(pluginVersion) }
-tasks.withType(KspTaskJvm).configureEach { dependsOn(pluginVersion) }
+tasks.withType(KspAATask).configureEach { dependsOn(pluginVersion) }
 
 wire {
   kotlin {}
@@ -80,7 +80,7 @@ wire {
 
 // https://github.com/square/wire/issues/2335
 afterEvaluate {
-  tasks.withType(KspTaskJvm).configureEach {
+  tasks.withType(KspAATask).configureEach {
     dependsOn(tasks.withType(WireTask))
   }
 }

@@ -143,8 +143,8 @@ class FeatureModuleSymbolProcessorTests {
     inheritClassPath = true
     sources = sourceFiles.asList()
     verbose = true
-    kspIncremental = true
     useKsp2()
+    kspIncremental = true
 
     symbolProcessorProviders = mutableListOf(DynamicFeaturesSymbolProcessorProvider())
     kspProcessorOptions[KSP_REPORT_DIRECTORY_PREFIX] = resultsDirectory.root.absolutePath
