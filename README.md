@@ -1,8 +1,8 @@
 # Better Features Dynamic
 
-:construction: Under construction!
-
 Making dynamic feature modules better.
+
+**This project is no longer under active development.**
 
 ## Setup
 
